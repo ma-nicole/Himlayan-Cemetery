@@ -1,0 +1,219 @@
+/* Base skeleton animation */
+.skeleton-base {
+  background: linear-gradient(
+    90deg,
+    var(--bg-tertiary, #f3f4f6) 25%,
+    var(--border-light, #e5e7eb) 50%,
+    var(--bg-tertiary, #f3f4f6) 75%
+  );
+  background-size: 200% 100%;
+  animation: skeleton-shimmer 1.5s ease-in-out infinite;
+}
+
+@keyframes skeleton-shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+/* Skeleton Text */
+.skeleton-text-container {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.skeleton-text-line {
+  height: 0.875rem;
+  border-radius: var(--radius-sm, 0.25rem);
+}
+
+/* Skeleton Avatar */
+.skeleton-avatar {
+  border-radius: var(--radius-full, 9999px);
+  flex-shrink: 0;
+}
+
+/* Skeleton Card */
+.skeleton-card {
+  background: var(--bg-elevated, #ffffff);
+  border-radius: var(--radius-xl, 0.75rem);
+  border: 1px solid var(--border-light, #e5e7eb);
+  overflow: hidden;
+}
+
+.skeleton-card-image {
+  border-radius: 0;
+}
+
+.skeleton-card-content {
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.skeleton-card-title {
+  height: 1.25rem;
+  width: 70%;
+  border-radius: var(--radius-sm, 0.25rem);
+}
+
+.skeleton-card-subtitle {
+  height: 0.875rem;
+  width: 50%;
+  border-radius: var(--radius-sm, 0.25rem);
+}
+
+/* Skeleton Table */
+.skeleton-table-container {
+  background: var(--bg-elevated, #ffffff);
+  border-radius: var(--radius-xl, 0.75rem);
+  border: 1px solid var(--border-light, #e5e7eb);
+  overflow: hidden;
+}
+
+.skeleton-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.skeleton-table th,
+.skeleton-table td {
+  padding: 1rem;
+  border-bottom: 1px solid var(--border-light, #e5e7eb);
+}
+
+.skeleton-table th {
+  background: var(--bg-tertiary, #f3f4f6);
+}
+
+.skeleton-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+/* Skeleton Stat Card */
+.skeleton-stat-card {
+  background: var(--bg-elevated, #ffffff);
+  border-radius: var(--radius-xl, 0.75rem);
+  border: 1px solid var(--border-light, #e5e7eb);
+  padding: 1.5rem;
+  border-left: 4px solid var(--border-default, #d1d5db);
+}
+
+.skeleton-stat-header {
+  margin-bottom: 1rem;
+}
+
+.skeleton-stat-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: var(--radius-lg, 0.5rem);
+}
+
+.skeleton-stat-label {
+  height: 0.875rem;
+  width: 60%;
+  border-radius: var(--radius-sm, 0.25rem);
+  margin-bottom: 0.5rem;
+}
+
+.skeleton-stat-value {
+  height: 2rem;
+  width: 40%;
+  border-radius: var(--radius-sm, 0.25rem);
+}
+
+/* Skeleton List Item */
+.skeleton-list-item {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.75rem 0;
+}
+
+.skeleton-list-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.skeleton-list-title {
+  height: 1rem;
+  width: 70%;
+  border-radius: var(--radius-sm, 0.25rem);
+}
+
+.skeleton-list-subtitle {
+  height: 0.75rem;
+  width: 40%;
+  border-radius: var(--radius-sm, 0.25rem);
+}
+
+/* Skeleton Dashboard */
+.skeleton-dashboard {
+  padding: 1.5rem;
+}
+
+.skeleton-dashboard-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2rem;
+}
+
+.skeleton-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.skeleton-dashboard-content {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 1.5rem;
+}
+
+.skeleton-dashboard-sidebar {
+  background: var(--bg-elevated, #ffffff);
+  border-radius: var(--radius-xl, 0.75rem);
+  border: 1px solid var(--border-light, #e5e7eb);
+  padding: 1.5rem;
+}
+
+/* Dark mode */
+[data-theme="dark"] .skeleton-base {
+  background: linear-gradient(
+    90deg,
+    var(--bg-tertiary, #334155) 25%,
+    var(--border-light, #475569) 50%,
+    var(--bg-tertiary, #334155) 75%
+  );
+  background-size: 200% 100%;
+}
+
+[data-theme="dark"] .skeleton-card,
+[data-theme="dark"] .skeleton-table-container,
+[data-theme="dark"] .skeleton-stat-card,
+[data-theme="dark"] .skeleton-dashboard-sidebar {
+  background: var(--bg-elevated, #1e293b);
+  border-color: var(--border-light, #334155);
+}
+
+/* Responsive */
+@media (max-width: 1024px) {
+  .skeleton-stats-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  
+  .skeleton-dashboard-content {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 768px) {
+  .skeleton-stats-grid {
+    grid-template-columns: 1fr;
+  }
+}

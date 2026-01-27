@@ -1,0 +1,361 @@
+.pay-dues-page {
+  max-width: 1000px;
+  margin: 0 auto;
+}
+
+.pay-dues-page .page-header {
+  text-align: center;
+  margin-bottom: 2rem;
+}
+
+.pay-dues-page .page-header h1 {
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: var(--color-primary-600, #166534);
+  margin: 0 0 0.5rem 0;
+}
+
+.pay-dues-page .page-header p {
+  color: var(--text-secondary, #6b7280);
+  margin: 0;
+}
+
+/* Container */
+.dues-container {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2rem;
+  align-items: start;
+}
+
+/* Section Headers */
+.dues-section h2,
+.payment-section h2 {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--text-primary, #111827);
+  margin: 0 0 1rem 0;
+}
+
+/* Dues List */
+.dues-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.due-card {
+  display: grid;
+  grid-template-columns: auto 1fr auto auto;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem 1.25rem;
+  background: white;
+  border: 2px solid var(--border-light, #e5e7eb);
+  border-radius: 0.75rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.due-card:hover {
+  border-color: var(--color-primary-300, #86efac);
+}
+
+.due-card.selected {
+  border-color: var(--color-primary-500, #1a472a);
+  background: var(--color-primary-50, #f0fdf4);
+}
+
+.due-card.overdue {
+  border-left: 4px solid var(--color-error-500, #ef4444);
+}
+
+.due-status {
+  min-width: 90px;
+}
+
+.status-badge {
+  display: inline-block;
+  padding: 0.25rem 0.5rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  border-radius: 0.25rem;
+}
+
+.status-badge.pending {
+  background: var(--color-warning-100, #fef3c7);
+  color: var(--color-warning-700, #a16207);
+}
+
+.status-badge.overdue {
+  background: var(--color-error-100, #fee2e2);
+  color: var(--color-error-700, #b91c1c);
+}
+
+.due-details h3 {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--text-primary, #111827);
+  margin: 0 0 0.25rem 0;
+}
+
+.plot-info {
+  font-size: 0.8125rem;
+  color: var(--text-secondary, #6b7280);
+  margin: 0 0 0.25rem 0;
+}
+
+.plot-number {
+  font-weight: 600;
+  color: var(--color-primary-600, #166534);
+}
+
+.separator {
+  margin: 0 0.5rem;
+  opacity: 0.5;
+}
+
+.due-type {
+  font-size: 0.75rem;
+  color: var(--text-tertiary, #9ca3af);
+  margin: 0;
+}
+
+.due-amount {
+  text-align: right;
+}
+
+.amount {
+  display: block;
+  font-size: 1.125rem;
+  font-weight: 700;
+  color: var(--text-primary, #111827);
+}
+
+.due-date {
+  font-size: 0.75rem;
+  color: var(--text-tertiary, #9ca3af);
+}
+
+.select-indicator {
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid var(--border-default, #d1d5db);
+  border-radius: 50%;
+  font-size: 0.875rem;
+  color: var(--text-tertiary, #9ca3af);
+}
+
+.due-card.selected .select-indicator {
+  background: var(--color-primary-500, #1a472a);
+  border-color: var(--color-primary-500, #1a472a);
+  color: white;
+}
+
+/* No Dues */
+.no-dues {
+  text-align: center;
+  padding: 3rem 2rem;
+  background: var(--bg-tertiary, #f9fafb);
+  border-radius: 0.75rem;
+}
+
+.no-dues .empty-icon {
+  font-size: 2.5rem;
+  display: block;
+  margin-bottom: 0.75rem;
+}
+
+.no-dues p {
+  font-weight: 600;
+  color: var(--text-primary, #111827);
+  margin: 0;
+}
+
+.no-dues span {
+  font-size: 0.875rem;
+  color: var(--text-tertiary, #9ca3af);
+}
+
+/* Payment Section */
+.payment-section {
+  background: white;
+  border: 1px solid var(--border-light, #e5e7eb);
+  border-radius: 1rem;
+  padding: 1.5rem;
+}
+
+.payment-summary {
+  background: var(--bg-tertiary, #f9fafb);
+  border-radius: 0.5rem;
+  padding: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.summary-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 0.5rem 0;
+  font-size: 0.875rem;
+  color: var(--text-secondary, #6b7280);
+}
+
+.summary-row.total {
+  border-top: 1px solid var(--border-default, #d1d5db);
+  margin-top: 0.5rem;
+  padding-top: 1rem;
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--text-primary, #111827);
+}
+
+/* Payment Methods */
+.method-label {
+  display: block;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--text-primary, #111827);
+  margin-bottom: 0.75rem;
+}
+
+.methods-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.method-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 1rem;
+  background: white;
+  border: 2px solid var(--border-default, #d1d5db);
+  border-radius: 0.5rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.method-btn:hover {
+  border-color: var(--color-primary-300, #86efac);
+}
+
+.method-btn.selected {
+  border-color: var(--color-primary-500, #1a472a);
+  background: var(--color-primary-50, #f0fdf4);
+}
+
+.method-icon {
+  font-size: 1.5rem;
+}
+
+.method-name {
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: var(--text-primary, #111827);
+}
+
+/* Pay Button */
+.btn-pay {
+  width: 100%;
+  padding: 1rem;
+  background: #111827;
+  color: white;
+  border: none;
+  border-radius: 0.5rem;
+  font-size: 1rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-pay:hover {
+  background: #1f2937;
+}
+
+.btn-pay:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.payment-note {
+  text-align: center;
+  font-size: 0.75rem;
+  color: var(--text-tertiary, #9ca3af);
+  margin: 1rem 0 0 0;
+}
+
+/* No Selection */
+.no-selection {
+  text-align: center;
+  padding: 4rem 2rem;
+  color: var(--text-tertiary, #9ca3af);
+}
+
+.select-icon {
+  font-size: 2rem;
+  display: block;
+  margin-bottom: 0.5rem;
+}
+
+.no-selection p {
+  margin: 0;
+}
+
+/* History Link */
+.history-link {
+  text-align: center;
+  margin-top: 2rem;
+}
+
+.btn-outline {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.5rem;
+  background: white;
+  border: 1px solid var(--border-default, #d1d5db);
+  border-radius: 0.5rem;
+  font-size: 0.9375rem;
+  font-weight: 500;
+  color: var(--text-primary, #111827);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-outline:hover {
+  border-color: var(--color-primary-500, #1a472a);
+  color: var(--color-primary-600, #166534);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .dues-container {
+    grid-template-columns: 1fr;
+  }
+  
+  .due-card {
+    grid-template-columns: 1fr auto;
+    grid-template-rows: auto auto;
+  }
+  
+  .due-status {
+    grid-column: 1 / -1;
+    margin-bottom: -0.5rem;
+  }
+  
+  .select-indicator {
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+  }
+  
+  .due-card {
+    position: relative;
+  }
+}

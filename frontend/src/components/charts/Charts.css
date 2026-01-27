@@ -1,0 +1,460 @@
+/* Base Chart Styles */
+.chart {
+  width: 100%;
+  font-size: 0.75rem;
+}
+
+/* ================================
+   Bar Chart
+   ================================ */
+.bar-chart-container {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-around;
+  height: 100%;
+  gap: 0.5rem;
+  padding-bottom: 2rem;
+}
+
+.bar-column {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  flex: 1;
+  max-width: 60px;
+  height: 100%;
+}
+
+.bar-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+  flex: 1;
+  width: 100%;
+}
+
+.bar {
+  width: 100%;
+  max-width: 40px;
+  border-radius: var(--radius-md, 0.375rem) var(--radius-md, 0.375rem) 0 0;
+  transition: height 0.5s ease;
+}
+
+.bar.animate {
+  animation: barGrow 0.6s ease forwards;
+  height: 0 !important;
+}
+
+@keyframes barGrow {
+  to { height: var(--target-height, 100%); }
+}
+
+.bar-primary { background: var(--color-primary-500, #1a472a); }
+.bar-success { background: var(--color-success-500, #22c55e); }
+.bar-warning { background: var(--color-warning-500, #f59e0b); }
+.bar-error { background: var(--color-error-500, #ef4444); }
+.bar-info { background: var(--color-info-500, #3b82f6); }
+
+.bar-value {
+  font-size: 0.6875rem;
+  font-weight: 600;
+  color: var(--text-secondary, #6b7280);
+  margin-bottom: 0.25rem;
+}
+
+.bar-label {
+  font-size: 0.6875rem;
+  color: var(--text-tertiary, #9ca3af);
+  margin-top: 0.5rem;
+  text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+}
+
+/* ================================
+   Horizontal Bar Chart
+   ================================ */
+.horizontal-bar-chart {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.h-bar-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.h-bar-label {
+  width: 100px;
+  font-size: 0.8125rem;
+  color: var(--text-secondary, #6b7280);
+  text-align: right;
+  flex-shrink: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.h-bar-wrapper {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  height: 24px;
+  background: var(--bg-tertiary, #f3f4f6);
+  border-radius: var(--radius-full, 9999px);
+  overflow: hidden;
+}
+
+.h-bar {
+  height: 100%;
+  border-radius: var(--radius-full, 9999px);
+  transition: width 0.5s ease;
+}
+
+.h-bar.animate {
+  animation: hBarGrow 0.6s ease forwards;
+  width: 0 !important;
+}
+
+@keyframes hBarGrow {
+  to { width: var(--target-width, 100%); }
+}
+
+.h-bar-primary { background: var(--color-primary-500, #1a472a); }
+.h-bar-success { background: var(--color-success-500, #22c55e); }
+.h-bar-warning { background: var(--color-warning-500, #f59e0b); }
+.h-bar-error { background: var(--color-error-500, #ef4444); }
+.h-bar-info { background: var(--color-info-500, #3b82f6); }
+
+.h-bar-value {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--text-primary, #111827);
+  padding-right: 0.75rem;
+}
+
+/* ================================
+   Donut Chart
+   ================================ */
+.donut-chart {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.5rem;
+}
+
+.donut-container {
+  position: relative;
+}
+
+.donut-container svg {
+  transform: rotate(-90deg);
+}
+
+.donut-container svg.animate .donut-segment {
+  animation: donutGrow 1s ease forwards;
+  stroke-dasharray: 0 1000;
+}
+
+@keyframes donutGrow {
+  to { stroke-dasharray: var(--target-dasharray); }
+}
+
+.donut-segment {
+  transition: stroke-dasharray 0.5s ease;
+}
+
+.donut-primary { stroke: var(--color-primary-500, #1a472a); }
+.donut-success { stroke: var(--color-success-500, #22c55e); }
+.donut-warning { stroke: var(--color-warning-500, #f59e0b); }
+.donut-error { stroke: var(--color-error-500, #ef4444); }
+.donut-info { stroke: var(--color-info-500, #3b82f6); }
+
+.donut-center {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  text-align: center;
+}
+
+.donut-center-value {
+  display: block;
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--text-primary, #111827);
+}
+
+.donut-center-label {
+  display: block;
+  font-size: 0.75rem;
+  color: var(--text-tertiary, #9ca3af);
+}
+
+/* Legend */
+.chart-legend {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 1rem;
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  font-size: 0.8125rem;
+}
+
+.legend-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: var(--radius-full, 9999px);
+}
+
+.legend-primary { background: var(--color-primary-500, #1a472a); }
+.legend-success { background: var(--color-success-500, #22c55e); }
+.legend-warning { background: var(--color-warning-500, #f59e0b); }
+.legend-error { background: var(--color-error-500, #ef4444); }
+.legend-info { background: var(--color-info-500, #3b82f6); }
+
+.legend-label {
+  color: var(--text-secondary, #6b7280);
+}
+
+.legend-value {
+  font-weight: 600;
+  color: var(--text-primary, #111827);
+}
+
+.legend-percent {
+  color: var(--text-tertiary, #9ca3af);
+}
+
+/* ================================
+   Line Chart
+   ================================ */
+.line-chart {
+  width: 100%;
+}
+
+.line-chart svg {
+  width: 100%;
+  height: auto;
+}
+
+.grid-line {
+  stroke: var(--border-light, #e5e7eb);
+  stroke-width: 1;
+  stroke-dasharray: 4 4;
+}
+
+.grid-label {
+  font-size: 10px;
+  fill: var(--text-tertiary, #9ca3af);
+}
+
+.x-label {
+  font-size: 10px;
+  fill: var(--text-tertiary, #9ca3af);
+}
+
+.line-path {
+  stroke-width: 2.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.line-path.animate {
+  animation: lineGrow 1.5s ease forwards;
+  stroke-dasharray: 1000;
+  stroke-dashoffset: 1000;
+}
+
+@keyframes lineGrow {
+  to { stroke-dashoffset: 0; }
+}
+
+.line-path-primary { stroke: var(--color-primary-500, #1a472a); }
+.line-path-success { stroke: var(--color-success-500, #22c55e); }
+.line-path-warning { stroke: var(--color-warning-500, #f59e0b); }
+.line-path-error { stroke: var(--color-error-500, #ef4444); }
+.line-path-info { stroke: var(--color-info-500, #3b82f6); }
+
+.line-area {
+  opacity: 0.1;
+}
+
+.line-area.animate {
+  animation: areaFade 1s 0.5s ease forwards;
+  opacity: 0;
+}
+
+@keyframes areaFade {
+  to { opacity: 0.15; }
+}
+
+.line-area-primary { fill: var(--color-primary-500, #1a472a); }
+.line-area-success { fill: var(--color-success-500, #22c55e); }
+.line-area-warning { fill: var(--color-warning-500, #f59e0b); }
+.line-area-error { fill: var(--color-error-500, #ef4444); }
+.line-area-info { fill: var(--color-info-500, #3b82f6); }
+
+.line-dot {
+  transition: r 0.2s ease;
+}
+
+.line-dot-group:hover .line-dot {
+  r: 7;
+}
+
+.line-dot-primary { fill: var(--color-primary-500, #1a472a); }
+.line-dot-success { fill: var(--color-success-500, #22c55e); }
+.line-dot-warning { fill: var(--color-warning-500, #f59e0b); }
+.line-dot-error { fill: var(--color-error-500, #ef4444); }
+.line-dot-info { fill: var(--color-info-500, #3b82f6); }
+
+/* ================================
+   Progress Ring
+   ================================ */
+.progress-ring {
+  position: relative;
+}
+
+.progress-arc {
+  transition: stroke-dashoffset 1s ease;
+}
+
+.progress-primary { stroke: var(--color-primary-500, #1a472a); }
+.progress-success { stroke: var(--color-success-500, #22c55e); }
+.progress-warning { stroke: var(--color-warning-500, #f59e0b); }
+.progress-error { stroke: var(--color-error-500, #ef4444); }
+.progress-info { stroke: var(--color-info-500, #3b82f6); }
+
+.progress-center {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  text-align: center;
+}
+
+.progress-value {
+  display: block;
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--text-primary, #111827);
+}
+
+.progress-label {
+  display: block;
+  font-size: 0.6875rem;
+  color: var(--text-tertiary, #9ca3af);
+}
+
+/* ================================
+   Sparkline
+   ================================ */
+.sparkline {
+  display: block;
+}
+
+.sparkline-path {
+  stroke-width: 1.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.sparkline-primary { stroke: var(--color-primary-500, #1a472a); }
+.sparkline-success { stroke: var(--color-success-500, #22c55e); }
+.sparkline-warning { stroke: var(--color-warning-500, #f59e0b); }
+.sparkline-error { stroke: var(--color-error-500, #ef4444); }
+.sparkline-info { stroke: var(--color-info-500, #3b82f6); }
+
+.sparkline-dot-primary { fill: var(--color-primary-500, #1a472a); }
+.sparkline-dot-success { fill: var(--color-success-500, #22c55e); }
+.sparkline-dot-warning { fill: var(--color-warning-500, #f59e0b); }
+.sparkline-dot-error { fill: var(--color-error-500, #ef4444); }
+.sparkline-dot-info { fill: var(--color-info-500, #3b82f6); }
+
+/* ================================
+   Stats Overview Card
+   ================================ */
+.stats-overview-card {
+  background: var(--bg-elevated, #ffffff);
+  border: 1px solid var(--border-light, #e5e7eb);
+  border-radius: var(--radius-xl, 0.75rem);
+  padding: 1.25rem;
+  transition: all 0.2s ease;
+}
+
+.stats-overview-card:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+.stats-header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+}
+
+.stats-icon {
+  font-size: 1rem;
+}
+
+.stats-title {
+  font-size: 0.8125rem;
+  color: var(--text-tertiary, #9ca3af);
+}
+
+.stats-body {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 0.5rem;
+}
+
+.stats-value {
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: var(--text-primary, #111827);
+  line-height: 1;
+}
+
+.stats-change {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  font-size: 0.8125rem;
+  font-weight: 500;
+}
+
+.stats-positive {
+  color: var(--color-success-600, #16a34a);
+}
+
+.stats-negative {
+  color: var(--color-error-600, #dc2626);
+}
+
+.stats-neutral {
+  color: var(--text-tertiary, #9ca3af);
+}
+
+.change-icon {
+  font-size: 0.875rem;
+}
+
+/* Dark Mode */
+[data-theme="dark"] .stats-overview-card {
+  background: var(--bg-elevated, #1e293b);
+  border-color: var(--border-light, #334155);
+}

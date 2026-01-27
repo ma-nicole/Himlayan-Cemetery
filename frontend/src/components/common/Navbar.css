@@ -1,0 +1,109 @@
+.navbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.75rem 1.5rem;
+  background: var(--bg-elevated, #ffffff);
+  border-bottom: 1px solid var(--border-light, #e5e7eb);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.navbar-brand {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.navbar-logo {
+  font-size: 1.5rem;
+}
+
+.navbar-brand h1 {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--color-primary-600, #166534);
+  margin: 0;
+  letter-spacing: 0.02em;
+}
+
+.navbar-actions {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.navbar-user {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding-left: 1rem;
+  border-left: 1px solid var(--border-light, #e5e7eb);
+}
+
+.user-name {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--text-primary, #111827);
+}
+
+.user-role {
+  font-size: 0.75rem;
+  color: var(--text-tertiary, #9ca3af);
+  text-transform: capitalize;
+}
+
+.logout-btn {
+  margin-left: 0.75rem;
+  padding: 0.375rem 0.75rem;
+  background: transparent;
+  border: 1px solid var(--border-default, #d1d5db);
+  border-radius: var(--radius-md, 0.375rem);
+  font-size: 0.8125rem;
+  color: var(--text-secondary, #6b7280);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.logout-btn:hover {
+  background: var(--color-error-50, #fef2f2);
+  border-color: var(--color-error-300, #fca5a5);
+  color: var(--color-error-600, #dc2626);
+}
+
+/* Dark mode */
+[data-theme="dark"] .navbar {
+  background: var(--bg-elevated, #1e293b);
+  border-color: var(--border-light, #334155);
+}
+
+[data-theme="dark"] .navbar-brand h1 {
+  color: #86efac;
+}
+
+[data-theme="dark"] .navbar-user {
+  border-color: var(--border-light, #334155);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .navbar {
+    padding: 0.5rem 1rem;
+  }
+  
+  .navbar-actions {
+    gap: 0.5rem;
+  }
+  
+  .navbar-user {
+    padding-left: 0.75rem;
+  }
+  
+  .user-name,
+  .user-role {
+    display: none;
+  }
+  
+  .logout-btn {
+    padding: 0.375rem;
+  }
+}
