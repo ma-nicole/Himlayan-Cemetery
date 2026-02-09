@@ -13,7 +13,6 @@ const MemberDashboardPage = () => {
   const [loading, setLoading] = useState(false);
   const [myPlots, setMyPlots] = useState([]);
   const [announcements, setAnnouncements] = useState([]);
-  const [showQRModal, setShowQRModal] = useState(false);
   const [currentTime, setCurrentTime] = useState(new Date());
 
   useEffect(() => {
@@ -158,29 +157,6 @@ const MemberDashboardPage = () => {
               </svg>
             </div>
           </Link>
-
-          <button onClick={() => setShowQRModal(true)} className="feature-card qr-scan">
-            <div className="feature-icon">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <rect x="3" y="3" width="7" height="7"/>
-                <rect x="14" y="3" width="7" height="7"/>
-                <rect x="3" y="14" width="7" height="7"/>
-                <rect x="14" y="14" width="3" height="3"/>
-                <line x1="21" y1="14" x2="21" y2="21"/>
-                <line x1="14" y1="21" x2="21" y2="21"/>
-              </svg>
-            </div>
-            <div className="feature-content">
-              <h3>QR Scan</h3>
-              <p>Scan grave QR code for instant information</p>
-            </div>
-            <div className="feature-arrow">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <line x1="5" y1="12" x2="19" y2="12"/>
-                <polyline points="12 5 19 12 12 19"/>
-              </svg>
-            </div>
-          </button>
 
           <Link to="/pay-dues" className="feature-card pay-dues">
             <div className="feature-icon">
@@ -449,49 +425,6 @@ const MemberDashboardPage = () => {
 
       {/* Footer */}
       <MemberFooter />
-
-      {/* QR Scanner Modal */}
-      {showQRModal && (
-        <div className="modal-overlay" onClick={() => setShowQRModal(false)}>
-          <div className="modal-content qr-modal" onClick={(e) => e.stopPropagation()}>
-            <button className="modal-close" onClick={() => setShowQRModal(false)}>
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
-              </svg>
-            </button>
-            <div className="qr-scanner-container">
-              <div className="qr-icon-large">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-                  <rect x="3" y="3" width="7" height="7"/>
-                  <rect x="14" y="3" width="7" height="7"/>
-                  <rect x="3" y="14" width="7" height="7"/>
-                  <rect x="14" y="14" width="3" height="3"/>
-                  <line x1="21" y1="14" x2="21" y2="21"/>
-                  <line x1="14" y1="21" x2="21" y2="21"/>
-                </svg>
-              </div>
-              <h3>Scan QR Code</h3>
-              <p>Point your camera at a grave's QR code to access information</p>
-              <div className="qr-camera-placeholder">
-                <div className="camera-frame">
-                  <div className="corner tl"></div>
-                  <div className="corner tr"></div>
-                  <div className="corner bl"></div>
-                  <div className="corner br"></div>
-                </div>
-                <p>Camera will appear here</p>
-              </div>
-              <button className="start-camera-btn">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
-                  <circle cx="12" cy="13" r="4"/>
-                </svg>
-                Enable Camera
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 };

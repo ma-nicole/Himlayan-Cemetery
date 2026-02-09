@@ -11,7 +11,6 @@ const PublicLayout = ({ children }) => {
   const navLinks = [
     { path: '/', label: 'Home', icon: '' },
     { path: '/member/search', label: 'Find Grave', icon: '' },
-    { path: '/qr-scan', label: 'QR Scan', icon: '' },
     { path: '/pay-dues', label: 'Pay Dues', icon: '', auth: true },
     { path: '/profile', label: 'Profile', icon: '', auth: true },
     { path: '/feedback', label: 'Feedback', icon: '' },
@@ -81,7 +80,7 @@ const PublicLayout = ({ children }) => {
             ) : (
               <>
                 <Link to="/login" className="btn-nav btn-login">
-                  Login / Register
+                  Login
                 </Link>
               </>
             )}

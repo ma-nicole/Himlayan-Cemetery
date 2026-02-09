@@ -37,6 +37,12 @@ const MemberHeader = () => {
             Find a Grave
           </Link>
           <Link 
+            to="/member/loved-ones" 
+            className={`member-nav-link ${isActive('/member/loved-ones') ? 'active' : ''}`}
+          >
+            My Loved Ones
+          </Link>
+          <Link 
             to="/member/map" 
             className={`member-nav-link ${isActive('/member/map') ? 'active' : ''}`}
           >

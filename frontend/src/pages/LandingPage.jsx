@@ -1,10 +1,133 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
+import api from '../services/api'; // For making search API requests
 
 const LandingPage = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [currentHeroImage, setCurrentHeroImage] = useState(0);
   const [scrolled, setScrolled] = useState(false);
+  
+  // Search functionality state
+  const [searchQuery, setSearchQuery] = useState('');
+  const [searchResults, setSearchResults] = useState([]);
+  const [searchLoading, setSearchLoading] = useState(false);
+  const [hasSearched, setHasSearched] = useState(false);
+
+  // Services section state
+  const [activeServiceTab, setActiveServiceTab] = useState('all');
+
+  // Services data
+  const landingServices = [
+    {
+      id: 1,
+      category: 'burial',
+      icon: (
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+          <path d="M12 3v18M5 8l7-5 7 5M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8"/>
+        </svg>
+      ),
+      title: 'Lawn Lots',
+      subtitle: 'Traditional Ground Burial',
+      description: 'Traditional burial lots in well-maintained lawn areas. Various sizes available depending on your family\'s needs.',
+      features: ['Single or Family lots', 'Perpetual care included', 'Well-maintained landscaping', 'Concrete vault ready'],
+      price: 'Starting at ₱150,000',
+      popular: false,
+      image: '/Florante-at-Laura-1-scaled.jpg'
+    },
+    {
+      id: 2,
+      category: 'cremation',
+      icon: (
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+          <rect x="3" y="3" width="18" height="18" rx="2"/>
+          <rect x="7" y="7" width="4" height="4"/>
+          <rect x="13" y="7" width="4" height="4"/>
+          <rect x="7" y="13" width="4" height="4"/>
+          <rect x="13" y="13" width="4" height="4"/>
+        </svg>
+      ),
+      title: 'Columbarium Niches',
+      subtitle: 'Modern Cremation Storage',
+      description: 'Modern niches for cremated remains. Climate-controlled and secured 24/7 for your peace of mind.',
+      features: ['Climate-controlled', 'Secured 24/7', 'Multiple sizes', 'Indoor location'],
+      price: 'Starting at ₱80,000',
+      popular: true,
+      image: '/Panooran-2.jpg'
+    },
+    {
+      id: 3,
+      category: 'burial',
+      icon: (
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+          <path d="M3 21h18M5 21V7l7-4 7 4v14M9 21v-6h6v6"/>
+          <rect x="9" y="9" width="2" height="2"/><rect x="13" y="9" width="2" height="2"/>
+        </svg>
+      ),
+      title: 'Mausoleum',
+      subtitle: 'Private Family Tombs',
+      description: 'Private family tombs with their own structure. Perfect for large families who want an exclusive memorial.',
+      features: ['Custom designs', 'Multiple vault capacity', 'Exclusive area', 'Premium location'],
+      price: 'Starting at ₱500,000',
+      popular: false,
+      image: '/heritage_HD.png'
+    },
+    {
+      id: 4,
+      category: 'burial',
+      icon: (
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+          <circle cx="12" cy="12" r="10"/>
+          <path d="M12 6v6l4 2"/>
+        </svg>
+      ),
+      title: 'Memorial Terrace',
+      subtitle: 'Elevated Scenic Views',
+      description: 'Elevated memorial area with beautiful views of the entire park. Perfect for those who want a peaceful and serene location.',
+      features: ['Scenic views', 'Peaceful atmosphere', 'Well-maintained', 'Garden setting'],
+      price: 'Starting at ₱200,000',
+      popular: false,
+      image: '/Malakas-at-Maganda.jpg'
+    },
+    {
+      id: 5,
+      category: 'services',
+      icon: (
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+          <path d="M18 2H6a2 2 0 00-2 2v16l8-4 8 4V4a2 2 0 00-2-2z"/>
+        </svg>
+      ),
+      title: 'Chapel Services',
+      subtitle: 'Memorial Masses & Events',
+      description: 'Our chapel is available for memorial masses, prayer services, and other religious ceremonies.',
+      features: ['Air-conditioned', '100+ seating capacity', 'Audio-visual system', 'Parking available'],
+      price: 'Starting at ₱5,000/event',
+      popular: false,
+      image: '/Teresa-Magbanua-scaled.jpg'
+    },
+    {
+      id: 6,
+      category: 'services',
+      icon: (
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+          <rect x="1" y="3" width="15" height="13" rx="2"/>
+          <path d="M16 8h4l3 3v5a2 2 0 01-2 2h-1M16 16H8M5.5 19.5a2.5 2.5 0 100-5 2.5 2.5 0 000 5zM18.5 19.5a2.5 2.5 0 100-5 2.5 2.5 0 000 5z"/>
+        </svg>
+      ),
+      title: 'Burial Coordination',
+      subtitle: 'Complete Assistance',
+      description: 'Complete and organized burial assistance from start to finish. One call and we\'ll take care of everything.',
+      features: ['Funeral home coordination', 'Equipment rental', 'Staff assistance', 'Documentation help'],
+      price: 'Starting at ₱15,000',
+      popular: true,
+      image: '/Gabriela-Silang-scaled.jpg'
+    }
+  ];
+
+  // Filter services based on active tab
+  const filteredLandingServices = activeServiceTab === 'all' 
+    ? landingServices 
+    : landingServices.filter(s => s.category === activeServiceTab);
+
 
   // Hero slideshow images
   const heroImages = [
@@ -38,6 +161,27 @@ const LandingPage = () => {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
+  // Handle grave search
+  const handleSearch = async (e) => {
+    e.preventDefault();
+    if (!searchQuery.trim()) return;
+
+    setSearchLoading(true);
+    setHasSearched(true);
+    
+    try {
+      const response = await api.get(`/public/search?q=${encodeURIComponent(searchQuery)}`);
+      if (response.data.success) {
+        setSearchResults(response.data.data || []);
+      }
+    } catch (err) {
+      console.error('Search error:', err);
+      setSearchResults([]);
+    } finally {
+      setSearchLoading(false);
+    }
+  };
+
   return (
     <div className="landing-page">
       {/* Navigation */}
@@ -57,6 +201,8 @@ const LandingPage = () => {
 
           <ul className={`landing-nav-menu ${mobileMenuOpen ? 'open' : ''}`}>
             <li><a href="#home">Home</a></li>
+            {/* Find a Grave - scrolls to search section on same page */}
+            <li><a href="#search">Find a Grave</a></li>
             <li><a href="#about">About</a></li>
             <li><a href="#services">Services</a></li>
             <li><a href="#gallery">Gallery</a></li>
@@ -65,7 +211,6 @@ const LandingPage = () => {
 
           <div className="landing-nav-actions">
             <Link to="/login" className="btn-nav-login">Login</Link>
-            <Link to="/register" className="btn-nav-register">Get Started</Link>
           </div>
         </div>
       </nav>
@@ -114,6 +259,156 @@ const LandingPage = () => {
         <div className="scroll-indicator">
           <span>Scroll</span>
           <div className="scroll-line"></div>
+        </div>
+      </section>
+
+      {/* Find a Grave Search Section */}
+      <section id="search" className="search-section-landing">
+        <div className="search-section-container">
+          <div className="search-section-header">
+            <span className="section-label">Find Your Loved Ones</span>
+            <h2 className="section-title">Grave <span>Locator</span></h2>
+            <p>Search for burial records by name to find grave locations</p>
+          </div>
+
+          <form onSubmit={handleSearch} className="landing-search-form">
+            <div className="landing-search-wrapper">
+              <svg className="landing-search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <circle cx="11" cy="11" r="8"/>
+                <path d="M21 21l-4.35-4.35"/>
+              </svg>
+              <input
+                type="text"
+                placeholder="Enter name (e.g. Juan Dela Cruz)..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="landing-search-input"
+              />
+              {searchQuery && (
+                <button type="button" className="landing-search-clear" onClick={() => setSearchQuery('')}>
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <path d="M18 6L6 18M6 6l12 12"/>
+                  </svg>
+                </button>
+              )}
+            </div>
+            <button type="submit" className="landing-search-btn" disabled={searchLoading}>
+              {searchLoading ? (
+                <>
+                  <span className="spinner-small"></span>
+                  Searching...
+                </>
+              ) : (
+                'Search'
+              )}
+            </button>
+          </form>
+
+          {/* Search Examples */}
+          {!hasSearched && (
+            <div className="search-examples">
+              <span>Examples:</span>
+              <button onClick={() => setSearchQuery('Juan Dela Cruz')} className="example-tag">Juan Dela Cruz</button>
+              <button onClick={() => setSearchQuery('Maria Santos')} className="example-tag">Maria Santos</button>
+              <button onClick={() => setSearchQuery('Pedro Garcia')} className="example-tag">Pedro Garcia</button>
+            </div>
+          )}
+
+          {/* Search Results */}
+          {hasSearched && (
+            <div className="landing-search-results">
+              {searchLoading ? (
+                <div className="search-loading">
+                  <div className="loading-spinner-large"></div>
+                  <p>Searching for results...</p>
+                </div>
+              ) : searchResults.length > 0 ? (
+                <>
+                  <div className="results-count-header">
+                    <h3>Search Results</h3>
+                    <span className="count-badge">{searchResults.length} found</span>
+                  </div>
+                  <div className="landing-results-grid">
+                    {searchResults.map((result) => (
+                      <div key={result.id} className="landing-result-card">
+                        <div className="result-card-header">
+                          <div className="result-avatar-icon">
+                            {result.deceased_photo_url ? (
+                              <img 
+                                src={result.deceased_photo_url} 
+                                alt={result.deceased_name}
+                                style={{ 
+                                  width: '100%', 
+                                  height: '100%', 
+                                  objectFit: 'cover',
+                                  borderRadius: '50%'
+                                }}
+                                onError={(e) => {
+                                  e.target.style.display = 'none';
+                                  e.target.parentElement.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>';
+                                }}
+                              />
+                            ) : (
+                              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                                <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/>
+                                <circle cx="12" cy="7" r="4"/>
+                              </svg>
+                            )}
+                          </div>
+                          <h4>{result.deceased_name}</h4>
+                        </div>
+                        <div className="result-card-details">
+                          <div className="result-detail-row">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                              <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 1118 0z"/>
+                              <circle cx="12" cy="10" r="3"/>
+                            </svg>
+                            <span>Plot: {result.plot?.plot_number || 'N/A'}</span>
+                          </div>
+                          <div className="result-detail-row">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                              <rect x="3" y="3" width="18" height="18" rx="2"/>
+                              <path d="M3 9h18M9 21V9"/>
+                            </svg>
+                            <span>Section {result.plot?.section || 'N/A'}, Block {result.plot?.block || 'N/A'}</span>
+                          </div>
+                          {result.birth_date && result.death_date && (
+                            <div className="result-detail-row">
+                              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                <rect x="3" y="4" width="18" height="18" rx="2"/>
+                                <path d="M16 2v4M8 2v4M3 10h18"/>
+                              </svg>
+                              <span>{result.birth_date} - {result.death_date}</span>
+                            </div>
+                          )}
+                        </div>
+                        <Link to={`/grave/${result.plot?.unique_code}`} className="result-view-btn">
+                          View Details
+                          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                            <path d="M5 12h14M12 5l7 7-7 7"/>
+                          </svg>
+                        </Link>
+                      </div>
+                    ))}
+                  </div>
+                </>
+              ) : (
+                <div className="search-empty">
+                  <div className="empty-icon-circle">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                      <circle cx="11" cy="11" r="8"/>
+                      <path d="M21 21l-4.35-4.35"/>
+                    </svg>
+                  </div>
+                  <h3>No Results Found</h3>
+                  <p>No results found for &quot;{searchQuery}&quot;</p>
+                  <button onClick={() => { setHasSearched(false); setSearchQuery(''); }} className="try-again-btn">
+                    Try Another Search
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
         </div>
       </section>
 
@@ -188,59 +483,90 @@ const LandingPage = () => {
       </section>
 
       {/* Services Section */}
-      <section id="services" className="services-section">
-        <div className="services-header">
+      <section id="services" className="services-section-landing">
+        <div className="services-header-landing">
           <span className="section-label">Our Services</span>
           <h2 className="section-title">Memorial <span>Products</span> & <span>Services</span></h2>
-          <p>Comprehensive options designed to honor your loved ones with dignity</p>
+          <p>We provide quality memorial services for your loved ones. Choose the right service for your family.</p>
         </div>
-        
-        <div className="services-grid-new">
-          <div className="service-card-new service-featured" style={{backgroundImage: 'url(/Panooran-2.jpg)'}}>
-            <div className="service-overlay"></div>
-            <div className="service-content">
-              <span className="service-icon-new"></span>
-              <h3>Lawn Lots</h3>
-              <p>Beautifully maintained burial plots set in serene garden landscapes</p>
-            </div>
-          </div>
-          <div className="service-card-new">
-            <div className="service-content">
-              <span className="service-icon-new"></span>
-              <h3>Columbaries</h3>
-              <p>Elegant niches for urns in peaceful, well-kept structures</p>
-            </div>
-          </div>
-          <div className="service-card-new">
-            <div className="service-content">
-              <span className="service-icon-new"></span>
-              <h3>Mausoleums</h3>
-              <p>Stately family crypts and private memorial structures</p>
-            </div>
-          </div>
-          <div className="service-card-new service-featured" style={{backgroundImage: 'url(/heritage_HD.png)'}}>
-            <div className="service-overlay"></div>
-            <div className="service-content">
-              <span className="service-icon-new"></span>
-              <h3>Memorial Terraces</h3>
-              <p>Customized memorial spaces with breathtaking scenic views</p>
-            </div>
-          </div>
-          <div className="service-card-new">
-            <div className="service-content">
-              <span className="service-icon-new"></span>
-              <h3>Bereavement Support</h3>
-              <p>Compassionate support services for grieving families</p>
-            </div>
-          </div>
-          <div className="service-card-new">
-            <div className="service-content">
-              <span className="service-icon-new"></span>
-              <h3>Digital Memorial</h3>
-              <p>QR-enabled grave profiles and online tributes</p>
-            </div>
+
+        {/* Filter Tabs */}
+        <div className="filter-container-landing">
+          <div className="filter-tabs-landing">
+            <button 
+              className={`filter-tab-landing ${activeServiceTab === 'all' ? 'active' : ''}`}
+              onClick={() => setActiveServiceTab('all')}
+            >
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <rect x="3" y="3" width="7" height="7"/>
+                <rect x="14" y="3" width="7" height="7"/>
+                <rect x="14" y="14" width="7" height="7"/>
+                <rect x="3" y="14" width="7" height="7"/>
+              </svg>
+              All Services
+            </button>
+            <button 
+              className={`filter-tab-landing ${activeServiceTab === 'burial' ? 'active' : ''}`}
+              onClick={() => setActiveServiceTab('burial')}
+            >
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M12 3v18M5 8l7-5 7 5"/>
+              </svg>
+              Burial Options
+            </button>
+            <button 
+              className={`filter-tab-landing ${activeServiceTab === 'cremation' ? 'active' : ''}`}
+              onClick={() => setActiveServiceTab('cremation')}
+            >
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <rect x="3" y="3" width="18" height="18" rx="2"/>
+                <rect x="8" y="8" width="8" height="8"/>
+              </svg>
+              Cremation
+            </button>
+            <button 
+              className={`filter-tab-landing ${activeServiceTab === 'services' ? 'active' : ''}`}
+              onClick={() => setActiveServiceTab('services')}
+            >
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M14.7 6.3a1 1 0 000 1.4l1.6 1.6a1 1 0 001.4 0l3.77-3.77a6 6 0 01-7.94 7.94l-6.91 6.91a2.12 2.12 0 01-3-3l6.91-6.91a6 6 0 017.94-7.94l-3.76 3.76z"/>
+              </svg>
+              Additional Services
+            </button>
           </div>
         </div>
+
+        {/* Services Grid */}
+        <section className="services-grid-landing">
+          {filteredLandingServices.map((service) => (
+            <div key={service.id} className={`service-card-landing ${service.popular ? 'popular' : ''}`}>
+              {service.popular && <div className="popular-badge-landing">MOST POPULAR</div>}
+              <div className="service-image-landing" style={{ backgroundImage: `url(${service.image})` }}>
+                <div className="service-icon-landing">{service.icon}</div>
+              </div>
+              <div className="service-content-landing">
+                <div className="service-header-landing">
+                  <h3>{service.title}</h3>
+                  <span className="service-subtitle-landing">{service.subtitle}</span>
+                </div>
+                <p className="service-description-landing">{service.description}</p>
+                <ul className="service-features-landing">
+                  {service.features.map((feature, idx) => (
+                    <li key={idx}>
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <polyline points="20 6 9 17 4 12"/>
+                      </svg>
+                      {feature}
+                    </li>
+                  ))}
+                </ul>
+                <div className="service-footer-landing">
+                  <span className="service-price-landing">{service.price}</span>
+                </div>
+              </div>
+            </div>
+          ))}
+        </section>
       </section>
 
       {/* Gallery / Landmarks Section */}
@@ -265,7 +591,7 @@ const LandingPage = () => {
         
         <div className="gallery-cta">
           <p>Experience the rich cultural heritage of Himlayang Pilipino</p>
-          <Link to="/register" className="btn-gallery-cta">Plan Your Visit</Link>
+          <a href="#contact" className="btn-gallery-cta">Contact Us</a>
         </div>
       </section>
 
@@ -276,8 +602,8 @@ const LandingPage = () => {
           <h2>A Meaningful Final Resting Place</h2>
           <p>Serving Filipino families with compassion and dignity since 1971</p>
           <div className="parallax-buttons">
-            <Link to="/register" className="btn-parallax-primary">Inquire Now</Link>
-            <a href="#contact" className="btn-parallax-secondary">Contact Us</a>
+            <a href="#contact" className="btn-parallax-primary">Contact Us</a>
+            <a href="#search" className="btn-parallax-secondary">Find a Grave</a>
           </div>
         </div>
       </section>
@@ -354,6 +680,7 @@ const LandingPage = () => {
               <h4>Quick Links</h4>
               <ul>
                 <li><a href="#home">Home</a></li>
+                <li><a href="#search">Find a Grave</a></li>
                 <li><a href="#about">About</a></li>
                 <li><a href="#services">Services</a></li>
                 <li><a href="#gallery">Gallery</a></li>

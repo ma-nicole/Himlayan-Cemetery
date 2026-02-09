@@ -23,21 +23,36 @@ export const burialService = {
 
   /**
    * Create burial record
-   * @param {object} data 
+   * @param {object|FormData} data 
    * @returns {Promise}
    */
   async create(data) {
-    const response = await api.post('/burial-records', data);
+    const config = data instanceof FormData 
+      ? { headers: { 'Content-Type': 'multipart/form-data' } }
+      : {};
+    
+    const response = await api.post('/burial-records', data, config);
     return response.data;
   },
 
   /**
    * Update burial record
    * @param {number} id 
-   * @param {object} data 
+   * @param {object|FormData} data 
    * @returns {Promise}
    */
   async update(id, data) {
+    const config = data instanceof FormData 
+      ? { headers: { 'Content-Type': 'multipart/form-data' } }
+      : {};
+    
+    // Use POST with _method=PUT for FormData (Laravel requirement)
+    if (data instanceof FormData) {
+      data.append('_method', 'PUT');
+      const response = await api.post(`/burial-records/${id}`, data, config);
+      return response.data;
+    }
+    
     const response = await api.put(`/burial-records/${id}`, data);
     return response.data;
   },

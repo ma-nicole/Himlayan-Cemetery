@@ -14,6 +14,7 @@ use App\Http\Controllers\Api\ServiceRequestController;
 use App\Http\Controllers\Api\PaymentController;
 use App\Http\Controllers\Api\FeedbackController;
 use App\Http\Controllers\Auth\SocialAuthController;
+use App\Http\Controllers\Api\InvitationController;
 
 /*
 |--------------------------------------------------------------------------
@@ -31,7 +32,7 @@ use App\Http\Controllers\Auth\SocialAuthController;
 
 // Authentication
 Route::post('/login', [AuthController::class, 'login']);
-Route::post('/register', [AuthController::class, 'register']);
+// Note: Registration is disabled - only admins can create accounts
 
 // Social Authentication (OAuth)
 Route::get('/auth/{provider}/redirect', [SocialAuthController::class, 'redirect']);
@@ -58,6 +59,11 @@ Route::middleware('auth:sanctum')->group(function () {
     // Auth Management
     Route::post('/logout', [AuthController::class, 'logout']);
     Route::get('/user', [AuthController::class, 'user']);
+    Route::post('/auth/change-password', [AuthController::class, 'changePassword']);
+
+    // My Loved Ones (Member access to their linked records)
+    Route::get('/my-burial-records', [BurialRecordController::class, 'myRecords']);
+    Route::post('/my-burial-records/{id}', [BurialRecordController::class, 'updateMyRecord']);
 
     // Dashboard
     Route::get('/dashboard', [DashboardController::class, 'index']);
@@ -96,6 +102,11 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::middleware('role:admin,staff')->group(function () {
             Route::post('/', [BurialRecordController::class, 'store']);
             Route::put('/{id}', [BurialRecordController::class, 'update']);
+            
+            // Invitation routes
+            Route::post('/{id}/invitation/send', [InvitationController::class, 'sendInvitation']);
+            Route::post('/{id}/invitation/resend', [InvitationController::class, 'resendInvitation']);
+            Route::get('/{id}/invitation/status', [InvitationController::class, 'getInvitationStatus']);
         });
 
         // Admin only routes
@@ -107,6 +118,7 @@ Route::middleware('auth:sanctum')->group(function () {
     // ----------------------------------------
     // QR CODE MANAGEMENT
     // ----------------------------------------
+    // Generate QR codes for burial records (scanner feature removed)
     Route::prefix('qr-codes')->group(function () {
         Route::get('/{code}', [QrCodeController::class, 'show']);
         

@@ -48,7 +48,13 @@ const LoginPage = () => {
     const result = await login(email, password);
     
     if (result.success) {
-      navigate('/dashboard');
+      // Check if user must change password
+      const storedUser = JSON.parse(localStorage.getItem('user'));
+      if (storedUser && storedUser.must_change_password) {
+        navigate('/change-password');
+      } else {
+        navigate('/dashboard');
+      }
     } else {
       setError(result.message || 'Login failed');
     }
@@ -87,7 +93,7 @@ const LoginPage = () => {
           <div className="cyl-form-content">
             <h1 className="cyl-form-title">Log in your Account</h1>
             <p className="cyl-form-subtitle">
-              Don't have an account? <Link to="/register">Sign up</Link>
+              Welcome back! Please enter your credentials to continue.
             </p>
 
             {successMessage && <div className="cyl-alert cyl-alert-success">{successMessage}</div>}
@@ -133,6 +139,10 @@ const LoginPage = () => {
                 {loading ? 'Logging in...' : 'Log in'}
               </button>
             </form>
+
+            <Link to="/" className="cyl-back-home-btn cyl-back-home-below">
+              ← Back to Home
+            </Link>
 
             {/* Demo Credentials */}
             <div className="cyl-demo-box">

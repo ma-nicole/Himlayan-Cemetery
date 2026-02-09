@@ -1,42 +1,46 @@
 import api from './api';
 
-export const qrService = {
+/**
+ * QR Code Service
+ * Handles QR code generation for burial records
+ */
+const qrService = {
   /**
-   * Generate QR code for burial record
-   * @param {number} burialId 
-   * @returns {Promise}
+   * Generate QR code for a burial record
+   * @param {number} burialId - The ID of the burial record
+   * @returns {Promise} API response with QR code data
    */
-  async generate(burialId) {
+  generate: async (burialId) => {
     const response = await api.post(`/qr-codes/generate/${burialId}`);
     return response.data;
   },
 
   /**
-   * Get QR code details
-   * @param {string} code 
-   * @returns {Promise}
+   * Get QR code details by code
+   * @param {string} code - The QR code UUID
+   * @returns {Promise} API response with QR code details
    */
-  async getByCode(code) {
+  getByCode: async (code) => {
     const response = await api.get(`/qr-codes/${code}`);
     return response.data;
   },
 
   /**
-   * Regenerate QR code
-   * @param {number} burialId 
-   * @returns {Promise}
+   * Regenerate QR code for a burial record
+   * @param {number} burialId - The ID of the burial record
+   * @returns {Promise} API response with new QR code data
    */
-  async regenerate(burialId) {
+  regenerate: async (burialId) => {
     const response = await api.post(`/qr-codes/regenerate/${burialId}`);
     return response.data;
   },
 
   /**
-   * Deactivate QR code
-   * @param {string} code 
-   * @returns {Promise}
+   * Deactivate a QR code
+   * @param {string} code - The QR code UUID
+   * @returns {Promise} API response
    */
-  async deactivate(code) {
+  deactivate: async (code) => {
     const response = await api.patch(`/qr-codes/${code}/deactivate`);
     return response.data;
   },

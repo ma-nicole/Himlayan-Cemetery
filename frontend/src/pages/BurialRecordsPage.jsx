@@ -103,22 +103,14 @@ const BurialRecordsPage = () => {
     }
   };
 
+  // Handle QR code generation for burial records
   const handleGenerateQR = async (burialId) => {
     try {
       const response = await qrService.generate(burialId);
       if (response.success) {
         setQrData(response.data);
         setSuccess('QR code generated successfully');
-        loadRecords(pagination.current_page);
-        
-        // If details modal is open, keep it updated
-        if (showDetails && selectedRecord?.id === burialId) {
-          const updatedRecord = await burialService.getById(burialId);
-          if (updatedRecord.success) {
-            setSelectedRecord(updatedRecord.data);
-          }
-        }
-        
+        loadRecords(pagination.current_page); // Reload to show updated QR status
         setTimeout(() => setSuccess(''), 3000);
       }
     } catch (err) {
@@ -143,7 +135,7 @@ const BurialRecordsPage = () => {
       <form onSubmit={handleSearch} className="search-bar">
         <input
           type="text"
-          placeholder="Search by deceased name..."
+          placeholder="Search by name, nickname, date, or plot..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
         />
@@ -226,7 +218,7 @@ const BurialRecordsPage = () => {
         <BurialDetails
           burial={selectedRecord}
           qrData={qrData}
-          onClose={() => { setShowDetails(false); setQrData(null); }}
+          onClose={() => setShowDetails(false)}
           onGenerateQR={handleGenerateQR}
         />
       )}

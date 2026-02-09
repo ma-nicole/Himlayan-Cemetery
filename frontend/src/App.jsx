@@ -11,7 +11,7 @@ import './styles/design-system.css';
 // Pages
 import LandingPage from './pages/LandingPage';
 import LoginPage from './pages/LoginPage';
-import RegisterPage from './pages/RegisterPage';
+import ChangePasswordPage from './pages/ChangePasswordPage';
 import DashboardPage from './pages/DashboardPage';
 import EnhancedDashboardPage from './pages/EnhancedDashboardPage';
 import MemberDashboardPage from './pages/MemberDashboardPage';
@@ -19,11 +19,12 @@ import BurialRecordsPage from './pages/BurialRecordsPage';
 import PlotsPage from './pages/PlotsPage';
 import MapPage from './pages/MapPage';
 import PublicGravePage from './pages/PublicGravePage';
+import PublicSearchPage from './pages/PublicSearchPage'; // NEW: Public search page (no login required)
 import MemberSearchPage from './pages/MemberSearchPage';
 import MemberMapPage from './pages/MemberMapPage';
 import MemberServicesPage from './pages/MemberServicesPage';
 import MemberContactPage from './pages/MemberContactPage';
-import QRScannerPage from './pages/QRScannerPage';
+import MyLovedOnesPage from './pages/MyLovedOnesPage';
 import ProfilePage from './pages/ProfilePage';
 import UserManagementPage from './pages/UserManagementPage';
 import AnnouncementManagementPage from './pages/AnnouncementManagementPage';
@@ -44,12 +45,22 @@ function App() {
             {/* Public Routes */}
           <Route path="/" element={<LandingPage />} />
           <Route path="/login" element={<LoginPage />} />
-          <Route path="/register" element={<RegisterPage />} />
           <Route path="/auth/callback" element={<AuthCallback />} />
+          {/* NEW PUBLIC ROUTE: Grave search accessible without login */}
+          <Route path="/search" element={<PublicSearchPage />} />
           <Route path="/grave/:code" element={<PublicGravePage />} />
-          <Route path="/qr-scan" element={<QRScannerPage />} />
           <Route path="/feedback" element={<FeedbackPage />} />
           <Route path="/announcements" element={<AnnouncementsPage />} />
+
+          {/* Password Change Route - Protected but accessible when must_change_password is true */}
+          <Route
+            path="/change-password"
+            element={
+              <ProtectedRoute>
+                <ChangePasswordPage />
+              </ProtectedRoute>
+            }
+          />
 
           {/* Role-based Dashboard Redirect */}
           <Route
@@ -149,6 +160,14 @@ function App() {
             element={
               <ProtectedRoute>
                 <MemberSearchPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/member/loved-ones"
+            element={
+              <ProtectedRoute>
+                <MyLovedOnesPage />
               </ProtectedRoute>
             }
           />

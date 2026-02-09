@@ -20,6 +20,13 @@ class BurialRecord extends Model
     protected $fillable = [
         'plot_id',
         'deceased_name',
+        'deceased_first_name',
+        'deceased_middle_initial',
+        'deceased_last_name',
+        'deceased_nickname',
+        'deceased_photo_url',
+        'deceased_gender',
+        'is_publicly_searchable',
         'birth_date',
         'death_date',
         'burial_date',
@@ -27,8 +34,18 @@ class BurialRecord extends Model
         'obituary',
         'notes',
         'contact_name',
+        'contact_first_name',
+        'contact_middle_initial',
+        'contact_last_name',
+        'contact_country_code',
         'contact_phone',
         'contact_email',
+        'contact2_first_name',
+        'contact2_middle_initial',
+        'contact2_last_name',
+        'contact2_country_code',
+        'contact2_phone',
+        'contact2_email',
     ];
 
     /**
@@ -40,6 +57,7 @@ class BurialRecord extends Model
         'birth_date' => 'date',
         'death_date' => 'date',
         'burial_date' => 'date',
+        'is_publicly_searchable' => 'boolean',
     ];
 
     /**

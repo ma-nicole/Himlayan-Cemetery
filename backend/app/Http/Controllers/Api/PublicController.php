@@ -27,6 +27,12 @@ class PublicController extends Controller
         }
 
         $record = $qrCode->burialRecord;
+        
+        // Check if record is publicly searchable
+        if (!$record->is_publicly_searchable) {
+            return $this->errorResponse('This burial record is private and not available for public viewing', 403);
+        }
+        
         $plot = $record->plot;
 
         return $this->successResponse([
@@ -37,6 +43,7 @@ class PublicController extends Controller
             'burial_date' => $record->burial_date?->format('F d, Y'),
             'obituary' => $record->obituary,
             'photo_url' => $record->photo_url,
+            'deceased_photo_url' => $record->deceased_photo_url ? asset('storage/' . $record->deceased_photo_url) : null,
             'location' => [
                 'plot_number' => $plot->plot_number,
                 'section' => $plot->section,
@@ -61,7 +68,45 @@ class PublicController extends Controller
         }
 
         $results = BurialRecord::with('plot')
-            ->where('deceased_name', 'LIKE', "%{$query}%")
+            ->where('is_publicly_searchable', true) // Only searchable records
+            ->where(function($q) use ($query) {
+                $q->where('deceased_name', 'LIKE', "%{$query}%")
+                  ->orWhere('deceased_nickname', 'LIKE', "%{$query}%")
+                  ->orWhere('birth_date', 'LIKE', "%{$query}%")
+                  ->orWhere('death_date', 'LIKE', "%{$query}%")
+                  ->orWhere('burial_date', 'LIKE', "%{$query}%")
+                  // Support extended date formats (Full Month, Day, Year, etc.)
+                  ->orWhereRaw("DATE_FORMAT(birth_date, '%M %d, %Y') LIKE ?", ["%{$query}%"]) // February 04, 2020
+                  ->orWhereRaw("DATE_FORMAT(death_date, '%M %d, %Y') LIKE ?", ["%{$query}%"])
+                  ->orWhereRaw("DATE_FORMAT(burial_date, '%M %d, %Y') LIKE ?", ["%{$query}%"])
+                  // Handle no-comma year inputs like "February 2 2026"
+                  ->orWhereRaw("DATE_FORMAT(birth_date, '%M %e %Y') LIKE ?", ["%{$query}%"])
+                  ->orWhereRaw("DATE_FORMAT(death_date, '%M %e %Y') LIKE ?", ["%{$query}%"])
+                  ->orWhereRaw("DATE_FORMAT(burial_date, '%M %e %Y') LIKE ?", ["%{$query}%"])
+                  ->orWhereRaw("DATE_FORMAT(birth_date, '%M %d %Y') LIKE ?", ["%{$query}%"])
+                  ->orWhereRaw("DATE_FORMAT(death_date, '%M %d %Y') LIKE ?", ["%{$query}%"])
+                  ->orWhereRaw("DATE_FORMAT(burial_date, '%M %d %Y') LIKE ?", ["%{$query}%"])
+                  ->orWhereRaw("DATE_FORMAT(birth_date, '%M %d') LIKE ?", ["%{$query}%"])     // February 04
+                  ->orWhereRaw("DATE_FORMAT(death_date, '%M %d') LIKE ?", ["%{$query}%"])
+                  ->orWhereRaw("DATE_FORMAT(burial_date, '%M %d') LIKE ?", ["%{$query}%"])
+                  // Handle single-digit days without double spaces (e.g., "February 2")
+                  ->orWhereRaw("CONCAT(DATE_FORMAT(birth_date, '%M'), ' ', DAY(birth_date)) LIKE ?", ["%{$query}%"])
+                  ->orWhereRaw("CONCAT(DATE_FORMAT(death_date, '%M'), ' ', DAY(death_date)) LIKE ?", ["%{$query}%"])
+                  ->orWhereRaw("CONCAT(DATE_FORMAT(burial_date, '%M'), ' ', DAY(burial_date)) LIKE ?", ["%{$query}%"])
+                  ->orWhereRaw("DATE_FORMAT(birth_date, '%M %e') LIKE ?", ["%{$query}%"])     // February 4
+                  ->orWhereRaw("DATE_FORMAT(death_date, '%M %e') LIKE ?", ["%{$query}%"])
+                  ->orWhereRaw("DATE_FORMAT(burial_date, '%M %e') LIKE ?", ["%{$query}%"])
+                  ->orWhereRaw("DATE_FORMAT(birth_date, '%m-%d-%Y') LIKE ?", ["%{$query}%"])  // 02-04-2020
+                  ->orWhereRaw("DATE_FORMAT(death_date, '%m-%d-%Y') LIKE ?", ["%{$query}%"])
+                  ->orWhereRaw("DATE_FORMAT(burial_date, '%m-%d-%Y') LIKE ?", ["%{$query}%"])
+                  ->orWhereRaw("DATE_FORMAT(birth_date, '%m/%d/%Y') LIKE ?", ["%{$query}%"])  // 02/04/2020
+                  ->orWhereRaw("DATE_FORMAT(death_date, '%m/%d/%Y') LIKE ?", ["%{$query}%"])
+                  ->orWhereRaw("DATE_FORMAT(burial_date, '%m/%d/%Y') LIKE ?", ["%{$query}%"])
+                  ->orWhereHas('plot', function($mq) use ($query) {
+                      $mq->where('plot_number', 'LIKE', "%{$query}%")
+                        ->orWhere('section', 'LIKE', "%{$query}%");
+                  });
+            })
             ->orderBy('deceased_name')
             ->limit(20)
             ->get()
@@ -69,6 +114,7 @@ class PublicController extends Controller
                 return [
                     'id' => $record->id,
                     'deceased_name' => $record->deceased_name,
+                    'deceased_photo_url' => $record->deceased_photo_url ? asset('storage/' . $record->deceased_photo_url) : null,
                     'birth_date' => $record->birth_date?->format('Y-m-d'),
                     'death_date' => $record->death_date?->format('Y-m-d'),
                     'plot' => $record->plot ? [

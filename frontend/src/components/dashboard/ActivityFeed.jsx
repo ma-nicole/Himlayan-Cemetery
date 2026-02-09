@@ -21,7 +21,6 @@ const ActivityFeed = ({ activities = [], loading = false, maxItems = 10 }) => {
       plot_reserved: '●',
       plot_available: '●',
       user_registered: '●',
-      qr_generated: '●',
       maintenance: '●',
       payment: '●',
       visit: '●',
@@ -35,7 +34,6 @@ const ActivityFeed = ({ activities = [], loading = false, maxItems = 10 }) => {
       plot_reserved: 'warning',
       plot_available: 'success',
       user_registered: 'info',
-      qr_generated: 'primary',
       maintenance: 'neutral',
       payment: 'success',
       visit: 'neutral',
@@ -84,10 +82,9 @@ const ActivityFeed = ({ activities = [], loading = false, maxItems = 10 }) => {
     { id: 1, type: 'burial', message: 'New burial record added for Juan Dela Cruz', timestamp: new Date(Date.now() - 1800000) },
     { id: 2, type: 'plot_reserved', message: 'Plot A-15 was reserved by Maria Santos', timestamp: new Date(Date.now() - 3600000) },
     { id: 3, type: 'user_registered', message: 'New visitor registered: Pedro Gonzales', timestamp: new Date(Date.now() - 7200000) },
-    { id: 4, type: 'qr_generated', message: 'QR code generated for Plot B-22', timestamp: new Date(Date.now() - 14400000) },
-    { id: 5, type: 'plot_available', message: 'Plot C-8 marked as available', timestamp: new Date(Date.now() - 28800000) },
-    { id: 6, type: 'visit', message: 'QR scan recorded at Plot A-12', timestamp: new Date(Date.now() - 43200000) },
-    { id: 7, type: 'maintenance', message: 'Section D maintenance completed', timestamp: new Date(Date.now() - 86400000) },
+    { id: 4, type: 'plot_available', message: 'Plot C-8 marked as available', timestamp: new Date(Date.now() - 14400000) },
+    { id: 5, type: 'visit', message: 'Visitor recorded at Plot A-12', timestamp: new Date(Date.now() - 28800000) },
+    { id: 6, type: 'maintenance', message: 'Section D maintenance completed', timestamp: new Date(Date.now() - 43200000) },
   ];
 
   return (

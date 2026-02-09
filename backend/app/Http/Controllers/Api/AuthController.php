@@ -42,6 +42,7 @@ class AuthController extends Controller
                 'name' => $user->name,
                 'email' => $user->email,
                 'role' => $user->role,
+                'must_change_password' => $user->must_change_password,
             ],
             'token' => $token,
             'token_type' => 'Bearer',
@@ -76,6 +77,7 @@ class AuthController extends Controller
             'name' => $user->name,
             'email' => $user->email,
             'role' => $user->role,
+            'must_change_password' => $user->must_change_password,
         ], 'User retrieved successfully');
     }
 
@@ -108,5 +110,48 @@ class AuthController extends Controller
                 'role' => $user->role,
             ],
         ], 'Registration successful', 201);
+    }
+
+    /**
+     * Change user password
+     * 
+     * @param Request $request
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function changePassword(Request $request)
+    {
+        $request->validate([
+            'current_password' => 'required|string',
+            'new_password' => 'required|string|min:8|confirmed',
+        ]);
+
+        $user = $request->user();
+
+        // Verify current password
+        if (!Hash::check($request->current_password, $user->password)) {
+            return $this->errorResponse('Current password is incorrect', 401);
+        }
+
+        // Check if new password is different from current
+        if (Hash::check($request->new_password, $user->password)) {
+            return $this->errorResponse('New password must be different from current password', 422);
+        }
+
+        // Update password
+        $user->password = Hash::make($request->new_password);
+        $user->must_change_password = false;
+        $user->last_password_change = now();
+        
+        // Mark invitation as accepted if this is first password change
+        if ($user->invitation_sent_at && !$user->invitation_accepted) {
+            $user->invitation_accepted = true;
+        }
+        
+        $user->save();
+
+        // Revoke all tokens to force re-login
+        $user->tokens()->delete();
+
+        return $this->successResponse(null, 'Password changed successfully. Please log in again with your new password.');
     }
 }

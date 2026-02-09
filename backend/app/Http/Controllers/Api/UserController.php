@@ -141,6 +141,24 @@ class UserController extends Controller
 
         $user->save();
 
+        // Sync name change to related Burial Records where this user is the contact person
+        if ($user->wasChanged('name')) {
+            $records = \App\Models\BurialRecord::where('contact_email', $user->email)->get();
+            
+            foreach ($records as $record) {
+                $record->contact_name = $user->name;
+                
+                // Simple parsing strategy to keep detailed fields somewhat in sync
+                // We assume the first word is the first name, and the rest is the last name
+                $parts = explode(' ', $user->name, 2);
+                $record->contact_first_name = $parts[0] ?? $user->name;
+                $record->contact_last_name = $parts[1] ?? '';
+                // We don't touch middle initial as it's hard to extract reliably from a full string
+                
+                $record->save();
+            }
+        }
+
         return response()->json([
             'success' => true,
             'message' => 'User updated successfully',

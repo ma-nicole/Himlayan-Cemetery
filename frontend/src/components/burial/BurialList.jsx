@@ -34,7 +34,50 @@ const BurialList = ({ records, onView, onEdit, onDelete, onGenerateQR }) => {
           {records.map(record => (
             <tr key={record.id}>
               <td>
-                <strong>{record.deceased_name}</strong>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                  {record.deceased_photo_url ? (
+                    <div style={{
+                      width: '40px',
+                      height: '40px',
+                      borderRadius: '50%',
+                      overflow: 'hidden',
+                      border: '2px solid #1a472a',
+                      flexShrink: 0
+                    }}>
+                      <img 
+                        src={record.deceased_photo_url.startsWith('http') ? record.deceased_photo_url : `${process.env.REACT_APP_API_URL || 'http://localhost:8000'}/storage/${record.deceased_photo_url}`}
+                        alt={record.deceased_name}
+                        style={{
+                          width: '100%',
+                          height: '100%',
+                          objectFit: 'cover'
+                        }}
+                        onError={(e) => {
+                          e.target.style.display = 'none';
+                          e.target.parentElement.style.display = 'none';
+                        }}
+                      />
+                    </div>
+                  ) : (
+                    <div style={{
+                      width: '40px',
+                      height: '40px',
+                      borderRadius: '50%',
+                      backgroundColor: '#f0fdf4',
+                      border: '2px solid #1a472a',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      flexShrink: 0
+                    }}>
+                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#1a472a" strokeWidth="1.5">
+                        <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/>
+                        <circle cx="12" cy="7" r="4"/>
+                      </svg>
+                    </div>
+                  )}
+                  <strong>{record.deceased_name}</strong>
+                </div>
               </td>
               <td>
                 {record.plot?.plot_number || '-'}

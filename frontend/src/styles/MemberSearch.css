@@ -870,3 +870,138 @@
     grid-template-columns: 1fr;
   }
 }
+
+/* ========== Public Search Nav ========== */
+/* Navigation bar specifically for the public search page
+   Sticky positioning keeps it at top when scrolling */
+.public-search-nav {
+  background: #fff;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  position: sticky; /* Stays at top when scrolling */
+  top: 0;
+  z-index: 100; /* Ensures nav stays above other content */
+}
+
+/* Container for nav content - centered with max width */
+.public-search-nav .nav-container {
+  max-width: 1400px;
+  margin: 0 auto; /* Centers the container */
+  padding: 1rem 2rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between; /* Logo on left, links on right */
+}
+
+/* Logo styling - includes image and text */
+.public-search-nav .nav-logo {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem; /* Space between logo image and text */
+  text-decoration: none;
+  color: #1a472a; /* Dark green cemetery color */
+  font-weight: 700;
+  font-size: 1.25rem;
+  transition: opacity 0.2s; /* Smooth hover effect */
+}
+
+.public-search-nav .nav-logo:hover {
+  opacity: 0.8;
+}
+
+.public-search-nav .logo-img {
+  width: 40px;
+  height: 40px;
+  border-radius: 8px;
+}
+
+/* Container for navigation links (Back to Home, Login) */
+.public-search-nav .nav-links {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem; /* Space between links */
+}
+
+.public-search-nav .nav-links a {
+  color: #475569;
+  text-decoration: none;
+  font-weight: 500;
+  transition: color 0.2s;
+}
+
+.public-search-nav .nav-links a:hover {
+  color: #1a472a;
+}
+
+/* Login button styling - stands out with green background */
+.public-search-nav .nav-login-btn {
+  background: #1a472a; /* Cemetery green color */
+  color: white !important;
+  padding: 0.5rem 1.25rem;
+  border-radius: 8px;
+  transition: background 0.2s; /* Smooth hover transition */
+}
+
+.public-search-nav .nav-login-btn:hover {
+  background: #143820;
+}
+
+/* ========== Public Search Footer ========== */
+/* Footer section with dark background and useful links */
+.public-search-footer {
+  background: #1e293b; /* Dark slate color */
+  color: #e2e8f0; /* Light gray text */
+  margin-top: 4rem; /* Space from content above */
+  padding: 2rem;
+}
+
+/* Footer content layout - copyright on left, links on right */
+.public-search-footer .footer-content {
+  max-width: 1400px;
+  margin: 0 auto; /* Centers the footer content */
+  display: flex;
+  align-items: center;
+  justify-content: space-between; /* Spreads content apart */
+  flex-wrap: wrap; /* Wraps on smaller screens */
+  gap: 1rem;
+}
+
+.public-search-footer .footer-links {
+  display: flex;
+  gap: 2rem;
+}
+
+.public-search-footer .footer-links a {
+  color: #cbd5e1;
+  text-decoration: none;
+  transition: color 0.2s;
+}
+
+.public-search-footer .footer-links a:hover {
+  color: #fff;
+}
+
+/* ========== Responsive Design for Mobile/Tablet ========== */
+/* Adjustments for screens smaller than 768px (tablets and phones) */
+@media (max-width: 768px) {
+  /* Reduce padding on smaller screens */
+  .public-search-nav .nav-container {
+    padding: 1rem;
+  }
+  
+  /* Smaller gaps and font size for nav links */
+  .public-search-nav .nav-links {
+    gap: 1rem;
+    font-size: 0.9rem;
+  }
+  
+  /* Stack footer content vertically on mobile */
+  .public-search-footer .footer-content {
+    flex-direction: column;
+    text-align: center;
+  }
+  
+  /* Reduce gap between footer links */
+  .public-search-footer .footer-links {
+    gap: 1rem;
+  }
+}

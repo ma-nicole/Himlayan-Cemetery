@@ -24,6 +24,12 @@ class User extends Authenticatable
         'provider',
         'provider_id',
         'avatar',
+        'invitation_sent_at',
+        'invitation_expires_at',
+        'invitation_token',
+        'invitation_accepted',
+        'must_change_password',
+        'last_password_change',
     ];
 
     /**
@@ -34,6 +40,7 @@ class User extends Authenticatable
     protected $hidden = [
         'password',
         'remember_token',
+        'invitation_token',
     ];
 
     /**
@@ -44,6 +51,11 @@ class User extends Authenticatable
     protected $casts = [
         'email_verified_at' => 'datetime',
         'password' => 'hashed',
+        'invitation_sent_at' => 'datetime',
+        'invitation_expires_at' => 'datetime',
+        'invitation_accepted' => 'boolean',
+        'must_change_password' => 'boolean',
+        'last_password_change' => 'datetime',
     ];
 
     /**

@@ -62,9 +62,9 @@ const PublicGravePage = () => {
     <div className="public-grave-container">
       <div className="grave-profile">
         <div className="grave-profile-header">
-          {profile.photo_url && (
+          {(profile.deceased_photo_url || profile.photo_url) && (
             <img
-              src={profile.photo_url}
+              src={profile.deceased_photo_url || profile.photo_url}
               alt={profile.deceased_name}
               style={{
                 width: '120px',
