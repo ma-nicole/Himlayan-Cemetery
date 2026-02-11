@@ -1,10 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
+import api from '../services/api';
 
 const LandingPage = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [currentHeroImage, setCurrentHeroImage] = useState(0);
   const [scrolled, setScrolled] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [searchResults, setSearchResults] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [searched, setSearched] = useState(false);
 
   // Hero slideshow images
   const heroImages = [
@@ -38,6 +43,25 @@ const LandingPage = () => {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
+  const handleSearch = async (e) => {
+    e.preventDefault();
+    if (!searchQuery.trim()) return;
+
+    setLoading(true);
+    setSearched(true);
+    try {
+      const response = await api.get(`/public/search?q=${encodeURIComponent(searchQuery)}`);
+      if (response.data.success) {
+        setSearchResults(response.data.data || []);
+      }
+    } catch (err) {
+      console.error('Search error:', err);
+      setSearchResults([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <div className="landing-page">
       {/* Navigation */}
@@ -57,6 +81,7 @@ const LandingPage = () => {
 
           <ul className={`landing-nav-menu ${mobileMenuOpen ? 'open' : ''}`}>
             <li><a href="#home">Home</a></li>
+            <li><a href="#find-grave">Find Grave</a></li>
             <li><a href="#about">About</a></li>
             <li><a href="#services">Services</a></li>
             <li><a href="#gallery">Gallery</a></li>
@@ -139,6 +164,182 @@ const LandingPage = () => {
             <span className="stat-number">15+</span>
             <span className="stat-label">Landmarks</span>
           </div>
+        </div>
+      </section>
+
+      {/* Find the Grave Section */}
+      <section id="find-grave" className="find-grave-section">
+        <div className="find-grave-container">
+          <div className="find-grave-header">
+            <span className="section-label">Find a Grave</span>
+            <h2 className="section-title">Search for <span>Your Loved Ones</span></h2>
+            <p>Locate burial sites by searching for names in our memorial registry</p>
+          </div>
+
+          <form onSubmit={handleSearch} className="grave-search-form">
+            <div className="grave-search-wrapper">
+              <svg className="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <circle cx="11" cy="11" r="8"/>
+                <path d="M21 21l-4.35-4.35"/>
+              </svg>
+              <input
+                type="text"
+                placeholder="Enter name (e.g., Juan Dela Cruz)..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="grave-search-input"
+              />
+              {searchQuery && (
+                <button type="button" className="grave-clear-btn" onClick={() => { setSearchQuery(''); setSearched(false); setSearchResults([]); }}>
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <path d="M18 6L6 18M6 6l12 12"/>
+                  </svg>
+                </button>
+              )}
+            </div>
+            <button type="submit" className="grave-search-btn" disabled={loading}>
+              {loading ? (
+                <>
+                  <span className="btn-spinner"></span>
+                  Searching...
+                </>
+              ) : (
+                <>
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <circle cx="11" cy="11" r="8"/>
+                    <path d="M21 21l-4.35-4.35"/>
+                  </svg>
+                  Search
+                </>
+              )}
+            </button>
+          </form>
+
+          {/* Search Results */}
+          {searched && (
+            <div className="grave-search-results">
+              {loading ? (
+                <div className="grave-loading">
+                  <div className="grave-loading-spinner"></div>
+                  <p>Searching our records...</p>
+                </div>
+              ) : searchResults.length > 0 ? (
+                <>
+                  <div className="grave-results-header">
+                    <h3>Search Results</h3>
+                    <span className="grave-results-count">{searchResults.length} found</span>
+                  </div>
+                  <div className="grave-results-grid">
+                    {searchResults.map((result) => (
+                      <div key={result.id} className="grave-result-card">
+                        <div className="grave-result-avatar">
+                          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                            <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/>
+                            <circle cx="12" cy="7" r="4"/>
+                          </svg>
+                        </div>
+                        <div className="grave-result-info">
+                          <h4>{result.deceased_name}</h4>
+                          <div className="grave-result-details">
+                            <div className="grave-detail-item">
+                              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 1118 0z"/>
+                                <circle cx="12" cy="10" r="3"/>
+                              </svg>
+                              <span>Plot: {result.plot?.plot_number || 'N/A'}</span>
+                            </div>
+                            <div className="grave-detail-item">
+                              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                <rect x="3" y="3" width="18" height="18" rx="2"/>
+                                <path d="M3 9h18M9 21V9"/>
+                              </svg>
+                              <span>Section {result.plot?.section || 'N/A'}, Block {result.plot?.block || 'N/A'}</span>
+                            </div>
+                            {result.birth_date && result.death_date && (
+                              <div className="grave-detail-item">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                  <rect x="3" y="4" width="18" height="18" rx="2"/>
+                                  <path d="M16 2v4M8 2v4M3 10h18"/>
+                                </svg>
+                                <span>{result.birth_date} - {result.death_date}</span>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                        <Link to={`/grave/${result.plot?.unique_code}`} className="grave-view-btn">
+                          <span>View Details</span>
+                          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                            <path d="M5 12h14M12 5l7 7-7 7"/>
+                          </svg>
+                        </Link>
+                      </div>
+                    ))}
+                  </div>
+                </>
+              ) : (
+                <div className="grave-empty-state">
+                  <div className="grave-empty-icon">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                      <circle cx="12" cy="12" r="10"/>
+                      <path d="M8 15s1.5 2 4 2 4-2 4-2"/>
+                      <line x1="9" y1="9" x2="9.01" y2="9"/>
+                      <line x1="15" y1="9" x2="15.01" y2="9"/>
+                    </svg>
+                  </div>
+                  <h3>No Results Found</h3>
+                  <p>"{searchQuery}" was not found in our records</p>
+                  <div className="grave-empty-tips">
+                    <p>Try the following:</p>
+                    <ul>
+                      <li>Check the spelling of the name</li>
+                      <li>Try searching by last name only</li>
+                      <li>Use shorter keywords</li>
+                    </ul>
+                  </div>
+                  <button onClick={() => { setSearched(false); setSearchQuery(''); }} className="grave-retry-btn">
+                    Try Again
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
+
+          {!searched && (
+            <div className="grave-search-info">
+              <div className="grave-info-grid">
+                <div className="grave-info-card">
+                  <div className="grave-info-icon">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                      <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/>
+                      <path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                    </svg>
+                  </div>
+                  <h4>Enter Name</h4>
+                  <p>Type the full name or last name of the person</p>
+                </div>
+                <div className="grave-info-card">
+                  <div className="grave-info-icon">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                      <circle cx="11" cy="11" r="8"/>
+                      <path d="M21 21l-4.35-4.35"/>
+                    </svg>
+                  </div>
+                  <h4>Search Records</h4>
+                  <p>We'll search our complete memorial registry</p>
+                </div>
+                <div className="grave-info-card">
+                  <div className="grave-info-icon">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                      <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 1118 0z"/>
+                      <circle cx="12" cy="10" r="3"/>
+                    </svg>
+                  </div>
+                  <h4>Find Location</h4>
+                  <p>View exact plot location and details</p>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       </section>
 

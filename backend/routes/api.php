@@ -123,7 +123,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::prefix('map')->group(function () {
         Route::get('/markers', [MapController::class, 'markers']);
         Route::get('/marker/{plotId}', [MapController::class, 'markerDetails']);
-        Route::get('/bounds', [MapController::class, 'bounds']);
+        Route::get('/bounds',  [MapController::class, 'bounds']);
     });
 
     // ----------------------------------------

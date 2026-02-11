@@ -3,14 +3,14 @@ Write-Host "Starting Himlayan System..." -ForegroundColor Green
 
 # Start Backend in new window
 Write-Host "Starting Backend (Laravel)..." -ForegroundColor Yellow
-Start-Process powershell -ArgumentList "cd C:\himlayan\himlayan\backend; C:\xampp\php\php.exe artisan serve --host=0.0.0.0 --port=8000" -WindowStyle Normal
+Start-Process powershell -ArgumentList "cd 'C:\Users\Miggy Taduran\Himlayan-Cemetery\backend'; php artisan serve --host=0.0.0.0 --port=8000" -WindowStyle Normal
 
 # Wait 2 seconds for backend to start
 Start-Sleep -Seconds 2
 
 # Start Frontend in new window
 Write-Host "Starting Frontend (React)..." -ForegroundColor Yellow
-Start-Process powershell -ArgumentList "cd C:\himlayan\himlayan\frontend; npm start" -WindowStyle Normal
+Start-Process powershell -ArgumentList "cd 'C:\Users\Miggy Taduran\Himlayan-Cemetery\frontend'; npm start" -WindowStyle Normal
 
 # Wait for frontend to start
 Start-Sleep -Seconds 5
