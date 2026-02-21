@@ -211,10 +211,18 @@ const MemberDashboardPage = () => {
               {searchResults.map((result) => (
                 <div key={result.id} className="result-card-pro">
                   <div className="result-avatar">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                      <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
-                      <circle cx="12" cy="7" r="4"/>
-                    </svg>
+                    {result.deceased_photo_url ? (
+                      <img 
+                        src={result.deceased_photo_url} 
+                        alt={result.deceased_name}
+                        style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '50%' }}
+                      />
+                    ) : (
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+                        <circle cx="12" cy="7" r="4"/>
+                      </svg>
+                    )}
                   </div>
                   <div className="result-info-pro">
                     <h4>{result.deceased_name}</h4>
