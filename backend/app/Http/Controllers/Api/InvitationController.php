@@ -37,6 +37,7 @@ class InvitationController extends Controller
 
     /**
      * Send invitation to create user account
+     * Allows multiple burial records for the same active account
      */
     public function sendInvitation(Request $request, $burialRecordId)
     {
@@ -54,8 +55,13 @@ class InvitationController extends Controller
         // Check if user already exists with this email
         $existingUser = User::where('email', $burialRecord->contact_email)->first();
         
+        // If user exists and invitation is already accepted, just return success
         if ($existingUser && $existingUser->invitation_accepted) {
-            return $this->errorResponse('User account already exists and is active', 400);
+            return $this->successResponse([
+                'user' => $existingUser,
+                'is_existing_account' => true,
+                'message' => 'This burial record is now linked to an existing active account'
+            ], 'Burial record linked to existing account successfully');
         }
 
         // Generate password
@@ -95,11 +101,13 @@ class InvitationController extends Controller
             'user' => $user,
             'invitation_sent_at' => $user->invitation_sent_at,
             'invitation_expires_at' => $user->invitation_expires_at,
+            'is_existing_account' => false
         ], 'Invitation sent successfully');
     }
 
     /**
      * Resend invitation
+     * Allows resending to accounts that haven't accepted yet, or returns success for active accounts
      */
     public function resendInvitation(Request $request, $burialRecordId)
     {
@@ -112,8 +120,13 @@ class InvitationController extends Controller
             return $this->errorResponse('No invitation found for this burial record', 404);
         }
 
+        // If user already accepted, just return success
         if ($user->invitation_accepted) {
-            return $this->errorResponse('User has already accepted the invitation', 400);
+            return $this->successResponse([
+                'user' => $user,
+                'is_existing_account' => true,
+                'message' => 'This burial record is linked to an active account. Invitation not needed.'
+            ], 'Burial record linked to existing account successfully');
         }
 
         // Regenerate password and token
@@ -140,6 +153,7 @@ class InvitationController extends Controller
             'user' => $user,
             'invitation_sent_at' => $user->invitation_sent_at,
             'invitation_expires_at' => $user->invitation_expires_at,
+            'is_existing_account' => false
         ], 'Invitation resent successfully');
     }
 

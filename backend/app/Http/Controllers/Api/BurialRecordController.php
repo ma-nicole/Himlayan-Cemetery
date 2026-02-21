@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\BurialRecord;
 use App\Models\Plot;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 
 class BurialRecordController extends Controller
 {
@@ -64,7 +65,22 @@ class BurialRecordController extends Controller
             $query->where('burial_date', '<=', $request->date_to);
         }
 
-        $records = $query->orderBy('burial_date', 'desc')
+        // Handle sorting
+        $sortBy = $request->input('sort_by', 'burial_date');
+        $sortOrder = $request->input('sort_order', 'desc');
+        
+        // Validate sort parameters for security
+        $allowedSortFields = ['deceased_name', 'death_date', 'burial_date', 'plot_id', 'created_at'];
+        $allowedSortOrders = ['asc', 'desc'];
+        
+        if (!in_array($sortBy, $allowedSortFields)) {
+            $sortBy = 'burial_date';
+        }
+        if (!in_array($sortOrder, $allowedSortOrders)) {
+            $sortOrder = 'desc';
+        }
+
+        $records = $query->orderBy($sortBy, $sortOrder)
                          ->paginate($request->per_page ?? 15);
 
         // Transform records to include full photo URLs
@@ -136,7 +152,7 @@ class BurialRecordController extends Controller
         if ($request->hasFile('deceased_photo')) {
             // Delete old photo if exists
             if ($record->deceased_photo_url) {
-                \Storage::disk('public')->delete($record->deceased_photo_url);
+                Storage::disk('public')->delete($record->deceased_photo_url);
             }
             
             $photo = $request->file('deceased_photo');
@@ -295,7 +311,7 @@ class BurialRecordController extends Controller
         if ($request->hasFile('deceased_photo')) {
             // Delete old photo if exists
             if ($record->deceased_photo_url) {
-                \Storage::disk('public')->delete($record->deceased_photo_url);
+                Storage::disk('public')->delete($record->deceased_photo_url);
             }
             
             $photo = $request->file('deceased_photo');
@@ -364,7 +380,7 @@ class BurialRecordController extends Controller
 
         $record->delete();
 
-        return $this->successResponse(null, 'Burial record deleted successfully');
+        return $this->successResponse(null, 'Burial record archived successfully');
     }
 
     /**

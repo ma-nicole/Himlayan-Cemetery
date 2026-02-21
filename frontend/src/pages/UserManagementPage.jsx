@@ -18,7 +18,7 @@ const UserManagementPage = () => {
     name: '',
     email: '',
     password: '',
-    role: 'member'
+    role: 'staff'
   });
   const [formError, setFormError] = useState('');
   const [pagination, setPagination] = useState({
@@ -394,7 +394,6 @@ const UserManagementPage = () => {
                     value={formData.role}
                     onChange={(e) => setFormData({ ...formData, role: e.target.value })}
                   >
-                    <option value="member">Member</option>
                     <option value="staff">Staff</option>
                     <option value="admin">Admin</option>
                   </select>

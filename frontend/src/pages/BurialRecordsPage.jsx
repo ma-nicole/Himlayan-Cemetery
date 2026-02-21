@@ -22,6 +22,8 @@ const BurialRecordsPage = () => {
   // Search and pagination
   const [search, setSearch] = useState('');
   const [pagination, setPagination] = useState({ current_page: 1, last_page: 1 });
+  const [sortField, setSortField] = useState('death_date');
+  const [sortOrder, setSortOrder] = useState('desc');
 
   const loadRecords = useCallback(async (page = 1) => {
     try {
@@ -29,7 +31,9 @@ const BurialRecordsPage = () => {
       const response = await burialService.getAll({ 
         page, 
         search: search || undefined,
-        per_page: 10 
+        per_page: 5,
+        sort_by: sortField,
+        sort_order: sortOrder
       });
       if (response.success) {
         setRecords(response.data.data);
@@ -43,15 +47,30 @@ const BurialRecordsPage = () => {
     } finally {
       setLoading(false);
     }
-  }, [search]);
+  }, [search, sortField, sortOrder]);
 
   useEffect(() => {
     loadRecords();
   }, [loadRecords]);
 
+  useEffect(() => {
+    loadRecords(1);
+  }, [sortField, sortOrder]);
+
   const handleSearch = (e) => {
     e.preventDefault();
     loadRecords(1);
+  };
+
+  const handleSort = (field) => {
+    if (sortField === field) {
+      // Toggle sort order if same field
+      setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
+    } else {
+      // Set new field with desc order
+      setSortField(field);
+      setSortOrder('desc');
+    }
   };
 
   const handleCreate = () => {
@@ -88,17 +107,17 @@ const BurialRecordsPage = () => {
   };
 
   const handleDelete = async (id) => {
-    if (!window.confirm('Are you sure you want to delete this burial record?')) {
+    if (!window.confirm('Are you sure you want to archive this burial record?')) {
       return;
     }
 
     try {
       await burialService.delete(id);
-      setSuccess('Burial record deleted successfully');
+      setSuccess('Burial record archived successfully');
       loadRecords(pagination.current_page);
       setTimeout(() => setSuccess(''), 3000);
     } catch (err) {
-      setError('Failed to delete burial record');
+      setError('Failed to archive burial record');
       setTimeout(() => setError(''), 3000);
     }
   };
@@ -123,7 +142,7 @@ const BurialRecordsPage = () => {
     <Layout>
       <div className="page-header">
         <h2>Burial Records</h2>
-        <button className="btn btn-primary" onClick={handleCreate}>
+        <button className="page-action-btn" onClick={handleCreate}>
           + Add Burial Record
         </button>
       </div>
@@ -139,7 +158,7 @@ const BurialRecordsPage = () => {
           value={search}
           onChange={(e) => setSearch(e.target.value)}
         />
-        <button type="submit" className="btn btn-primary">Search</button>
+        <button type="submit" className="page-action-btn">Search</button>
         {search && (
           <button 
             type="button" 
@@ -151,6 +170,30 @@ const BurialRecordsPage = () => {
         )}
       </form>
 
+      {/* Sort Controls */}
+      <div style={{ display: 'flex', gap: '12px', marginBottom: '16px', alignItems: 'center' }}>
+        <label style={{ fontSize: '0.8rem', fontWeight: '500' }}>Sort by:</label>
+        <select 
+          value={sortField} 
+          onChange={(e) => setSortField(e.target.value)}
+          className="sort-select"
+        >
+          <option value="death_date">Death Date</option>
+          <option value="burial_date">Burial Date</option>
+          <option value="deceased_name">Deceased Name</option>
+          <option value="plot_id">Plot</option>
+          <option value="created_at">Created Date</option>
+        </select>
+        <select 
+          value={sortOrder} 
+          onChange={(e) => setSortOrder(e.target.value)}
+          className="sort-select"
+        >
+          <option value="desc">Newest First</option>
+          <option value="asc">Oldest First</option>
+        </select>
+      </div>
+
       {loading ? (
         <LoadingSpinner text="Loading burial records..." />
       ) : (
@@ -161,27 +204,26 @@ const BurialRecordsPage = () => {
             onEdit={handleEdit}
             onDelete={handleDelete}
             onGenerateQR={handleGenerateQR}
+            onSort={handleSort}
+            sortField={sortField}
+            sortOrder={sortOrder}
           />
 
           {/* Pagination */}
           {pagination.last_page > 1 && (
             <div className="pagination">
               <button
+                className="btn"
                 disabled={pagination.current_page === 1}
                 onClick={() => loadRecords(pagination.current_page - 1)}
               >
                 Previous
               </button>
-              {[...Array(pagination.last_page)].map((_, i) => (
-                <button
-                  key={i + 1}
-                  className={pagination.current_page === i + 1 ? 'active' : ''}
-                  onClick={() => loadRecords(i + 1)}
-                >
-                  {i + 1}
-                </button>
-              ))}
+              <span style={{ padding: '0 12px', fontSize: '0.75rem' }}>
+                Page {pagination.current_page} of {pagination.last_page}
+              </span>
               <button
+                className="btn"
                 disabled={pagination.current_page === pagination.last_page}
                 onClick={() => loadRecords(pagination.current_page + 1)}
               >

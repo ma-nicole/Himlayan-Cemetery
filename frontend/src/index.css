@@ -378,96 +378,112 @@ body {
 
 .data-table th,
 .data-table td {
-  padding: 16px 20px;
+  padding: 12px 16px;
   text-align: left;
   border-bottom: 1px solid var(--border-color);
+  font-size: 0.8rem;
 }
 
 .data-table th {
-  background-color: var(--bg-light);
-  font-weight: 600;
-  color: var(--text-dark);
-  font-size: 0.85rem;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
+  background-color: #f9fafb;
+  font-weight: 500;
+  color: #6b7280;
+  font-size: 0.75rem;
+  text-transform: none;
+  letter-spacing: 0;
 }
 
 .data-table tbody tr {
-  transition: var(--transition);
+  transition: background-color 0.15s;
 }
 
 .data-table tbody tr:hover {
-  background-color: rgba(233, 69, 96, 0.05);
+  background-color: #f9fafb;
 }
 
 /* Buttons */
 .btn {
-  padding: 12px 24px;
+  padding: 6px 12px;
   border: none;
-  border-radius: 10px;
+  border-radius: 3px;
   cursor: pointer;
-  font-size: 0.95rem;
-  font-weight: 600;
-  transition: var(--transition);
+  font-size: 0.8rem;
+  font-weight: 400;
+  transition: background-color 0.15s;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
+  gap: 2px;
 }
 
 .btn-primary {
-  background: var(--accent-gradient);
+  background: #1a472a;
   color: white;
-  box-shadow: 0 4px 15px rgba(233, 69, 96, 0.3);
 }
 
 .btn-primary:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(233, 69, 96, 0.4);
+  background: #0f2e1d;
 }
 
 .btn-primary:disabled {
-  opacity: 0.7;
+  opacity: 0.6;
   cursor: not-allowed;
-  transform: none;
+}
+
+/* Page Action Buttons */
+.page-action-btn {
+  background: #1f2937;
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: var(--transition);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+  font-size: 0.9rem;
+}
+
+.page-action-btn:hover {
+  background: #111827;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
 }
 
 .btn-secondary {
-  background: var(--bg-light);
-  color: var(--text-dark);
-  border: 2px solid var(--border-color);
+  background: #e5e7eb;
+  color: #374151;
 }
 
 .btn-secondary:hover {
-  background: var(--border-color);
+  background: #d1d5db;
+  color: #111827;
 }
 
 .btn-success {
-  background: linear-gradient(135deg, #27ae60, #2ecc71);
-  color: white;
-  box-shadow: 0 4px 15px rgba(39, 174, 96, 0.3);
+  background: #e5e7eb;
+  color: #374151;
 }
 
 .btn-success:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(39, 174, 96, 0.4);
+  background: #d1fae5;
+  color: #065f46;
 }
 
 .btn-danger {
-  background: linear-gradient(135deg, #e74c3c, #c0392b);
-  color: white;
-  box-shadow: 0 4px 15px rgba(231, 76, 60, 0.3);
+  background: #e5e7eb;
+  color: #374151;
 }
 
 .btn-danger:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(231, 76, 60, 0.4);
+  background: #fee2e2;
+  color: #7f1d1d;
 }
 
 .btn-sm {
-  padding: 8px 16px;
-  font-size: 0.85rem;
-  border-radius: 8px;
+  padding: 4px 8px;
+  font-size: 0.75rem;
+  border-radius: 2px;
 }
 
 .btn-block {
@@ -476,7 +492,30 @@ body {
 
 .btn-group {
   display: flex;
-  gap: 10px;
+  gap: 6px;
+}
+
+/* Sort Select */
+.sort-select {
+  padding: 6px 12px;
+  border: none;
+  border-radius: 3px;
+  cursor: pointer;
+  font-size: 0.8rem;
+  font-weight: 400;
+  background: #1a472a;
+  color: white;
+  transition: background-color 0.15s;
+  font-family: 'Inter', sans-serif;
+}
+
+.sort-select:hover {
+  background: #0f2e1d;
+}
+
+.sort-select option {
+  background: white;
+  color: #111827;
 }
 
 .btn-spinner {
@@ -548,18 +587,18 @@ body {
 .status-badge {
   display: inline-flex;
   align-items: center;
-  padding: 6px 14px;
-  border-radius: 20px;
-  font-size: 0.8rem;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
+  padding: 4px 10px;
+  border-radius: 4px;
+  font-size: 0.7rem;
+  font-weight: 500;
+  text-transform: none;
+  letter-spacing: 0;
 }
 
-.status-available { background: #d4edda; color: #155724; }
-.status-occupied { background: #f8d7da; color: #721c24; }
-.status-reserved { background: #fff3cd; color: #856404; }
-.status-maintenance { background: #e2e3e5; color: #383d41; }
+.status-available { background: #d1fae5; color: #065f46; }
+.status-occupied { background: #fee2e2; color: #7f1d1d; }
+.status-reserved { background: #fef3c7; color: #78350f; }
+.status-maintenance { background: #e5e7eb; color: #374151; }
 
 /* Map Container */
 .map-container {

@@ -17,6 +17,8 @@ const PlotsPage = () => {
   
   const [filter, setFilter] = useState('all');
   const [pagination, setPagination] = useState({ current_page: 1, last_page: 1 });
+  const [sortField, setSortField] = useState('plot_number');
+  const [sortOrder, setSortOrder] = useState('asc');
   
   const { isAdmin } = useAuth();
 
@@ -26,7 +28,9 @@ const PlotsPage = () => {
       const response = await plotService.getAll({ 
         page, 
         status: filter !== 'all' ? filter : undefined,
-        per_page: 15 
+        per_page: 15,
+        sort_by: sortField,
+        sort_order: sortOrder
       });
       if (response.success) {
         setPlots(response.data.data);
@@ -40,11 +44,23 @@ const PlotsPage = () => {
     } finally {
       setLoading(false);
     }
-  }, [filter]);
+  }, [filter, sortField, sortOrder]);
 
   useEffect(() => {
     loadPlots();
   }, [loadPlots]);
+
+  const handleSort = (field) => {
+    // If clicking same field, toggle order; otherwise set to asc
+    if (sortField === field) {
+      setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortField(field);
+      setSortOrder('asc');
+    }
+    // Reset to page 1 when sorting changes
+    loadPlots(1);
+  };
 
   const handleCreate = () => {
     setSelectedPlot(null);
@@ -94,7 +110,7 @@ const PlotsPage = () => {
       <div className="page-header">
         <h2>Plot Management</h2>
         {isAdmin && (
-          <button className="btn btn-primary" onClick={handleCreate}>
+          <button className="page-action-btn" onClick={handleCreate}>
             + Add Plot
           </button>
         )}
@@ -130,6 +146,9 @@ const PlotsPage = () => {
             plots={plots}
             onEdit={handleEdit}
             onDelete={handleDelete}
+            onSort={handleSort}
+            sortField={sortField}
+            sortOrder={sortOrder}
           />
 
           {/* Pagination */}

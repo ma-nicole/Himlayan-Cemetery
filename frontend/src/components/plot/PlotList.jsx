@@ -1,7 +1,22 @@
 import React from 'react';
 import { useAuth } from '../../hooks/useAuth';
 
-const PlotList = ({ plots, onEdit, onDelete }) => {
+const SortableHeader = ({ label, field, sortField, sortOrder, onSort }) => {
+  const isActive = sortField === field;
+  const arrow = isActive ? (sortOrder === 'asc' ? ' ▲' : ' ▼') : '';
+  
+  return (
+    <th 
+      onClick={() => onSort(field)}
+      style={{ cursor: 'pointer', userSelect: 'none' }}
+      title={`Click to sort by ${label}`}
+    >
+      {label}{arrow}
+    </th>
+  );
+};
+
+const PlotList = ({ plots, onEdit, onDelete, onSort, sortField, sortOrder }) => {
   const { isAdmin } = useAuth();
 
   const getStatusClass = (status) => {
@@ -21,8 +36,20 @@ const PlotList = ({ plots, onEdit, onDelete }) => {
       <table className="data-table">
         <thead>
           <tr>
-            <th>Plot Number</th>
-            <th>Section</th>
+            <SortableHeader 
+              label="Plot Number" 
+              field="plot_number" 
+              sortField={sortField}
+              sortOrder={sortOrder}
+              onSort={onSort}
+            />
+            <SortableHeader 
+              label="Section" 
+              field="section" 
+              sortField={sortField}
+              sortOrder={sortOrder}
+              onSort={onSort}
+            />
             <th>Location (Row/Col)</th>
             <th>Coordinates</th>
             <th>Status</th>

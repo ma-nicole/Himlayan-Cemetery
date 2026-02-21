@@ -34,9 +34,22 @@ class PlotController extends Controller
             $query->where('plot_number', 'like', '%' . $request->search . '%');
         }
 
-        $plots = $query->orderBy('section')
-                       ->orderBy('row_number')
-                       ->orderBy('column_number')
+        // Handle sorting
+        $sortBy = $request->input('sort_by', 'plot_number');
+        $sortOrder = $request->input('sort_order', 'asc');
+        
+        // Whitelist allowed sort fields for security
+        $allowedSortFields = ['plot_number', 'section', 'status', 'row_number', 'column_number', 'created_at'];
+        if (!in_array($sortBy, $allowedSortFields)) {
+            $sortBy = 'plot_number';
+        }
+        
+        // Validate sort order
+        if (!in_array(strtolower($sortOrder), ['asc', 'desc'])) {
+            $sortOrder = 'asc';
+        }
+
+        $plots = $query->orderBy($sortBy, strtoupper($sortOrder))
                        ->paginate($request->per_page ?? 15);
 
         return $this->successResponse($plots, 'Plots retrieved successfully');
@@ -51,7 +64,7 @@ class PlotController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'plot_number' => 'required|string|unique:plots,plot_number',
+            'plot_number' => ['required', 'string', Rule::unique('plots', 'plot_number')->whereNull('deleted_at')],
             'section' => 'nullable|string|max:50',
             'row_number' => 'nullable|integer|min:1',
             'column_number' => 'nullable|integer|min:1',
@@ -99,7 +112,6 @@ class PlotController extends Controller
         }
 
         $validated = $request->validate([
-            'plot_number' => ['sometimes', 'string', Rule::unique('plots')->ignore($id)],
             'section' => 'nullable|string|max:50',
             'row_number' => 'nullable|integer|min:1',
             'column_number' => 'nullable|integer|min:1',

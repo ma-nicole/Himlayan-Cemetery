@@ -10,23 +10,35 @@ use Illuminate\Http\Request;
 class PublicController extends Controller
 {
     /**
-     * Get public grave profile by QR code
+     * Get public grave profile by QR code or plot number
      * 
      * @param string $code
      * @return \Illuminate\Http\JsonResponse
      */
     public function graveProfile($code)
     {
+        // Try to find by QR code first
         $qrCode = QrCode::with('burialRecord.plot')
                         ->where('code', $code)
                         ->where('is_active', true)
                         ->first();
 
-        if (!$qrCode || !$qrCode->burialRecord) {
-            return $this->errorResponse('Grave not found or QR code is inactive', 404);
-        }
+        if ($qrCode && $qrCode->burialRecord) {
+            $record = $qrCode->burialRecord;
+        } else {
+            // If not found by QR code, try to find by plot number
+            $burialRecord = BurialRecord::with('plot')
+                                        ->whereHas('plot', function($q) use ($code) {
+                                            $q->where('plot_number', $code);
+                                        })
+                                        ->first();
 
-        $record = $qrCode->burialRecord;
+            if (!$burialRecord) {
+                return $this->errorResponse('Grave not found or QR code is inactive', 404);
+            }
+
+            $record = $burialRecord;
+        }
         
         // Check if record is publicly searchable
         if (!$record->is_publicly_searchable) {
@@ -121,8 +133,6 @@ class PublicController extends Controller
                         'id' => $record->plot->id,
                         'plot_number' => $record->plot->plot_number,
                         'section' => $record->plot->section,
-                        'block' => $record->plot->block,
-                        'unique_code' => $record->plot->unique_code,
                     ] : null,
                 ];
             });

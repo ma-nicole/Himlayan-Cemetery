@@ -220,7 +220,7 @@ const MemberDashboardPage = () => {
                     <h4>{result.deceased_name}</h4>
                     <p>Plot: {result.plot?.plot_number || 'N/A'} • Section: {result.plot?.section || 'N/A'}</p>
                   </div>
-                  <Link to={`/grave/${result.plot?.unique_code}`} className="result-btn-pro">
+                  <Link to={`/grave/${result.plot?.plot_number}`} className="result-btn-pro">
                     View Details
                   </Link>
                 </div>

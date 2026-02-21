@@ -1,13 +1,28 @@
 import React from 'react';
 import { useAuth } from '../../hooks/useAuth';
 
-const BurialList = ({ records, onView, onEdit, onDelete, onGenerateQR }) => {
+const BurialList = ({ records, onView, onEdit, onDelete, onGenerateQR, onSort, sortField, sortOrder }) => {
   const { isAdmin } = useAuth();
 
   const formatDate = (dateString) => {
     if (!dateString) return '-';
     return new Date(dateString).toLocaleDateString();
   };
+
+  const SortableHeader = ({ field, label }) => (
+    <th 
+      onClick={() => onSort && onSort(field)}
+      style={{ cursor: onSort ? 'pointer' : 'default', userSelect: 'none' }}
+      title={onSort ? `Click to sort by ${label}` : ''}
+    >
+      {label}
+      {sortField === field && (
+        <span style={{ marginLeft: '4px', fontSize: '0.75rem' }}>
+          {sortOrder === 'asc' ? '▲' : '▼'}
+        </span>
+      )}
+    </th>
+  );
 
   if (!records || records.length === 0) {
     return (
@@ -23,8 +38,8 @@ const BurialList = ({ records, onView, onEdit, onDelete, onGenerateQR }) => {
         <thead>
           <tr>
             <th>Deceased Name</th>
-            <th>Plot</th>
-            <th>Death Date</th>
+            <SortableHeader field="plot_id" label="Plot" />
+            <SortableHeader field="death_date" label="Death Date" />
             <th>Burial Date</th>
             <th>QR Code</th>
             <th>Actions</th>
@@ -60,17 +75,16 @@ const BurialList = ({ records, onView, onEdit, onDelete, onGenerateQR }) => {
                     </div>
                   ) : (
                     <div style={{
-                      width: '40px',
-                      height: '40px',
+                      width: '32px',
+                      height: '32px',
                       borderRadius: '50%',
-                      backgroundColor: '#f0fdf4',
-                      border: '2px solid #1a472a',
+                      backgroundColor: '#e5e7eb',
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
                       flexShrink: 0
                     }}>
-                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#1a472a" strokeWidth="1.5">
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#6b7280" strokeWidth="1.5">
                         <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/>
                         <circle cx="12" cy="7" r="4"/>
                       </svg>
@@ -82,7 +96,7 @@ const BurialList = ({ records, onView, onEdit, onDelete, onGenerateQR }) => {
               <td>
                 {record.plot?.plot_number || '-'}
                 <br />
-                <small style={{ color: '#666' }}>Section {record.plot?.section}</small>
+                <small style={{ color: '#999', fontSize: '0.7rem' }}>Section {record.plot?.section}</small>
               </td>
               <td>{formatDate(record.death_date)}</td>
               <td>{formatDate(record.burial_date)}</td>
@@ -120,7 +134,7 @@ const BurialList = ({ records, onView, onEdit, onDelete, onGenerateQR }) => {
                       className="btn btn-sm btn-danger"
                       onClick={() => onDelete(record.id)}
                     >
-                      Delete
+                      Archive
                     </button>
                   )}
                 </div>
