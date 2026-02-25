@@ -230,6 +230,22 @@ class BurialRecordController extends Controller
         // Update plot status to occupied
         $plot->update(['status' => 'occupied']);
 
+        // Sync contact info if this email matches an activated user account
+        if ($burialRecord->contact_email) {
+            $user = \App\Models\User::where('email', $burialRecord->contact_email)
+                                    ->where('invitation_accepted', true)
+                                    ->first();
+            if ($user && $user->name) {
+                // Parse user's full name into detailed fields
+                $parts = explode(' ', $user->name, 3); // Split into max 3 parts
+                $burialRecord->contact_first_name = $parts[0] ?? '';
+                $burialRecord->contact_middle_initial = isset($parts[1]) ? $parts[1][0] : '';
+                $burialRecord->contact_last_name = $parts[2] ?? '';
+                $burialRecord->contact_name = $user->name;
+                $burialRecord->save();
+            }
+        }
+
         // Load relationships
         $burialRecord->load(['plot', 'qrCode']);
         
@@ -324,7 +340,7 @@ class BurialRecordController extends Controller
 
         $record->update($validated);
         
-        // Sync contact info with User if associated account exists
+        // Sync contact info with User if associated account exists, and sync to other records with same email
         if ($record->contact_email) {
             $user = \App\Models\User::where('email', $record->contact_email)->first();
             if ($user) {
@@ -345,6 +361,21 @@ class BurialRecordController extends Controller
                     $user->name = $fullName;
                     $user->save();
                 }
+            }
+            
+            // Sync contact names to all other burial records with the same email
+            $allRecordsWithEmail = \App\Models\BurialRecord::where('contact_email', $record->contact_email)
+                                                           ->where('id', '!=', $record->id)
+                                                           ->get();
+            
+            foreach ($allRecordsWithEmail as $otherRecord) {
+                $otherRecord->contact_first_name = $record->contact_first_name;
+                $otherRecord->contact_middle_initial = $record->contact_middle_initial;
+                $otherRecord->contact_last_name = $record->contact_last_name;
+                $otherRecord->contact_name = $record->contact_name;
+                $otherRecord->contact_phone = $record->contact_phone;
+                $otherRecord->contact_country_code = $record->contact_country_code;
+                $otherRecord->save();
             }
         }
 

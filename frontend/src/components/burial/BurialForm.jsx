@@ -1,6 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import plotService from '../../services/plotService';
 import { getInvitationStatus } from '../../services/invitationService';
+import userService from '../../services/userService';
 
 const BurialForm = ({ burial, onSubmit, onCancel }) => {
   const [formData, setFormData] = useState({
@@ -38,6 +39,7 @@ const BurialForm = ({ burial, onSubmit, onCancel }) => {
   const [error, setError] = useState('');
   const [photoPreview, setPhotoPreview] = useState(null);
   const [invitationStatus, setInvitationStatus] = useState(null);
+  const formLoadedRef = useRef(false); // Track if form was just populated from edit
 
   // Load available plots
   useEffect(() => {
@@ -55,6 +57,7 @@ const BurialForm = ({ burial, onSubmit, onCancel }) => {
   }, []);
 
   // Fetch invitation status when editing
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     if (burial && burial.id) {
       const fetchStatus = async () => {
@@ -68,6 +71,44 @@ const BurialForm = ({ burial, onSubmit, onCancel }) => {
       fetchStatus();
     }
   }, [burial?.id]);
+
+  // Auto-fill contact names when email matches an activated account
+  useEffect(() => {
+    const autoFillNames = async () => {
+      const email = formData.contact_email.trim();
+      
+      // Only auto-fill if:
+      // 1. Email is valid
+      // 2. Form was not just loaded (this prevents overwriting existing contact info when editing)
+      // 3. Account is not already activated (email locked)
+      if (email && email.includes('@') && !formLoadedRef.current && invitationStatus?.status !== 'accepted') {
+        try {
+          const user = await userService.getUserByEmail(email);
+          if (user && user.name) {
+            const { firstName, middleInitial, lastName } = userService.parseName(user.name);
+            setFormData(prev => ({
+              ...prev,
+              contact_first_name: firstName,
+              contact_middle_initial: middleInitial,
+              contact_last_name: lastName,
+            }));
+          }
+        } catch (err) {
+          // Silently fail if user not found
+          console.debug('User not found for auto-fill:', email);
+        }
+      }
+      
+      // Reset the ref after first auto-fill check so that manual changes trigger subsequent auto-fills
+      if (formLoadedRef.current && !email) {
+        formLoadedRef.current = false;
+      }
+    };
+
+    // Debounce the auto-fill to avoid excessive API calls
+    const timer = setTimeout(autoFillNames, 500);
+    return () => clearTimeout(timer);
+  }, [formData.contact_email, invitationStatus?.status]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Populate form when editing
   useEffect(() => {
@@ -104,6 +145,9 @@ const BurialForm = ({ burial, onSubmit, onCancel }) => {
         contact2_email: burial.contact2_email || '',
       });
 
+      // Mark that form was just loaded from burial record to prevent auto-fill override
+      formLoadedRef.current = true;
+
       // Set photo preview if exists
       if (burial.deceased_photo_url) {
         setPhotoPreview(burial.deceased_photo_url);
@@ -113,6 +157,12 @@ const BurialForm = ({ burial, onSubmit, onCancel }) => {
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
+    
+    // When user manually changes contact email, reset the form loaded flag
+    // to allow auto-fill on new email entry
+    if (name === 'contact_email') {
+      formLoadedRef.current = false;
+    }
     
     // Handle country code changes - clear phone if it exceeds new country's limit
     if (name === 'contact_country_code' || name === 'contact2_country_code') {

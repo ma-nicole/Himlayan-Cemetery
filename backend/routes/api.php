@@ -54,6 +54,9 @@ Route::post('/feedback', [FeedbackController::class, 'store']);
 Route::get('/invitations/details', [InvitationController::class, 'getInvitationDetails']);
 Route::post('/invitations/accept', [InvitationController::class, 'acceptInvitation']);
 
+// User lookup by email (public - only returns activated accounts for auto-fill feature)
+Route::get('/users/by-email', [UserController::class, 'getByEmail']);
+
 // ============================================
 // PROTECTED ROUTES (Authentication Required)
 // ============================================

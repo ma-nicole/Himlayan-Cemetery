@@ -197,6 +197,41 @@ class UserController extends Controller
     }
 
     /**
+     * Get user by email (only returns activated accounts)
+     */
+    public function getByEmail(Request $request)
+    {
+        $email = $request->query('email');
+        
+        if (!$email) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Email is required'
+            ], 400);
+        }
+
+        $user = User::where('email', $email)
+                    ->where('invitation_accepted', true)
+                    ->first();
+        
+        if (!$user) {
+            return response()->json([
+                'success' => false,
+                'message' => 'User not found or account not activated'
+            ], 404);
+        }
+
+        return response()->json([
+            'success' => true,
+            'data' => [
+                'id' => $user->id,
+                'name' => $user->name,
+                'email' => $user->email,
+            ]
+        ]);
+    }
+
+    /**
      * Get user statistics
      */
     public function statistics()
