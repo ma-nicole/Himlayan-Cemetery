@@ -9,6 +9,8 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Facades\Log;
 use App\Mail\UserInvitation;
 
 class InvitationController extends Controller
@@ -43,9 +45,19 @@ class InvitationController extends Controller
     {
         $burialRecord = BurialRecord::with('plot')->findOrFail($burialRecordId);
         
-        // Validate that burial record has contact information
+        // Check if contact email exists
         if (!$burialRecord->contact_email) {
-            return $this->errorResponse('Burial record must have a contact email address', 400);
+            return $this->errorResponse('This email is invalid or does not exist.', 400);
+        }
+
+        // Validate email format
+        $validator = Validator::make(
+            ['email' => $burialRecord->contact_email],
+            ['email' => 'required|email']
+        );
+
+        if ($validator->fails()) {
+            return $this->errorResponse('This email is invalid or does not exist.', 400);
         }
 
         if (!$burialRecord->contact_phone) {
@@ -94,7 +106,12 @@ class InvitationController extends Controller
         try {
             Mail::to($user->email)->send(new UserInvitation($user, $password, $burialRecord));
         } catch (\Exception $e) {
-            return $this->errorResponse('Failed to send invitation email: ' . $e->getMessage(), 500);
+            Log::error('Email send failed for ' . $user->email, [
+                'error' => $e->getMessage(),
+                'file' => $e->getFile(),
+                'line' => $e->getLine()
+            ]);
+            return $this->errorResponse('This email is invalid or does not exist.', 400);
         }
 
         return $this->successResponse([
@@ -112,6 +129,21 @@ class InvitationController extends Controller
     public function resendInvitation(Request $request, $burialRecordId)
     {
         $burialRecord = BurialRecord::with('plot')->findOrFail($burialRecordId);
+        
+        // Check if contact email exists
+        if (!$burialRecord->contact_email) {
+            return $this->errorResponse('This email is invalid or does not exist.', 400);
+        }
+
+        // Validate email format
+        $validator = Validator::make(
+            ['email' => $burialRecord->contact_email],
+            ['email' => 'required|email']
+        );
+
+        if ($validator->fails()) {
+            return $this->errorResponse('This email is invalid or does not exist.', 400);
+        }
         
         // Find the user
         $user = User::where('email', $burialRecord->contact_email)->first();
@@ -146,7 +178,12 @@ class InvitationController extends Controller
         try {
             Mail::to($user->email)->send(new UserInvitation($user, $password, $burialRecord));
         } catch (\Exception $e) {
-            return $this->errorResponse('Failed to resend invitation email: ' . $e->getMessage(), 500);
+            Log::error('Email resend failed for ' . $user->email, [
+                'error' => $e->getMessage(),
+                'file' => $e->getFile(),
+                'line' => $e->getLine()
+            ]);
+            return $this->errorResponse('This email is invalid or does not exist.', 400);
         }
 
         return $this->successResponse([
