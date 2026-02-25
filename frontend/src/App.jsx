@@ -35,6 +35,7 @@ import FeedbackPage from './pages/FeedbackPage';
 import AnnouncementsPage from './pages/AnnouncementsPage';
 import PayDuesPage from './pages/PayDuesPage';
 import AuthCallback from './pages/AuthCallback';
+import AcceptInvitation from './pages/AcceptInvitation';
 
 function App() {
   return (
@@ -51,6 +52,7 @@ function App() {
           <Route path="/grave/:code" element={<PublicGravePage />} />
           <Route path="/feedback" element={<FeedbackPage />} />
           <Route path="/announcements" element={<AnnouncementsPage />} />
+          <Route path="/accept-invitation" element={<AcceptInvitation />} />
 
           {/* Password Change Route - Protected but accessible when must_change_password is true */}
           <Route

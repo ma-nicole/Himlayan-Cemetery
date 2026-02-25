@@ -50,6 +50,10 @@ Route::get('/announcements', [AnnouncementController::class, 'index']);
 // Public feedback submission
 Route::post('/feedback', [FeedbackController::class, 'store']);
 
+// Invitation acceptance (public - user accepts invitation from email)
+Route::get('/invitations/details', [InvitationController::class, 'getInvitationDetails']);
+Route::post('/invitations/accept', [InvitationController::class, 'acceptInvitation']);
+
 // ============================================
 // PROTECTED ROUTES (Authentication Required)
 // ============================================

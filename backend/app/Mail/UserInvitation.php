@@ -2,8 +2,6 @@
 
 namespace App\Mail;
 
-use App\Models\User;
-use App\Models\BurialRecord;
 use Illuminate\Bus\Queueable;
 use Illuminate\Mail\Mailable;
 use Illuminate\Mail\Mailables\Content;
@@ -14,17 +12,15 @@ class UserInvitation extends Mailable
 {
     use Queueable, SerializesModels;
 
-    public $user;
-    public $password;
+    public $invitation;
     public $burialRecord;
 
     /**
      * Create a new message instance.
      */
-    public function __construct(User $user, string $password, BurialRecord $burialRecord)
+    public function __construct($invitation, $burialRecord)
     {
-        $this->user = $user;
-        $this->password = $password;
+        $this->invitation = $invitation;
         $this->burialRecord = $burialRecord;
     }
 
@@ -34,7 +30,7 @@ class UserInvitation extends Mailable
     public function envelope(): Envelope
     {
         return new Envelope(
-            subject: 'Cemetery Management System - Account Invitation',
+            subject: 'Account Invitation - Himlayan Cemetery',
         );
     }
 
@@ -46,12 +42,13 @@ class UserInvitation extends Mailable
         return new Content(
             view: 'emails.user-invitation',
             with: [
-                'userName' => $this->user->name,
-                'email' => $this->user->email,
-                'password' => $this->password,
-                'deceasedName' => $this->burialRecord->deceased_name,
+                'name' => $this->invitation['name'],
+                'email' => $this->invitation['email'],
+                'password' => $this->invitation['password'],
+                'acceptUrl' => $this->invitation['accept_url'],
+                'deceasedName' => $this->burialRecord->deceased_first_name . ' ' . $this->burialRecord->deceased_last_name,
                 'plotNumber' => $this->burialRecord->plot->plot_number,
-                'expiresAt' => $this->user->invitation_expires_at->format('F d, Y g:i A'),
+                'expiresAt' => now()->addDay()->format('F d, Y g:i A'),
             ],
         );
     }

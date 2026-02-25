@@ -1,0 +1,168 @@
+.accept-invitation-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  background: linear-gradient(135deg, #1a472a 0%, #2d5c3f 100%);
+}
+
+.accept-invitation-card {
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+  padding: 40px;
+  max-width: 500px;
+  width: 100%;
+  margin: 20px;
+  text-align: center;
+}
+
+.accept-invitation-card h2 {
+  color: #333;
+  margin-top: 0;
+  margin-bottom: 20px;
+  font-size: 28px;
+}
+
+.accept-invitation-card p {
+  color: #666;
+  line-height: 1.6;
+  margin: 10px 0;
+}
+
+.credentials-box {
+  background-color: #f9f9f9;
+  border: 1px solid #e0e0e0;
+  border-radius: 6px;
+  padding: 20px;
+  margin: 25px 0;
+  text-align: left;
+}
+
+.credentials-box h3 {
+  color: #333;
+  margin: 0 0 15px 0;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.credential-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin: 12px 0;
+  padding: 8px 0;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.credential-item:last-child {
+  border-bottom: none;
+}
+
+.credential-item label {
+  font-weight: 600;
+  color: #333;
+  min-width: 80px;
+}
+
+.credential-item span {
+  color: #666;
+  font-family: 'Courier New', monospace;
+  font-size: 14px;
+  word-break: break-all;
+}
+
+.credential-item .password {
+  background-color: #f0f0f0;
+  padding: 5px 10px;
+  border-radius: 4px;
+  font-weight: 500;
+}
+
+.accept-btn,
+.login-btn {
+  background: linear-gradient(135deg, #2d5c3f 0%, #1a472a 100%);
+  color: white;
+  border: none;
+  padding: 12px 30px;
+  font-size: 16px;
+  border-radius: 6px;
+  cursor: pointer;
+  margin-top: 20px;
+  font-weight: 600;
+  transition: all 0.3s ease;
+  width: 100%;
+}
+
+.accept-btn:hover:not(:disabled),
+.login-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(45, 92, 63, 0.3);
+}
+
+.accept-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.invitation-details h2 {
+  color: #333;
+  margin-bottom: 15px;
+}
+
+.error-message {
+  background-color: #fee;
+  color: #c00;
+  padding: 15px;
+  border-radius: 4px;
+  margin: 20px 0;
+  border-left: 4px solid #c00;
+  text-align: left;
+}
+
+.success-message h2 {
+  color: #28a745;
+  font-size: 36px;
+  margin: 0 0 20px 0;
+}
+
+.success-message p {
+  color: #666;
+  margin: 15px 0;
+}
+
+.login-message {
+  font-size: 16px;
+  font-weight: 500;
+  color: #333;
+}
+
+.redirect-message {
+  color: #999;
+  font-size: 14px;
+  margin-top: 20px;
+}
+
+.loading-message {
+  text-align: center;
+}
+
+.loading-message p {
+  color: #666;
+  font-size: 16px;
+  margin: 20px 0;
+}
+
+@media (max-width: 600px) {
+  .accept-invitation-card {
+    padding: 30px 20px;
+  }
+
+  .accept-invitation-card h2 {
+    font-size: 24px;
+  }
+
+  .success-message h2 {
+    font-size: 32px;
+  }
+}

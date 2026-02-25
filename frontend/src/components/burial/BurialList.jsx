@@ -104,7 +104,12 @@ const BurialList = ({ records, onView, onEdit, onDelete, onGenerateQR, onSort, s
                 {record.qr_code ? (
                   <span className="status-badge status-available">Generated</span>
                 ) : (
-                  <span className="status-badge status-maintenance">Not Generated</span>
+                  <button
+                    className="btn btn-sm btn-success"
+                    onClick={() => onGenerateQR(record.id)}
+                  >
+                    Generate QR
+                  </button>
                 )}
               </td>
               <td>
@@ -121,14 +126,6 @@ const BurialList = ({ records, onView, onEdit, onDelete, onGenerateQR, onSort, s
                   >
                     Edit
                   </button>
-                  {!record.qr_code && (
-                    <button
-                      className="btn btn-sm btn-success"
-                      onClick={() => onGenerateQR(record.id)}
-                    >
-                      Generate QR
-                    </button>
-                  )}
                   {isAdmin && (
                     <button
                       className="btn btn-sm btn-danger"

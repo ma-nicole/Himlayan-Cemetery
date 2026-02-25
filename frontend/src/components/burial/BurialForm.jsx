@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import plotService from '../../services/plotService';
+import { getInvitationStatus } from '../../services/invitationService';
 
 const BurialForm = ({ burial, onSubmit, onCancel }) => {
   const [formData, setFormData] = useState({
@@ -36,6 +37,7 @@ const BurialForm = ({ burial, onSubmit, onCancel }) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [photoPreview, setPhotoPreview] = useState(null);
+  const [invitationStatus, setInvitationStatus] = useState(null);
 
   // Load available plots
   useEffect(() => {
@@ -51,6 +53,21 @@ const BurialForm = ({ burial, onSubmit, onCancel }) => {
     };
     loadPlots();
   }, []);
+
+  // Fetch invitation status when editing
+  useEffect(() => {
+    if (burial && burial.id) {
+      const fetchStatus = async () => {
+        try {
+          const status = await getInvitationStatus(burial.id);
+          setInvitationStatus(status);
+        } catch (err) {
+          console.error('Failed to fetch invitation status:', err);
+        }
+      };
+      fetchStatus();
+    }
+  }, [burial?.id]);
 
   // Populate form when editing
   useEffect(() => {
@@ -554,8 +571,15 @@ const BurialForm = ({ burial, onSubmit, onCancel }) => {
             value={formData.contact_email}
             onChange={handleChange}
             placeholder="email@example.com"
+            disabled={invitationStatus?.status === 'accepted'}
+            title={invitationStatus?.status === 'accepted' ? 'Email cannot be changed after account activation' : ''}
             required
           />
+          {invitationStatus?.status === 'accepted' && (
+            <small style={{ color: '#d97706', marginTop: '5px', display: 'block' }}>
+              Email cannot be edited after account activation
+            </small>
+          )}
         </div>
       </div>
 

@@ -103,7 +103,7 @@
         </div>
 
         <div class="content">
-            <h2>Hello, {{ $userName }}!</h2>
+            <h2>Hello, {{ $name }}!</h2>
 
             <p>You've been invited to access the Cemetery Management System as a family representative for:</p>
 
@@ -112,7 +112,15 @@
                 <strong>Plot Number:</strong> {{ $plotNumber }}
             </div>
 
-            <p>An account has been created for you with the following credentials:</p>
+            <p><strong>Click the button below to accept and activate your account:</strong></p>
+            
+            <div style="text-align: center; margin: 30px 0;">
+                <a href="{{ $acceptUrl }}" style="display: inline-block; background-color: #1a472a; color: white; padding: 14px 30px; text-decoration: none; border-radius: 4px; font-weight: bold; font-size: 16px;">
+                    ✓ Accept Invitation
+                </a>
+            </div>
+
+            <p style="color: #666; font-size: 14px; margin-top: 20px;"><strong>Your account credentials:</strong></p>
 
             <div class="credentials-box">
                 <div class="credential-row">
