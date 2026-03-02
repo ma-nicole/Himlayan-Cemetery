@@ -286,13 +286,18 @@ class InvitationController extends Controller
             $cachedStatus = cache()->get('invitation_status_burial_' . $burialRecord->id);
 
             if ($cachedStatus) {
+                // If the cached email doesn't match current email, treat as not sent (email was changed)
+                if ($cachedStatus['email'] !== $burialRecord->contact_email) {
+                    return $this->successResponse(['status' => 'not_sent'], 'No invitation sent');
+                }
+
                 $expiresAt = isset($cachedStatus['expires_at']) ? Carbon::parse($cachedStatus['expires_at']) : null;
                 $isExpired = $expiresAt ? $expiresAt->isPast() : false;
 
                 return $this->successResponse([
                     'status' => $isExpired ? 'expired' : 'pending',
                     'user' => [
-                        'email' => $cachedStatus['email'] ?? $burialRecord->contact_email,
+                        'email' => $burialRecord->contact_email,
                         'invitation_expires_at' => $cachedStatus['expires_at'] ?? null,
                     ]
                 ], $isExpired ? 'Invitation expired' : 'Invitation pending');

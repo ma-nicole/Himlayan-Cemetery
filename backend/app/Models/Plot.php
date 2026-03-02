@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class Plot extends Model
@@ -24,6 +25,7 @@ class Plot extends Model
         'latitude',
         'longitude',
         'status',
+        'owner_id',
         'notes',
     ];
 
@@ -45,6 +47,14 @@ class Plot extends Model
     public function burialRecord(): HasOne
     {
         return $this->hasOne(BurialRecord::class);
+    }
+
+    /**
+     * Get the owner of the plot.
+     */
+    public function owner(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'owner_id');
     }
 
     /**

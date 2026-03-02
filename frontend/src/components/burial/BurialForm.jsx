@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import plotService from '../../services/plotService';
 import { getInvitationStatus } from '../../services/invitationService';
 import userService from '../../services/userService';
+import { validateName, validateEmail, validatePhone, validateDate, validateBirthDate, validateDeathDate, validateBurialDate } from '../../utils/formValidator';
 
 const BurialForm = ({ burial, onSubmit, onCancel }) => {
   const [formData, setFormData] = useState({
@@ -39,6 +40,7 @@ const BurialForm = ({ burial, onSubmit, onCancel }) => {
   const [error, setError] = useState('');
   const [photoPreview, setPhotoPreview] = useState(null);
   const [invitationStatus, setInvitationStatus] = useState(null);
+  const [validationErrors, setValidationErrors] = useState({});
   const formLoadedRef = useRef(false); // Track if form was just populated from edit
 
   // Load available plots
@@ -157,6 +159,15 @@ const BurialForm = ({ burial, onSubmit, onCancel }) => {
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
+    
+    // Clear validation error for this field when user starts correcting it
+    if (validationErrors[name]) {
+      setValidationErrors(prev => {
+        const newErrors = { ...prev };
+        delete newErrors[name];
+        return newErrors;
+      });
+    }
     
     // When user manually changes contact email, reset the form loaded flag
     // to allow auto-fill on new email entry
@@ -282,6 +293,145 @@ const BurialForm = ({ burial, onSubmit, onCancel }) => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
+    const newErrors = {};
+
+    // Validate deceased first name
+    if (!formData.deceased_first_name.trim()) {
+      newErrors.deceased_first_name = 'First name is required';
+    } else {
+      const nameValidation = validateName(formData.deceased_first_name);
+      if (!nameValidation.valid) {
+        newErrors.deceased_first_name = nameValidation.error;
+      }
+    }
+
+    // Validate deceased last name
+    if (!formData.deceased_last_name.trim()) {
+      newErrors.deceased_last_name = 'Last name is required';
+    } else {
+      const nameValidation = validateName(formData.deceased_last_name);
+      if (!nameValidation.valid) {
+        newErrors.deceased_last_name = nameValidation.error;
+      }
+    }
+
+    // Validate gender
+    if (!formData.deceased_gender) {
+      newErrors.deceased_gender = 'Gender is required';
+    }
+
+    // Validate birth date
+    if (!formData.birth_date) {
+      newErrors.birth_date = 'Birth date is required';
+    } else {
+      const birthDateValidation = validateBirthDate(formData.birth_date);
+      if (!birthDateValidation.valid) {
+        newErrors.birth_date = birthDateValidation.error;
+      }
+    }
+
+    // Validate death date
+    if (!formData.death_date) {
+      newErrors.death_date = 'Death date is required';
+    } else {
+      const deathDateValidation = validateDeathDate(formData.death_date, formData.birth_date);
+      if (!deathDateValidation.valid) {
+        newErrors.death_date = deathDateValidation.error;
+      }
+    }
+
+    // Validate burial date
+    if (!formData.burial_date) {
+      newErrors.burial_date = 'Burial date is required';
+    } else {
+      const burialDateValidation = validateBurialDate(formData.burial_date, formData.birth_date, formData.death_date);
+      if (!burialDateValidation.valid) {
+        newErrors.burial_date = burialDateValidation.error;
+      }
+    }
+
+    // Validate plot selection
+    if (!formData.plot_id) {
+      newErrors.plot_id = 'Please select a plot';
+    }
+
+    // Validate primary contact information
+    if (!formData.contact_first_name.trim()) {
+      newErrors.contact_first_name = 'Contact first name is required';
+    } else {
+      const nameValidation = validateName(formData.contact_first_name);
+      if (!nameValidation.valid) {
+        newErrors.contact_first_name = nameValidation.error;
+      }
+    }
+
+    if (!formData.contact_last_name.trim()) {
+      newErrors.contact_last_name = 'Contact last name is required';
+    } else {
+      const nameValidation = validateName(formData.contact_last_name);
+      if (!nameValidation.valid) {
+        newErrors.contact_last_name = nameValidation.error;
+      }
+    }
+
+    if (!formData.contact_email.trim()) {
+      newErrors.contact_email = 'Contact email is required';
+    } else {
+      const emailValidation = validateEmail(formData.contact_email);
+      if (!emailValidation.valid) {
+        newErrors.contact_email = emailValidation.error;
+      }
+    }
+
+    if (!formData.contact_phone.trim()) {
+      newErrors.contact_phone = 'Contact phone is required';
+    } else {
+      const phoneValidation = validatePhone(formData.contact_phone, formData.contact_country_code);
+      if (!phoneValidation.valid) {
+        newErrors.contact_phone = phoneValidation.error;
+      }
+    }
+
+    // Validate secondary contact if provided
+    if (formData.contact2_email.trim() || formData.contact2_phone.trim()) {
+      if (!formData.contact2_first_name.trim()) {
+        newErrors.contact2_first_name = 'Secondary contact first name is required if seco ndary contact email or phone is provided';
+      } else {
+        const nameValidation = validateName(formData.contact2_first_name);
+        if (!nameValidation.valid) {
+          newErrors.contact2_first_name = nameValidation.error;
+        }
+      }
+
+      if (!formData.contact2_last_name.trim()) {
+        newErrors.contact2_last_name = 'Secondary contact last name is required if secondary contact email or phone is provided';
+      } else {
+        const nameValidation = validateName(formData.contact2_last_name);
+        if (!nameValidation.valid) {
+          newErrors.contact2_last_name = nameValidation.error;
+        }
+      }
+
+      if (formData.contact2_email.trim()) {
+        const emailValidation = validateEmail(formData.contact2_email);
+        if (!emailValidation.valid) {
+          newErrors.contact2_email = emailValidation.error;
+        }
+      }
+
+      if (formData.contact2_phone.trim()) {
+        const phoneValidation = validatePhone(formData.contact2_phone, formData.contact2_country_code);
+        if (!phoneValidation.valid) {
+          newErrors.contact2_phone = phoneValidation.error;
+        }
+      }
+    }
+
+    // If there are validation errors, show them
+    if (Object.keys(newErrors).length > 0) {
+      setValidationErrors(newErrors);
+      return;
+    }
 
     // HTML5 validation will handle all field validations
 
@@ -345,7 +495,7 @@ const BurialForm = ({ burial, onSubmit, onCancel }) => {
         <label>Plot *</label>
         <select
           name="plot_id"
-          className="form-control"
+          className={`form-control ${validationErrors.plot_id ? 'error' : ''}`}
           value={formData.plot_id}
           onChange={handleChange}
           required
@@ -363,6 +513,11 @@ const BurialForm = ({ burial, onSubmit, onCancel }) => {
             </option>
           ))}
         </select>
+        {validationErrors.plot_id && (
+          <small style={{ color: '#ef4444', marginTop: '4px', display: 'block' }}>
+            {validationErrors.plot_id}
+          </small>
+        )}
       </div>
 
       <h4 style={{ marginTop: '20px', marginBottom: '15px', color: '#1a1a2e' }}>Deceased Information</h4>
@@ -374,11 +529,16 @@ const BurialForm = ({ burial, onSubmit, onCancel }) => {
           <input
             type="text"
             name="deceased_first_name"
-            className="form-control"
+            className={`form-control ${validationErrors.deceased_first_name ? 'error' : ''}`}
             value={formData.deceased_first_name}
             onChange={handleChange}
             required
           />
+          {validationErrors.deceased_first_name && (
+            <small style={{ color: '#ef4444', marginTop: '4px', display: 'block' }}>
+              {validationErrors.deceased_first_name}
+            </small>
+          )}
         </div>
         <div className="form-group" style={{ flex: '0 0 120px' }}>
           <label>M.I.</label>
@@ -397,11 +557,16 @@ const BurialForm = ({ burial, onSubmit, onCancel }) => {
           <input
             type="text"
             name="deceased_last_name"
-            className="form-control"
+            className={`form-control ${validationErrors.deceased_last_name ? 'error' : ''}`}
             value={formData.deceased_last_name}
             onChange={handleChange}
             required
           />
+          {validationErrors.deceased_last_name && (
+            <small style={{ color: '#ef4444', marginTop: '4px', display: 'block' }}>
+              {validationErrors.deceased_last_name}
+            </small>
+          )}
         </div>
       </div>
 
@@ -422,7 +587,7 @@ const BurialForm = ({ burial, onSubmit, onCancel }) => {
           <label>Gender *</label>
           <select
             name="deceased_gender"
-            className="form-control"
+            className={`form-control ${validationErrors.deceased_gender ? 'error' : ''}`}
             value={formData.deceased_gender}
             onChange={handleChange}
             required
@@ -431,6 +596,11 @@ const BurialForm = ({ burial, onSubmit, onCancel }) => {
             <option value="Male">Male</option>
             <option value="Female">Female</option>
           </select>
+          {validationErrors.deceased_gender && (
+            <small style={{ color: '#ef4444', marginTop: '4px', display: 'block' }}>
+              {validationErrors.deceased_gender}
+            </small>
+          )}
         </div>
       </div>
 
@@ -462,22 +632,32 @@ const BurialForm = ({ burial, onSubmit, onCancel }) => {
           <input
             type="date"
             name="birth_date"
-            className="form-control"
+            className={`form-control ${validationErrors.birth_date ? 'error' : ''}`}
             value={formData.birth_date}
             onChange={handleChange}
             required
           />
+          {validationErrors.birth_date && (
+            <small style={{ color: '#ef4444', marginTop: '4px', display: 'block' }}>
+              {validationErrors.birth_date}
+            </small>
+          )}
         </div>
         <div className="form-group">
           <label>Death Date *</label>
           <input
             type="date"
             name="death_date"
-            className="form-control"
+            className={`form-control ${validationErrors.death_date ? 'error' : ''}`}
             value={formData.death_date}
             onChange={handleChange}
             required
           />
+          {validationErrors.death_date && (
+            <small style={{ color: '#ef4444', marginTop: '4px', display: 'block' }}>
+              {validationErrors.death_date}
+            </small>
+          )}
         </div>
       </div>
 
@@ -486,11 +666,16 @@ const BurialForm = ({ burial, onSubmit, onCancel }) => {
         <input
           type="date"
           name="burial_date"
-          className="form-control"
+          className={`form-control ${validationErrors.burial_date ? 'error' : ''}`}
           value={formData.burial_date}
           onChange={handleChange}
           required
         />
+        {validationErrors.burial_date && (
+          <small style={{ color: '#ef4444', marginTop: '4px', display: 'block' }}>
+            {validationErrors.burial_date}
+          </small>
+        )}
       </div>
 
       {/* Public Searchability Checkbox */}
@@ -543,11 +728,16 @@ const BurialForm = ({ burial, onSubmit, onCancel }) => {
           <input
             type="text"
             name="contact_first_name"
-            className="form-control"
+            className={`form-control ${validationErrors.contact_first_name ? 'error' : ''}`}
             value={formData.contact_first_name}
             onChange={handleChange}
             required
           />
+          {validationErrors.contact_first_name && (
+            <small style={{ color: '#ef4444', marginTop: '4px', display: 'block' }}>
+              {validationErrors.contact_first_name}
+            </small>
+          )}
         </div>
         <div className="form-group" style={{ flex: '0 0 120px' }}>
           <label>M.I.</label>
@@ -566,11 +756,16 @@ const BurialForm = ({ burial, onSubmit, onCancel }) => {
           <input
             type="text"
             name="contact_last_name"
-            className="form-control"
+            className={`form-control ${validationErrors.contact_last_name ? 'error' : ''}`}
             value={formData.contact_last_name}
             onChange={handleChange}
             required
           />
+          {validationErrors.contact_last_name && (
+            <small style={{ color: '#ef4444', marginTop: '4px', display: 'block' }}>
+              {validationErrors.contact_last_name}
+            </small>
+          )}
         </div>
       </div>
 
@@ -617,7 +812,7 @@ const BurialForm = ({ burial, onSubmit, onCancel }) => {
           <input
             type="email"
             name="contact_email"
-            className="form-control"
+            className={`form-control ${validationErrors.contact_email ? 'error' : ''}`}
             value={formData.contact_email}
             onChange={handleChange}
             placeholder="email@example.com"
@@ -625,6 +820,11 @@ const BurialForm = ({ burial, onSubmit, onCancel }) => {
             title={invitationStatus?.status === 'accepted' ? 'Email cannot be changed after account activation' : ''}
             required
           />
+          {validationErrors.contact_email && (
+            <small style={{ color: '#ef4444', marginTop: '4px', display: 'block' }}>
+              {validationErrors.contact_email}
+            </small>
+          )}
           {invitationStatus?.status === 'accepted' && (
             <small style={{ color: '#d97706', marginTop: '5px', display: 'block' }}>
               Email cannot be edited after account activation
@@ -726,7 +926,7 @@ const BurialForm = ({ burial, onSubmit, onCancel }) => {
         <button type="button" className="btn" onClick={onCancel} disabled={loading}>
           Cancel
         </button>
-        <button type="submit" className="btn btn-primary" disabled={loading}>
+        <button type="submit" className="btn btn-primary" disabled={loading || Object.keys(validationErrors).length > 0}>
           {loading ? 'Saving...' : (burial ? 'Update' : 'Create')}
         </button>
       </div>

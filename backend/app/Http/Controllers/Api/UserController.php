@@ -61,7 +61,7 @@ class UserController extends Controller
             'name' => 'required|string|max:255',
             'email' => 'required|string|email|max:255|unique:users',
             'password' => 'required|string|min:8',
-            'role' => 'required|in:admin,staff',
+            'role' => 'required|in:admin,staff,member',
         ]);
 
         $user = User::create([
@@ -247,6 +247,69 @@ class UserController extends Controller
         return response()->json([
             'success' => true,
             'data' => $stats
+        ]);
+    }
+
+    /**
+     * Update the authenticated user's profile
+     */
+    public function updateProfile(Request $request)
+    {
+        $user = auth()->user();
+
+        $validated = $request->validate([
+            'name' => 'sometimes|required|string|max:255',
+            'email' => [
+                'sometimes',
+                'required',
+                'string',
+                'email',
+                'max:255',
+                Rule::unique('users')->ignore($user->id),
+            ],
+            'phone' => 'sometimes|nullable|string|max:20',
+            'address' => 'sometimes|nullable|string|max:500',
+            'avatar' => 'sometimes|nullable|image|mimes:png,jpg,jpeg|max:5120', // 5MB max
+        ]);
+
+        if (isset($validated['name'])) {
+            $user->name = $validated['name'];
+        }
+        if (isset($validated['email'])) {
+            $user->email = $validated['email'];
+        }
+        if (isset($validated['phone'])) {
+            $user->phone = $validated['phone'];
+        }
+        if (isset($validated['address'])) {
+            $user->address = $validated['address'];
+        }
+
+        // Handle avatar upload
+        if ($request->hasFile('avatar')) {
+            $file = $request->file('avatar');
+            $filename = 'avatar_' . $user->id . '_' . time() . '.' . $file->extension();
+            
+            // Ensure avatars directory exists
+            \Illuminate\Support\Facades\Storage::disk('public')->makeDirectory('avatars', 0755, true);
+            
+            // Store in public/avatars directory
+            $path = $file->storeAs('avatars', $filename, 'public');
+            
+            // Delete old avatar if it exists
+            if ($user->avatar && \Illuminate\Support\Facades\Storage::disk('public')->exists($user->avatar)) {
+                \Illuminate\Support\Facades\Storage::disk('public')->delete($user->avatar);
+            }
+            
+            $user->avatar = $path;
+        }
+
+        $user->save();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Profile updated successfully',
+            'data' => $user
         ]);
     }
 }

@@ -54,12 +54,44 @@ const MemberHeader = () => {
           >
             Services
           </Link>
+          <Link 
+            to="/pay-dues" 
+            className={`member-nav-link ${isActive('/pay-dues') ? 'active' : ''}`}
+          >
+            Pay Dues
+          </Link>
+          <Link 
+            to="/member/contact" 
+            className={`member-nav-link ${isActive('/member/contact') ? 'active' : ''}`}
+          >
+            Feedback
+          </Link>
         </nav>
 
         <div className="member-header-actions">
-          <div className="member-user-avatar">
-            {user?.name?.charAt(0).toUpperCase()}
-          </div>
+          <Link 
+            to="/profile" 
+            className="member-user-avatar"
+            title="Edit Profile"
+          >
+            {user?.avatar ? (
+              <img 
+                src={user.avatar} 
+                alt="Profile" 
+                className="avatar-image"
+                onError={(e) => {
+                  e.target.style.display = 'none';
+                  e.target.nextElementSibling.style.display = 'flex';
+                }}
+              />
+            ) : null}
+            <span 
+              className="avatar-initials"
+              style={{ display: user?.avatar ? 'none' : 'flex' }}
+            >
+              {user?.name?.charAt(0).toUpperCase()}
+            </span>
+          </Link>
           <button onClick={handleLogout} className="member-logout-btn">
             Logout
           </button>

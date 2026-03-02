@@ -60,6 +60,27 @@ const PublicGravePage = () => {
 
   return (
     <div className="public-grave-container">
+      {/* Back Button */}
+      <div style={{ marginBottom: '20px' }}>
+        <button
+          onClick={() => window.history.back()}
+          style={{ 
+            padding: '10px 20px',
+            fontSize: '1rem',
+            color: 'white',
+            backgroundColor: 'rgba(26, 71, 42, 0.6)',
+            border: 'none',
+            borderRadius: '6px',
+            cursor: 'pointer',
+            transition: 'background-color 0.2s'
+          }}
+          onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'rgba(26, 71, 42, 0.85)'}
+          onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'rgba(26, 71, 42, 0.6)'}
+        >
+          ← Back
+        </button>
+      </div>
+
       <div className="grave-profile">
         <div className="grave-profile-header">
           {(profile.deceased_photo_url || profile.photo_url) && (

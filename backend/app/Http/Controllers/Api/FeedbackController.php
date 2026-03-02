@@ -4,7 +4,10 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Feedback;
+use App\Mail\FeedbackNotification;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Log;
 
 class FeedbackController extends Controller
 {
@@ -31,6 +34,7 @@ class FeedbackController extends Controller
             $query->where(function ($q) use ($search) {
                 $q->where('name', 'like', "%{$search}%")
                   ->orWhere('email', 'like', "%{$search}%")
+                  ->orWhere('phone', 'like', "%{$search}%")
                   ->orWhere('subject', 'like', "%{$search}%")
                   ->orWhere('message', 'like', "%{$search}%");
             });
@@ -61,10 +65,23 @@ class FeedbackController extends Controller
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'email' => 'required|email|max:255',
+            'phone' => 'nullable|string|max:20',
+            'phone_country_code' => 'nullable|string|max:5',
             'subject' => 'nullable|string|max:255',
             'message' => 'required|string',
             'rating' => 'nullable|integer|min:1|max:5',
         ]);
+
+        // Validate phone number if provided
+        if ($validated['phone']) {
+            $phoneRequirements = $this->getPhoneRequirements($validated['phone_country_code'] ?? '+63');
+            if (strlen($validated['phone']) !== $phoneRequirements['digits']) {
+                return $this->errorResponse(
+                    "Phone number must be exactly {$phoneRequirements['digits']} digits for {$phoneRequirements['country']}.",
+                    400
+                );
+            }
+        }
 
         $feedback = Feedback::create([
             ...$validated,
@@ -72,11 +89,72 @@ class FeedbackController extends Controller
             'status' => 'new',
         ]);
 
+        // Log the feedback submission (avoiding email template rendering issues)
+        if (config('mail.default') === 'log') {
+            // When using log driver, just log the details without rendering template
+            Log::info('=== NEW FEEDBACK SUBMISSION ===', [
+                'feedback_id' => $feedback->id,
+                'timestamp' => now()->toDateTimeString(),
+                'name' => $validated['name'],
+                'email' => $validated['email'],
+                'phone' => $validated['phone'] ?? 'N/A',
+                'phone_country_code' => $validated['phone_country_code'] ?? 'N/A',
+                'subject' => $validated['subject'] ?? 'N/A',
+                'message' => $validated['message'],
+                'rating' => $validated['rating'] ?? 'N/A',
+            ]);
+            Log::info('=== END FEEDBACK SUBMISSION ===');
+        } else {
+            // When using SMTP, send the email
+            try {
+                $cemeteryEmail = config('mail.from.address');
+                
+                if (!$cemeteryEmail) {
+                    throw new \Exception('MAIL_FROM_ADDRESS is not configured in .env');
+                }
+                
+                Mail::to($cemeteryEmail)->send(new FeedbackNotification($feedback));
+                
+                Log::info('Feedback email sent successfully', [
+                    'feedback_id' => $feedback->id,
+                    'recipient' => $cemeteryEmail,
+                    'sender_email' => $validated['email'],
+                    'sender_name' => $validated['name'],
+                ]);
+            } catch (\Exception $e) {
+                Log::error('Failed to send feedback notification email', [
+                    'error' => $e->getMessage(),
+                    'feedback_id' => $feedback->id,
+                    'exception_class' => get_class($e),
+                ]);
+            }
+        }
+
         return response()->json([
             'success' => true,
             'message' => 'Thank you for your feedback!',
             'data' => $feedback
         ], 201);
+    }
+
+    /**
+     * Get phone requirements by country code
+     */
+    private function getPhoneRequirements($countryCode)
+    {
+        $requirements = [
+            '+63' => ['digits' => 10, 'country' => 'Philippines'],
+            '+1' => ['digits' => 10, 'country' => 'USA/Canada'],
+            '+44' => ['digits' => 10, 'country' => 'UK'],
+            '+61' => ['digits' => 9, 'country' => 'Australia'],
+            '+81' => ['digits' => 10, 'country' => 'Japan'],
+            '+82' => ['digits' => 10, 'country' => 'South Korea'],
+            '+86' => ['digits' => 11, 'country' => 'China'],
+            '+65' => ['digits' => 8, 'country' => 'Singapore'],
+            '+60' => ['digits' => 10, 'country' => 'Malaysia'],
+            '+971' => ['digits' => 9, 'country' => 'UAE'],
+        ];
+        return $requirements[$countryCode] ?? ['digits' => 10, 'country' => 'Selected Country'];
     }
 
     /**
@@ -175,5 +253,68 @@ class FeedbackController extends Controller
             'success' => true,
             'data' => $stats
         ]);
+    }
+
+    /**
+     * Test email sending (admin only - for debugging)
+     */
+    public function testEmail()
+    {
+        // Only allow admin to test emails
+        if (!auth()->check() || auth()->user()->role !== 'admin') {
+            return response()->json([
+                'success' => false,
+                'message' => 'Unauthorized. Only admins can test emails.'
+            ], 403);
+        }
+
+        try {
+            $testEmail = auth()->user()->email;
+            $cemeteryEmail = config('mail.from.address');
+            
+            Log::info('Testing email configuration', [
+                'from' => config('mail.mailers.smtp.username'),
+                'to' => $testEmail,
+                'host' => config('mail.mailers.smtp.host'),
+                'port' => config('mail.mailers.smtp.port'),
+            ]);
+
+            // Send a simple test email
+            Mail::raw('This is a test email from Himlayan Cemetery contact form. If you received this, email sending is working correctly!', function ($message) use ($testEmail) {
+                $message->to($testEmail)
+                    ->subject('Test Email from Himlayan Cemetery');
+            });
+
+            Log::info('Test email sent successfully to: ' . $testEmail);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Test email sent successfully! Check your inbox (including spam folder)',
+                'email_sent_to' => $testEmail,
+                'mail_config' => [
+                    'host' => config('mail.mailers.smtp.host'),
+                    'port' => config('mail.mailers.smtp.port'),
+                    'encryption' => config('mail.mailers.smtp.encryption'),
+                    'username' => config('mail.mailers.smtp.username'),
+                ]
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Test email failed', [
+                'error' => $e->getMessage(),
+                'code' => $e->getCode(),
+                'mail_host' => config('mail.mailers.smtp.host'),
+                'mail_port' => config('mail.mailers.smtp.port'),
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to send test email: ' . $e->getMessage(),
+                'error_details' => [
+                    'exception' => get_class($e),
+                    'message' => $e->getMessage(),
+                    'line' => $e->getLine(),
+                ]
+            ], 500);
+        }
     }
 }

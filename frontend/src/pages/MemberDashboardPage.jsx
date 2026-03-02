@@ -11,19 +11,44 @@ const MemberDashboardPage = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [statsLoading, setStatsLoading] = useState(true);
+  const [plotsLoading, setPlotsLoading] = useState(true);
+  const [announcementsLoading, setAnnouncementsLoading] = useState(true);
   const [myPlots, setMyPlots] = useState([]);
   const [announcements, setAnnouncements] = useState([]);
   const [currentTime, setCurrentTime] = useState(new Date());
+  const [dashboardStats, setDashboardStats] = useState({
+    my_plots: 0,
+    pending_payments: 0,
+    visits_this_year: 0,
+    service_requests: 0
+  });
 
   useEffect(() => {
     loadMyPlots();
     loadAnnouncements();
+    loadDashboardStats();
     
     const timer = setInterval(() => setCurrentTime(new Date()), 60000);
     return () => clearInterval(timer);
   }, []);
 
+  const loadDashboardStats = async () => {
+    setStatsLoading(true);
+    try {
+      const response = await api.get('/member/dashboard-stats');
+      if (response.data.success) {
+        setDashboardStats(response.data.data);
+      }
+    } catch (err) {
+      console.log('Failed to load dashboard stats:', err);
+    } finally {
+      setStatsLoading(false);
+    }
+  };
+
   const loadMyPlots = async () => {
+    setPlotsLoading(true);
     try {
       const response = await api.get('/member/my-plots');
       if (response.data.success) {
@@ -32,10 +57,13 @@ const MemberDashboardPage = () => {
     } catch (err) {
       console.log('No plots found or API not ready');
       setMyPlots([]);
+    } finally {
+      setPlotsLoading(false);
     }
   };
 
   const loadAnnouncements = async () => {
+    setAnnouncementsLoading(true);
     try {
       const response = await api.get('/announcements');
       if (response.data.success) {
@@ -65,6 +93,8 @@ const MemberDashboardPage = () => {
           type: 'success'
         }
       ]);
+    } finally {
+      setAnnouncementsLoading(false);
     }
   };
 
@@ -239,7 +269,7 @@ const MemberDashboardPage = () => {
 
         {/* Stats Overview */}
         <section className="stats-overview">
-          <div className="stat-card">
+          <Link to="/member/loved-ones" className={`stat-card clickable ${statsLoading ? 'loading' : ''}`}>
             <div className="stat-icon plots">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                 <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/>
@@ -247,12 +277,12 @@ const MemberDashboardPage = () => {
               </svg>
             </div>
             <div className="stat-info">
-              <span className="stat-number">{myPlots.length}</span>
+              {!statsLoading && <span className="stat-number">{dashboardStats.my_plots}</span>}
               <span className="stat-label">My Plots</span>
             </div>
-          </div>
+          </Link>
 
-          <div className="stat-card">
+          <Link to="/pay-dues" className={`stat-card clickable ${statsLoading ? 'loading' : ''}`}>
             <div className="stat-icon pending">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                 <circle cx="12" cy="12" r="10"/>
@@ -260,12 +290,12 @@ const MemberDashboardPage = () => {
               </svg>
             </div>
             <div className="stat-info">
-              <span className="stat-number">0</span>
+              {!statsLoading && <span className="stat-number">{dashboardStats.pending_payments}</span>}
               <span className="stat-label">Pending Payments</span>
             </div>
-          </div>
+          </Link>
 
-          <div className="stat-card">
+          <div className={`stat-card ${statsLoading ? 'loading' : ''}`}>
             <div className="stat-icon visits">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                 <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
@@ -274,12 +304,12 @@ const MemberDashboardPage = () => {
               </svg>
             </div>
             <div className="stat-info">
-              <span className="stat-number">12</span>
+              {!statsLoading && <span className="stat-number">{dashboardStats.visits_this_year}</span>}
               <span className="stat-label">Visits This Year</span>
             </div>
           </div>
 
-          <div className="stat-card">
+          <Link to="/member/services?tab=my-requests" className={`stat-card clickable ${statsLoading ? 'loading' : ''}`}>
             <div className="stat-icon requests">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                 <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
@@ -289,10 +319,10 @@ const MemberDashboardPage = () => {
               </svg>
             </div>
             <div className="stat-info">
-              <span className="stat-number">2</span>
-              <span className="stat-label">Service Requests</span>
+              {!statsLoading && <span className="stat-number">{dashboardStats.service_requests}</span>}
+              <span className="stat-label">Pending Requests</span>
             </div>
-          </div>
+          </Link>
         </section>
 
         {/* Two Column Layout */}
@@ -310,7 +340,12 @@ const MemberDashboardPage = () => {
               <Link to="/member/plots" className="see-all-link">View All</Link>
             </div>
             
-            {myPlots.length > 0 ? (
+            {plotsLoading ? (
+              <div className="loading-spinner-container">
+                <div className="loading-spinner"></div>
+                <p>Loading your plots...</p>
+              </div>
+            ) : myPlots.length > 0 ? (
               <div className="plots-list-pro">
                 {myPlots.slice(0, 3).map((plot) => (
                   <div key={plot.id} className="plot-card-pro">
@@ -353,7 +388,12 @@ const MemberDashboardPage = () => {
             </div>
             
             <div className="announcements-list-pro">
-              {announcements.map((announcement) => (
+              {announcementsLoading ? (
+                <div className="loading-spinner-container">
+                  <div className="loading-spinner"></div>
+                  <p>Loading announcements...</p>
+                </div>
+              ) : announcements.map((announcement) => (
                 <div key={announcement.id} className={`announcement-card-pro ${announcement.type}`}>
                   <div className="announcement-indicator"></div>
                   <div className="announcement-content">
@@ -382,7 +422,7 @@ const MemberDashboardPage = () => {
               </div>
               <span>Cemetery Map</span>
             </Link>
-            <Link to="/member/history" className="quick-link-card">
+            <Link to="/pay-dues" className="quick-link-card">
               <div className="quick-link-icon">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                   <circle cx="12" cy="12" r="10"/>
@@ -399,16 +439,6 @@ const MemberDashboardPage = () => {
               </div>
               <span>Maintenance Request</span>
             </Link>
-            <Link to="/member/schedule" className="quick-link-card">
-              <div className="quick-link-icon">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
-                  <line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/>
-                  <line x1="3" y1="10" x2="21" y2="10"/>
-                </svg>
-              </div>
-              <span>Schedule Visit</span>
-            </Link>
             <Link to="/member/contact" className="quick-link-card">
               <div className="quick-link-icon">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -416,16 +446,6 @@ const MemberDashboardPage = () => {
                 </svg>
               </div>
               <span>Contact Us</span>
-            </Link>
-            <Link to="/member/help" className="quick-link-card">
-              <div className="quick-link-icon">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <circle cx="12" cy="12" r="10"/>
-                  <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/>
-                  <line x1="12" y1="17" x2="12.01" y2="17"/>
-                </svg>
-              </div>
-              <span>Help & FAQ</span>
             </Link>
           </div>
         </section>

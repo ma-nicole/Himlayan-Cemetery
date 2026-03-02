@@ -126,10 +126,10 @@ const MyLovedOnesPage = () => {
   };
 
   return (
-    <div className="cyl-page-wrapper">
+    <div className="cyl-page-wrapper" style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
       <MemberHeader />
       
-      <main className="cyl-main-content" style={{ minHeight: 'calc(100vh - 200px)', padding: '40px 20px', backgroundColor: '#f9fafb' }}>
+      <main className="cyl-main-content" style={{ flex: 1, padding: '40px 20px', backgroundColor: '#f9fafb' }}>
         <div className="cyl-container" style={{ maxWidth: '1200px', margin: '0 auto' }}>
           <div className="page-header" style={{ marginBottom: '30px' }}>
             <h1 style={{ fontSize: '28px', color: '#1a472a', marginBottom: '10px' }}>My Loved Ones</h1>
@@ -157,10 +157,10 @@ const MyLovedOnesPage = () => {
               <p style={{ color: '#6b7280' }}>You don't have any burial records associated with this account yet.</p>
             </div>
           ) : (
-            <div className="records-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(350px, 1fr))', gap: '25px' }}>
+            <div className="records-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(350px, 1fr))', gap: '25px', alignItems: 'stretch' }}>
               {records.map(record => (
-                <div key={record.id} className="record-card" style={{ backgroundColor: 'white', borderRadius: '12px', overflow: 'hidden', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)' }}>
-                  <div className="card-header" style={{ position: 'relative', height: '140px', backgroundColor: '#e5e7eb' }}>
+                <div key={record.id} className="record-card" style={{ backgroundColor: 'white', borderRadius: '12px', overflow: 'hidden', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)', display: 'flex', flexDirection: 'column', height: '100%' }}>
+                  <div className="card-header" style={{ position: 'relative', height: '140px', backgroundColor: '#e5e7eb', flexShrink: 0 }}>
                     {record.deceased_photo_url ? (
                       <img 
                         src={record.deceased_photo_url.startsWith('http') ? record.deceased_photo_url : `http://localhost:8000/storage/${record.deceased_photo_url}`}
@@ -168,11 +168,29 @@ const MyLovedOnesPage = () => {
                         style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                       />
                     ) : (
-                      <div style={{ height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: '#d1d5db', color: '#9ca3af' }}>
-                        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-                           <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
-                           <circle cx="12" cy="7" r="4"/>
-                        </svg>
+                      <div style={{ 
+                        width: '100%',
+                        height: '100%', 
+                        display: 'flex', 
+                        alignItems: 'center', 
+                        justifyContent: 'center', 
+                        backgroundColor: '#e5e7eb', 
+                        color: '#9ca3af'
+                      }}>
+                        <div style={{
+                          width: '70px',
+                          height: '70px',
+                          borderRadius: '50%',
+                          backgroundColor: '#d1d5db',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center'
+                        }}>
+                          <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                             <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+                             <circle cx="12" cy="7" r="4"/>
+                          </svg>
+                        </div>
                       </div>
                     )}
                     <div className="status-badge" style={{ 
@@ -191,11 +209,13 @@ const MyLovedOnesPage = () => {
                     </div>
                   </div>
                   
-                  <div className="card-content" style={{ padding: '20px' }}>
+                  <div className="card-content" style={{ padding: '20px', display: 'flex', flexDirection: 'column', flex: 1 }}>
                     <h2 style={{ fontSize: '18px', fontWeight: 'bold', color: '#111827', marginBottom: '5px' }}>{record.deceased_name}</h2>
-                    {record.deceased_nickname && <p style={{ color: '#4b5563', fontSize: '14px', marginBottom: '15px', fontStyle: 'italic' }}>"{record.deceased_nickname}"</p>}
+                    <p style={{ color: record.deceased_nickname ? '#4b5563' : '#9ca3af', fontSize: '14px', marginBottom: '15px', fontStyle: 'italic', minHeight: '21px' }}>
+                      {record.deceased_nickname ? `"${record.deceased_nickname}"` : 'No nickname'}
+                    </p>
                     
-                    <div className="info-list" style={{ fontSize: '14px', color: '#374151', marginBottom: '20px' }}>
+                    <div className="info-list" style={{ fontSize: '14px', color: '#374151', marginBottom: '20px', flex: 1 }}>
                       <div style={{ display: 'flex', marginBottom: '8px' }}>
                         <span style={{ width: '100px', color: '#6b7280' }}>Plot:</span>
                         <span style={{ fontWeight: '500' }}>{record.plot?.plot_number} (Loc: {record.plot?.section}-{record.plot?.block})</span>
@@ -222,7 +242,8 @@ const MyLovedOnesPage = () => {
                         cursor: 'pointer',
                         fontWeight: '600',
                         fontSize: '14px',
-                        transition: 'background-color 0.2s'
+                        transition: 'background-color 0.2s',
+                        marginTop: 'auto'
                       }}
                       onMouseOver={(e) => e.target.style.backgroundColor = '#15803d'}
                       onMouseOut={(e) => e.target.style.backgroundColor = '#1a472a'}
@@ -344,15 +365,17 @@ const MyLovedOnesPage = () => {
                   value={formData.obituary}
                   onChange={handleInputChange}
                   placeholder="Share a short biography or memory..."
-                  rows="4"
+                  rows="8"
                   style={{ 
                     width: '100%', 
-                    padding: '10px', 
+                    padding: '12px', 
                     borderRadius: '8px', 
                     border: '1px solid #d1d5db',
                     fontSize: '15px',
                     fontFamily: 'inherit',
-                    resize: 'vertical'
+                    resize: 'vertical',
+                    minHeight: '150px',
+                    lineHeight: '1.5'
                   }}
                 />
               </div>

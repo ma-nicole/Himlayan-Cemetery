@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import PublicLayout from '../components/common/PublicLayout';
 import { useToast } from '../context/ToastContext';
 import api from '../services/api';
+import { validateName, validateEmail, validatePhone, validateRequired, validateTextArea } from '../utils/formValidator';
 import './FeedbackPage.css';
 
 const FeedbackPage = () => {
@@ -10,27 +11,105 @@ const FeedbackPage = () => {
   const [submitted, setSubmitted] = useState(false);
   const [rating, setRating] = useState(0);
   const [hoverRating, setHoverRating] = useState(0);
+  const [validationErrors, setValidationErrors] = useState({});
   
   const [formData, setFormData] = useState({
     name: '',
     email: '',
+    phone_country_code: '+63',
+    phone: '',
     subject: '',
     message: '',
   });
 
+  const getPhoneRequirements = (countryCode) => {
+    const requirements = {
+      '+63': { digits: 10, country: 'Philippines' },
+      '+1': { digits: 10, country: 'USA/Canada' },
+      '+44': { digits: 10, country: 'UK' },
+      '+61': { digits: 9, country: 'Australia' },
+      '+81': { digits: 10, country: 'Japan' },
+      '+82': { digits: 10, country: 'South Korea' },
+      '+86': { digits: 11, country: 'China' },
+      '+65': { digits: 8, country: 'Singapore' },
+      '+60': { digits: 10, country: 'Malaysia' },
+      '+971': { digits: 9, country: 'UAE' }
+    };
+    return requirements[countryCode] || { digits: 10, country: 'Selected Country' };
+  };
+
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
+    
+    // Handle phone number input - only allow digits and enforce length limit
+    if (name === 'phone') {
+      const digitsOnly = value.replace(/\D/g, '');
+      const maxLength = getPhoneRequirements(formData.phone_country_code).digits;
+      setFormData(prev => ({ 
+        ...prev, 
+        [name]: digitsOnly.slice(0, maxLength)
+      }));
+    } else if (name === 'phone_country_code') {
+      // Handle country code changes - clear phone if it exceeds new country's limit
+      const currentPhone = formData.phone;
+      const newMaxLength = getPhoneRequirements(value).digits;
+      
+      setFormData(prev => ({
+        ...prev,
+        [name]: value,
+        phone: currentPhone.length > newMaxLength ? '' : currentPhone
+      }));
+    } else {
+      setFormData(prev => ({ ...prev, [name]: value }));
+    }
+
+    // Clear validation error for this field when user starts typing
+    if (validationErrors[name]) {
+      setValidationErrors(prev => {
+        const newErrors = { ...prev };
+        delete newErrors[name];
+        return newErrors;
+      });
+    }
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
-    if (!formData.name || !formData.email || !formData.message) {
-      toast?.warning('Please fill in all required fields');
+    const newErrors = {};
+
+    // Validate name
+    const nameValidation = validateName(formData.name);
+    if (!nameValidation.isValid) {
+      newErrors.name = nameValidation.error;
+    }
+
+    // Validate email
+    const emailValidation = validateEmail(formData.email);
+    if (!emailValidation.isValid) {
+      newErrors.email = emailValidation.error;
+    }
+
+    // Validate phone if provided
+    if (formData.phone) {
+      const phoneValidation = validatePhone(formData.phone, formData.phone_country_code);
+      if (!phoneValidation.isValid) {
+        newErrors.phone = phoneValidation.error;
+      }
+    }
+
+    // Validate message
+    const messageValidation = validateTextArea(formData.message);
+    if (!messageValidation.isValid) {
+      newErrors.message = messageValidation.error;
+    }
+
+    // If there are validation errors, display them and don't submit
+    if (Object.keys(newErrors).length > 0) {
+      setValidationErrors(newErrors);
       return;
     }
 
+    setValidationErrors({});
     setLoading(true);
     
     try {
@@ -54,6 +133,8 @@ const FeedbackPage = () => {
     setFormData({
       name: '',
       email: '',
+      phone_country_code: '+63',
+      phone: '',
       subject: '',
       message: '',
     });
@@ -104,10 +185,16 @@ const FeedbackPage = () => {
                   name="name"
                   value={formData.name}
                   onChange={handleChange}
-                  className="form-input"
+                  className={`form-input ${validationErrors.name ? 'error' : ''}`}
                   placeholder="Your full name"
                   required
+                  style={{ borderColor: validationErrors.name ? '#ef4444' : undefined }}
                 />
+                {validationErrors.name && (
+                  <small style={{ color: '#ef4444', marginTop: '4px', display: 'block' }}>
+                    {validationErrors.name}
+                  </small>
+                )}
               </div>
 
               <div className="form-group">
@@ -119,11 +206,70 @@ const FeedbackPage = () => {
                   name="email"
                   value={formData.email}
                   onChange={handleChange}
-                  className="form-input"
+                  className={`form-input ${validationErrors.email ? 'error' : ''}`}
                   placeholder="your.email@example.com"
                   required
+                  style={{ borderColor: validationErrors.email ? '#ef4444' : undefined }}
+                />
+                {validationErrors.email && (
+                  <small style={{ color: '#ef4444', marginTop: '4px', display: 'block' }}>
+                    {validationErrors.email}
+                  </small>
+                )}
+              </div>
+            </div>
+
+            <div className="form-group">
+              <label className="form-label">Phone Number (Optional)</label>
+              <div style={{ display: 'flex', gap: '8px', alignItems: 'flex-start' }}>
+                <select
+                  name="phone_country_code"
+                  className="form-input form-select"
+                  value={formData.phone_country_code}
+                  onChange={handleChange}
+                  style={{ 
+                    flex: '0 0 120px',
+                    padding: '0.875rem 1rem'
+                  }}
+                >
+                  <option value="+63">🇵🇭 +63</option>
+                  <option value="+1">🇺🇸 +1</option>
+                  <option value="+44">🇬🇧 +44</option>
+                  <option value="+61">🇦🇺 +61</option>
+                  <option value="+81">🇯🇵 +81</option>
+                  <option value="+82">🇰🇷 +82</option>
+                  <option value="+86">🇨🇳 +86</option>
+                  <option value="+65">🇸🇬 +65</option>
+                  <option value="+60">🇲🇾 +60</option>
+                  <option value="+971">🇦🇪 +971</option>
+                </select>
+                <input
+                  type="tel"
+                  name="phone"
+                  className={`form-input ${validationErrors.phone ? 'error' : ''}`}
+                  value={formData.phone}
+                  onChange={handleChange}
+                  placeholder="e.g., 9123456789"
+                  style={{ flex: '1', borderColor: validationErrors.phone ? '#ef4444' : undefined }}
+                  title={`Please enter exactly ${getPhoneRequirements(formData.phone_country_code).digits} digits for ${getPhoneRequirements(formData.phone_country_code).country}`}
                 />
               </div>
+              {validationErrors.phone && (
+                <small style={{ color: '#ef4444', marginTop: '4px', display: 'block' }}>
+                  {validationErrors.phone}
+                </small>
+              )}
+              {!validationErrors.phone && (
+                <small style={{ color: '#666', display: 'block', marginTop: '0.5rem' }}>
+                  {formData.phone ? (
+                    formData.phone.length === getPhoneRequirements(formData.phone_country_code).digits
+                      ? '✓ Valid'
+                      : `Enter exactly ${getPhoneRequirements(formData.phone_country_code).digits} digits for ${getPhoneRequirements(formData.phone_country_code).country}`
+                  ) : (
+                    `Optional - Enter exactly ${getPhoneRequirements(formData.phone_country_code).digits} digits for ${getPhoneRequirements(formData.phone_country_code).country}`
+                  )}
+                </small>
+              )}
             </div>
 
             <div className="form-group">
@@ -163,19 +309,27 @@ const FeedbackPage = () => {
                 name="message"
                 value={formData.message}
                 onChange={handleChange}
-                className="form-input form-textarea"
+                className={`form-input form-textarea ${validationErrors.message ? 'error' : ''}`}
                 placeholder="Write your feedback or suggestions here..."
                 rows={6}
                 required
+                style={{ borderColor: validationErrors.message ? '#ef4444' : undefined }}
               />
-              <span className="char-count">{formData.message.length} / 1000</span>
+              {validationErrors.message && (
+                <small style={{ color: '#ef4444', marginTop: '4px', display: 'block' }}>
+                  {validationErrors.message}
+                </small>
+              )}
+              {!validationErrors.message && (
+                <span className="char-count">{formData.message.length} / 1000</span>
+              )}
             </div>
 
             <div className="form-actions">
               <button 
                 type="submit" 
                 className="btn btn-primary btn-full"
-                disabled={loading}
+                disabled={loading || Object.keys(validationErrors).length > 0}
               >
                 {loading ? 'Submitting...' : 'Submit Feedback'}
               </button>

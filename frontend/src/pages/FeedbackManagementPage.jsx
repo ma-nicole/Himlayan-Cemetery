@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import api from '../services/api';
 import Sidebar from '../components/common/Sidebar';
+import { validateRequired, validateTextArea } from '../utils/formValidator';
 import '../styles/AdminManagement.css';
 
 const FeedbackManagementPage = () => {
@@ -12,6 +13,7 @@ const FeedbackManagementPage = () => {
   const [showModal, setShowModal] = useState(false);
   const [selectedItem, setSelectedItem] = useState(null);
   const [response, setResponse] = useState('');
+  const [validationErrors, setValidationErrors] = useState({});
   const [formError, setFormError] = useState('');
   const [pagination, setPagination] = useState({ currentPage: 1, lastPage: 1, total: 0 });
 
@@ -60,15 +62,31 @@ const FeedbackManagementPage = () => {
     setSelectedItem(item);
     setResponse(item.admin_response || '');
     setFormError('');
+    setValidationErrors({});
     setShowModal(true);
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!response.trim()) {
-      setFormError('Please enter a response');
+    const newErrors = {};
+
+    // Validate response
+    const responseValidation = validateRequired(response, 'Response');
+    if (!responseValidation.valid) {
+      newErrors.response = responseValidation.error;
+    } else {
+      const textAreaValidation = validateTextArea(response, { minLength: 5, maxLength: 3000 });
+      if (!textAreaValidation.valid) {
+        newErrors.response = textAreaValidation.error;
+      }
+    }
+
+    // If there are validation errors, show them
+    if (Object.keys(newErrors).length > 0) {
+      setValidationErrors(newErrors);
       return;
     }
+
     setFormError('');
     try {
       await api.post(`/feedbacks/${selectedItem.id}/respond`, { admin_response: response });
@@ -174,6 +192,11 @@ const FeedbackManagementPage = () => {
                             <div>
                               <div className="user-name">{item.name}</div>
                               <div className="user-email">{item.email}</div>
+                              {item.phone && (
+                                <div className="user-phone" style={{ fontSize: '0.85rem', color: '#666', marginTop: '2px' }}>
+                                  {item.phone_country_code} {item.phone}
+                                </div>
+                              )}
                             </div>
                           </div>
                         </td>
@@ -221,6 +244,11 @@ const FeedbackManagementPage = () => {
                   <div>
                     <strong>{selectedItem?.name}</strong>
                     <span>{selectedItem?.email}</span>
+                    {selectedItem?.phone && (
+                      <span style={{ display: 'block', marginTop: '2px', fontSize: '0.9rem', color: '#666' }}>
+                        {selectedItem?.phone_country_code} {selectedItem?.phone}
+                      </span>
+                    )}
                   </div>
                   <div className="feedback-rating">{renderStars(selectedItem?.rating)}</div>
                 </div>
@@ -240,11 +268,29 @@ const FeedbackManagementPage = () => {
               <form onSubmit={handleSubmit}>
                 <div className="form-group">
                   <label>{selectedItem?.admin_response ? 'Update Response' : 'Your Response'}</label>
-                  <textarea rows="4" value={response} onChange={(e) => setResponse(e.target.value)} placeholder="Type your response to this feedback..." />
+                  <textarea 
+                    rows="4" 
+                    value={response} 
+                    onChange={(e) => {
+                      setResponse(e.target.value);
+                      if (validationErrors.response) {
+                        setValidationErrors(prev => {
+                          const newErrors = { ...prev };
+                          delete newErrors.response;
+                          return newErrors;
+                        });
+                      }
+                    }} 
+                    className={validationErrors.response ? 'error' : ''}
+                    placeholder="Type your response to this feedback..." 
+                  />
+                  {validationErrors.response && (
+                    <small className="error-message">{validationErrors.response}</small>
+                  )}
                 </div>
                 <div className="form-actions">
                   <button type="button" className="btn-cancel" onClick={() => setShowModal(false)}>Close</button>
-                  <button type="submit" className="btn-submit">Send Response</button>
+                  <button type="submit" className="btn-submit" disabled={Object.keys(validationErrors).length > 0}>Send Response</button>
                 </div>
               </form>
             </div>

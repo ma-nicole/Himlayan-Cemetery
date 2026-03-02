@@ -35,6 +35,20 @@ export const AuthProvider = ({ children }) => {
       const response = await authService.login(email, password);
       if (response.success) {
         setUser(response.data.user);
+        
+        // Fetch fresh user data immediately after login to ensure all fields
+        // (including avatar) are properly stored in localStorage
+        setTimeout(async () => {
+          try {
+            const freshResponse = await authService.getCurrentUser();
+            if (freshResponse.success && freshResponse.data) {
+              setUser(freshResponse.data);
+            }
+          } catch (error) {
+            console.error('Failed to fetch fresh user data after login:', error);
+          }
+        }, 100);
+        
         return { success: true };
       }
       return { success: false, message: response.message };
@@ -67,6 +81,19 @@ export const AuthProvider = ({ children }) => {
     setUser(userData);
   }, []);
 
+  // Refresh user data from server
+  const refreshUser = useCallback(async () => {
+    try {
+      const response = await authService.getCurrentUser();
+      if (response.success && response.data) {
+        setUser(response.data);
+        return response.data;
+      }
+    } catch (error) {
+      console.error('Failed to refresh user:', error);
+    }
+  }, []);
+
   const value = {
     user,
     loading,
@@ -74,6 +101,7 @@ export const AuthProvider = ({ children }) => {
     logout,
     hasRole,
     setUserFromSocial,
+    refreshUser,
     isAuthenticated: !!user,
     isAdmin: user?.role === 'admin',
     isStaff: user?.role === 'staff',

@@ -15,6 +15,8 @@ class Feedback extends Model
         'user_id',
         'name',
         'email',
+        'phone',
+        'phone_country_code',
         'subject',
         'message',
         'rating',

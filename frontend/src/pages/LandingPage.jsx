@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import api from '../services/api'; // For making search API requests
+import { validateName, validateEmail, validateTextArea, validatePhone } from '../utils/formValidator';
 
 const LandingPage = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [currentHeroImage, setCurrentHeroImage] = useState(0);
+  const [currentGalleryIndex, setCurrentGalleryIndex] = useState(0);
   const [scrolled, setScrolled] = useState(false);
   
   // Search functionality state
@@ -15,6 +17,19 @@ const LandingPage = () => {
 
   // Services section state
   const [activeServiceTab, setActiveServiceTab] = useState('all');
+
+  // Contact form state
+  const [contactForm, setContactForm] = useState({
+    firstName: '',
+    lastName: '',
+    email: '',
+    phone_country_code: '+63',
+    phone: '',
+    message: ''
+  });
+  const [contactLoading, setContactLoading] = useState(false);
+  const [contactMessage, setContactMessage] = useState('');
+  const [validationErrors, setValidationErrors] = useState({});
 
   // Services data
   const landingServices = [
@@ -179,6 +194,138 @@ const LandingPage = () => {
       setSearchResults([]);
     } finally {
       setSearchLoading(false);
+    }
+  };
+
+  // Phone validation helper
+  const getPhoneRequirements = (countryCode) => {
+    const requirements = {
+      '+63': { digits: 10, country: 'Philippines' },
+      '+1': { digits: 10, country: 'USA/Canada' },
+      '+44': { digits: 10, country: 'UK' },
+      '+61': { digits: 9, country: 'Australia' },
+      '+81': { digits: 10, country: 'Japan' },
+      '+82': { digits: 10, country: 'South Korea' },
+      '+86': { digits: 11, country: 'China' },
+      '+65': { digits: 8, country: 'Singapore' },
+      '+60': { digits: 10, country: 'Malaysia' },
+      '+971': { digits: 9, country: 'UAE' }
+    };
+    return requirements[countryCode] || { digits: 10, country: 'Selected Country' };
+  };
+
+  // Handle contact form change
+  const handleContactChange = (e) => {
+    const { name, value } = e.target;
+    
+    if (name === 'phone') {
+      const digitsOnly = value.replace(/\D/g, '');
+      const maxLength = getPhoneRequirements(contactForm.phone_country_code).digits;
+      setContactForm(prev => ({
+        ...prev,
+        phone: digitsOnly.slice(0, maxLength)
+      }));
+    } else if (name === 'phone_country_code') {
+      const currentPhone = contactForm.phone;
+      const newMaxLength = getPhoneRequirements(value).digits;
+      setContactForm(prev => ({
+        ...prev,
+        phone_country_code: value,
+        phone: currentPhone.length > newMaxLength ? '' : currentPhone
+      }));
+    } else {
+      setContactForm(prev => ({
+        ...prev,
+        [name]: value
+      }));
+    }
+    
+    // Clear validation error for this field as user types
+    if (validationErrors[name]) {
+      setValidationErrors(prev => {
+        const updated = { ...prev };
+        delete updated[name];
+        return updated;
+      });
+    }
+  };
+
+  // Handle contact form submit
+  const handleContactSubmit = async (e) => {
+    e.preventDefault();
+    setContactMessage('');
+    const errors = {};
+
+    // Validate first name
+    const firstNameValidation = validateName(contactForm.firstName, 'First Name');
+    if (!firstNameValidation.valid) {
+      errors.firstName = firstNameValidation.error;
+    }
+
+    // Validate last name
+    const lastNameValidation = validateName(contactForm.lastName, 'Last Name');
+    if (!lastNameValidation.valid) {
+      errors.lastName = lastNameValidation.error;
+    }
+
+    // Validate email
+    const emailValidation = validateEmail(contactForm.email);
+    if (!emailValidation.valid) {
+      errors.email = emailValidation.error;
+    }
+
+    // Validate phone if provided
+    if (contactForm.phone) {
+      const phoneValidation = validatePhone(contactForm.phone, contactForm.phone_country_code);
+      if (!phoneValidation.valid) {
+        errors.phone = phoneValidation.error;
+      }
+    }
+
+    // Validate message
+    const messageValidation = validateTextArea(contactForm.message);
+    if (!messageValidation.valid) {
+      errors.message = messageValidation.error;
+    }
+
+    // If validation errors exist, display them
+    if (Object.keys(errors).length > 0) {
+      setValidationErrors(errors);
+      return;
+    }
+
+    setValidationErrors({});
+    setContactLoading(true);
+
+    try {
+      const response = await api.post('/feedback', {
+        name: `${contactForm.firstName} ${contactForm.lastName}`,
+        email: contactForm.email,
+        phone: contactForm.phone || null,
+        phone_country_code: contactForm.phone_country_code,
+        message: contactForm.message
+      });
+
+      if (response.data.success) {
+        setContactMessage({ type: 'success', text: 'Thank you! Your message has been sent successfully.' });
+        setContactForm({
+          firstName: '',
+          lastName: '',
+          email: '',
+          phone_country_code: '+63',
+          phone: '',
+          message: ''
+        });
+        setValidationErrors({});
+        setTimeout(() => setContactMessage(''), 5000);
+      }
+    } catch (err) {
+      setContactMessage({ 
+        type: 'error', 
+        text: err.response?.data?.message || 'Failed to send message. Please try again.' 
+      });
+    } finally {
+      setContactLoading(false);
     }
   };
 
@@ -463,14 +610,31 @@ const LandingPage = () => {
             </p>
             <div className="about-features">
               <div className="about-feature">
-                <div className="feature-icon"></div>
+                <div className="feature-icon">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M3 21h18"/>
+                    <path d="M5 21V7l8-4v18"/>
+                    <path d="M19 21V11l-6-4"/>
+                    <path d="M9 9v.01"/>
+                    <path d="M9 12v.01"/>
+                    <path d="M9 15v.01"/>
+                    <path d="M9 18v.01"/>
+                  </svg>
+                </div>
                 <div>
                   <h4>Cultural Heritage</h4>
                   <p>Preserving Filipino history through art and memorials</p>
                 </div>
               </div>
               <div className="about-feature">
-                <div className="feature-icon"></div>
+                <div className="feature-icon">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/>
+                    <path d="M12 5 9.04 7.96a2.17 2.17 0 0 0 0 3.08c.82.82 2.13.85 3 .07l2.07-1.9a2.82 2.82 0 0 1 3.79 0l2.96 2.66"/>
+                    <path d="m18 15-2-2"/>
+                    <path d="m15 18-2-2"/>
+                  </svg>
+                </div>
                 <div>
                   <h4>Compassionate Care</h4>
                   <p>Supporting families with dignity and respect</p>
@@ -577,16 +741,55 @@ const LandingPage = () => {
           <p>Sculptural artworks celebrating Filipino history and artistic heritage</p>
         </div>
         
-        <div className="gallery-grid">
-          {landmarks.map((item, index) => (
-            <div key={index} className={`gallery-item ${index === 0 ? 'gallery-large' : ''}`}>
-              <img src={item.image} alt={item.title} />
-              <div className="gallery-overlay">
-                <h4>{item.title}</h4>
-                <p>{item.desc}</p>
+        <div className="gallery-carousel">
+          <div className="gallery-slides">
+            {landmarks.map((item, index) => (
+              <div 
+                key={index} 
+                className={`gallery-slide ${index === currentGalleryIndex ? 'active' : ''} ${item.image === '/Gabriela-Silang-scaled.jpg' ? 'gallery-slide-cropped' : ''}`}
+              >
+                <img 
+                  src={item.image} 
+                  alt={item.title}
+                />
+                <div className="gallery-overlay">
+                  <h4>{item.title}</h4>
+                  <p>{item.desc}</p>
+                </div>
               </div>
+            ))}
+            
+            <button 
+              className="gallery-arrow gallery-arrow-left"
+              onClick={() => setCurrentGalleryIndex(prev => prev === 0 ? landmarks.length - 1 : prev - 1)}
+              aria-label="Previous image"
+            >
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <polyline points="15 18 9 12 15 6"/>
+              </svg>
+            </button>
+            
+            <button 
+              className="gallery-arrow gallery-arrow-right"
+              onClick={() => setCurrentGalleryIndex(prev => prev === landmarks.length - 1 ? 0 : prev + 1)}
+              aria-label="Next image"
+            >
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <polyline points="9 18 15 12 9 6"/>
+              </svg>
+            </button>
+            
+            <div className="gallery-dots">
+              {landmarks.map((_, index) => (
+                <button
+                  key={index}
+                  className={`gallery-dot ${index === currentGalleryIndex ? 'active' : ''}`}
+                  onClick={() => setCurrentGalleryIndex(index)}
+                  aria-label={`Go to slide ${index + 1}`}
+                />
+              ))}
             </div>
-          ))}
+          </div>
         </div>
         
         <div className="gallery-cta">
@@ -621,21 +824,35 @@ const LandingPage = () => {
             
             <div className="contact-cards">
               <div className="contact-card">
-                <div className="contact-card-icon"></div>
+                <div className="contact-card-icon">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/>
+                    <circle cx="12" cy="10" r="3"/>
+                  </svg>
+                </div>
                 <div>
                   <h4>Location</h4>
                   <p>Himlayan Road, Barangay Pasong Tamo,<br/>Tandang Sora, Quezon City 1107</p>
                 </div>
               </div>
               <div className="contact-card">
-                <div className="contact-card-icon"></div>
+                <div className="contact-card-icon">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/>
+                  </svg>
+                </div>
                 <div>
                   <h4>Phone</h4>
                   <p>0917-130-6930<br/>0968-896-4850<br/>0917-713-5034</p>
                 </div>
               </div>
               <div className="contact-card">
-                <div className="contact-card-icon"></div>
+                <div className="contact-card-icon">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <circle cx="12" cy="12" r="10"/>
+                    <polyline points="12 6 12 12 16 14"/>
+                  </svg>
+                </div>
                 <div>
                   <h4>Hours</h4>
                   <p>Monday - Sunday<br/>6:00 AM - 6:00 PM</p>
@@ -645,16 +862,149 @@ const LandingPage = () => {
           </div>
           
           <div className="contact-form-side">
-            <form className="contact-form-new">
+            <form className="contact-form-new" onSubmit={handleContactSubmit}>
               <h3>Send us a Message</h3>
+              
+              {contactMessage && (
+                <div style={{
+                  marginBottom: '1rem',
+                  padding: '0.75rem 1rem',
+                  borderRadius: '0.5rem',
+                  backgroundColor: contactMessage.type === 'success' ? '#ecfdf5' : '#fef2f2',
+                  color: contactMessage.type === 'success' ? '#15803d' : '#dc2626',
+                  fontSize: '0.875rem'
+                }}>
+                  {contactMessage.text}
+                </div>
+              )}
+              
               <div className="form-row">
-                <input type="text" placeholder="First Name" className="form-input" />
-                <input type="text" placeholder="Last Name" className="form-input" />
+                <div style={{ flex: '1' }}>
+                  <input 
+                    type="text" 
+                    name="firstName"
+                    placeholder="First Name" 
+                    className="form-input"
+                    required
+                    value={contactForm.firstName}
+                    onChange={handleContactChange}
+                    style={validationErrors.firstName ? { borderColor: '#dc2626', borderWidth: '2px' } : {}}
+                  />
+                  {validationErrors.firstName && (
+                    <small style={{ color: '#dc2626', display: 'block', marginTop: '0.25rem' }}>
+                      {validationErrors.firstName}
+                    </small>
+                  )}
+                </div>
+                <div style={{ flex: '1' }}>
+                  <input 
+                    type="text" 
+                    name="lastName"
+                    placeholder="Last Name" 
+                    className="form-input"
+                    required
+                    value={contactForm.lastName}
+                    onChange={handleContactChange}
+                    style={validationErrors.lastName ? { borderColor: '#dc2626', borderWidth: '2px' } : {}}
+                  />
+                  {validationErrors.lastName && (
+                    <small style={{ color: '#dc2626', display: 'block', marginTop: '0.25rem' }}>
+                      {validationErrors.lastName}
+                    </small>
+                  )}
+                </div>
               </div>
-              <input type="email" placeholder="Email Address" className="form-input" />
-              <input type="tel" placeholder="Phone Number" className="form-input" />
-              <textarea placeholder="Your Message" rows="4" className="form-input"></textarea>
-              <button type="submit" className="btn-contact-submit">Send Message</button>
+              
+              <div>
+                <input 
+                  type="email" 
+                  name="email"
+                  placeholder="Email Address" 
+                  className="form-input"
+                  required
+                  value={contactForm.email}
+                  onChange={handleContactChange}
+                  style={validationErrors.email ? { borderColor: '#dc2626', borderWidth: '2px' } : {}}
+                />
+                {validationErrors.email && (
+                  <small style={{ color: '#dc2626', display: 'block', marginTop: '0.25rem' }}>
+                    {validationErrors.email}
+                  </small>
+                )}
+              </div>
+              
+              <div style={{ display: 'flex', gap: '8px', marginBottom: '0.5rem' }}>
+                <select 
+                  name="phone_country_code"
+                  className="form-input"
+                  style={{ flex: '0 0 120px' }}
+                  value={contactForm.phone_country_code}
+                  onChange={handleContactChange}
+                >
+                  <option value="+63">🇵🇭 +63</option>
+                  <option value="+1">🇺🇸 +1</option>
+                  <option value="+44">🇬🇧 +44</option>
+                  <option value="+61">🇦🇺 +61</option>
+                  <option value="+81">🇯🇵 +81</option>
+                  <option value="+82">🇰🇷 +82</option>
+                  <option value="+86">🇨🇳 +86</option>
+                  <option value="+65">🇸🇬 +65</option>
+                  <option value="+60">🇲🇾 +60</option>
+                  <option value="+971">🇦🇪 +971</option>
+                </select>
+                <input 
+                  type="tel" 
+                  name="phone"
+                  placeholder="Phone Number" 
+                  className="form-input"
+                  style={{ flex: '1', borderColor: validationErrors.phone ? '#dc2626' : undefined, borderWidth: validationErrors.phone ? '2px' : undefined }}
+                  value={contactForm.phone}
+                  onChange={handleContactChange}
+                  title={contactForm.phone ? (contactForm.phone.length === getPhoneRequirements(contactForm.phone_country_code).digits ? 'Valid' : `Enter exactly ${getPhoneRequirements(contactForm.phone_country_code).digits} digits`) : `Optional - Enter exactly ${getPhoneRequirements(contactForm.phone_country_code).digits} digits`}
+                />
+              </div>
+              
+              {validationErrors.phone ? (
+                <small style={{ color: '#dc2626', display: 'block', marginBottom: '1rem' }}>
+                  {validationErrors.phone}
+                </small>
+              ) : (
+                <small style={{ color: '#666', display: 'block', marginBottom: '1rem' }}>
+                  {contactForm.phone ? (
+                    contactForm.phone.length === getPhoneRequirements(contactForm.phone_country_code).digits
+                      ? '✓ Valid'
+                      : `Enter exactly ${getPhoneRequirements(contactForm.phone_country_code).digits} digits`
+                  ) : (
+                    `(Optional) Exactly ${getPhoneRequirements(contactForm.phone_country_code).digits} digits needed`
+                  )}
+                </small>
+              )}
+              
+              <div>
+                <textarea 
+                  name="message"
+                  placeholder="Your Message" 
+                  rows="4" 
+                  className="form-input"
+                  required
+                  value={contactForm.message}
+                  onChange={handleContactChange}
+                  style={validationErrors.message ? { borderColor: '#dc2626', borderWidth: '2px' } : {}}
+                ></textarea>
+                {validationErrors.message && (
+                  <small style={{ color: '#dc2626', display: 'block', marginTop: '0.25rem' }}>
+                    {validationErrors.message}
+                  </small>
+                )}
+              </div>
+              
+              <button 
+                type="submit" 
+                className="btn-contact-submit"
+                disabled={contactLoading || Object.keys(validationErrors).length > 0}
+              >
+                {contactLoading ? 'Sending...' : 'Send Message'}
+              </button>
             </form>
           </div>
         </div>
@@ -670,10 +1020,6 @@ const LandingPage = () => {
                 <span className="logo-text">Himlayan</span>
               </Link>
               <p>Himlayang Pilipino Memorial Park — A premier memorial park reflecting Filipino culture and values.</p>
-              <div className="footer-social">
-                <a href="#" className="social-link" title="Facebook">FB</a>
-                <a href="#" className="social-link" title="YouTube">YT</a>
-              </div>
             </div>
             
             <div className="footer-links">

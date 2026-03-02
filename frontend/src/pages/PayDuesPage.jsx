@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import PublicLayout from '../components/common/PublicLayout';
+import MemberHeader from '../components/common/MemberHeader';
+import MemberFooter from '../components/common/MemberFooter';
 import { useToast } from '../context/ToastContext';
 import './PayDuesPage.css';
 
@@ -73,14 +74,16 @@ const PayDuesPage = () => {
   };
 
   return (
-    <PublicLayout>
-      <div className="pay-dues-page">
-        <div className="page-header">
-          <h1>Pay Dues</h1>
-          <p>Manage and pay your memorial park dues online</p>
-        </div>
+    <div className="member-dashboard">
+      <MemberHeader />
+      <main className="member-main" style={{ paddingTop: '40px' }}>
+        <div className="pay-dues-page">
+          <div className="page-header">
+            <h1>Pay Dues</h1>
+            <p>Manage and pay your memorial park dues online</p>
+          </div>
 
-        <div className="dues-container">
+          <div className="dues-container">
           {/* Dues List */}
           <div className="dues-section">
             <h2>Outstanding Dues</h2>
@@ -192,8 +195,10 @@ const PayDuesPage = () => {
             View Payment History
           </button>
         </div>
-      </div>
-    </PublicLayout>
+        </div>
+      </main>
+      <MemberFooter />
+    </div>
   );
 };
 

@@ -193,12 +193,13 @@ class PlotController extends Controller
     {
         $user = auth()->user();
         
-        // For now, return empty array as we don't have owner_id on plots yet
-        // In production, you would filter by user_id
-        $plots = Plot::where('owner_id', $user->id)
-                     ->with('burialRecord')
-                     ->orderBy('section')
-                     ->get();
+        // Get plots that have burial records associated with this user's email
+        $plots = Plot::whereHas('burialRecord', function ($query) use ($user) {
+            $query->where('contact_email', $user->email);
+        })
+        ->with('burialRecord')
+        ->orderBy('section')
+        ->get();
 
         return $this->successResponse($plots, 'My plots retrieved successfully');
     }

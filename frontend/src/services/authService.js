@@ -36,6 +36,10 @@ export const authService = {
    */
   async getCurrentUser() {
     const response = await api.get('/user');
+    if (response.data.success && response.data.data) {
+      // Update localStorage with fresh user data
+      localStorage.setItem('user', JSON.stringify(response.data.data));
+    }
     return response.data;
   },
 

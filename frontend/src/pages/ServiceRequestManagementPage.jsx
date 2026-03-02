@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import api from '../services/api';
 import Sidebar from '../components/common/Sidebar';
+import { validateTextArea } from '../utils/formValidator';
 import '../styles/AdminManagement.css';
 
 const ServiceRequestManagementPage = () => {
@@ -12,6 +13,7 @@ const ServiceRequestManagementPage = () => {
   const [showModal, setShowModal] = useState(false);
   const [selectedItem, setSelectedItem] = useState(null);
   const [formData, setFormData] = useState({ status: '', admin_notes: '' });
+  const [validationErrors, setValidationErrors] = useState({});
   const [formError, setFormError] = useState('');
   const [pagination, setPagination] = useState({ currentPage: 1, lastPage: 1, total: 0 });
 
@@ -60,12 +62,34 @@ const ServiceRequestManagementPage = () => {
     setSelectedItem(item);
     setFormData({ status: item.status, admin_notes: item.admin_notes || '' });
     setFormError('');
+    setValidationErrors({});
     setShowModal(true);
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setFormError('');
+    const newErrors = {};
+
+    // Validate status
+    if (!formData.status.trim()) {
+      newErrors.status = 'Status is required';
+    }
+
+    // Validate admin notes if provided
+    if (formData.admin_notes.trim()) {
+      const notesValidation = validateTextArea(formData.admin_notes, { minLength: 2, maxLength: 2000 });
+      if (!notesValidation.valid) {
+        newErrors.admin_notes = notesValidation.error;
+      }
+    }
+
+    // If there are validation errors, show them
+    if (Object.keys(newErrors).length > 0) {
+      setValidationErrors(newErrors);
+      return;
+    }
+
     try {
       await api.put(`/service-requests/${selectedItem.id}`, formData);
       setShowModal(false);
@@ -223,20 +247,55 @@ const ServiceRequestManagementPage = () => {
               <form onSubmit={handleSubmit}>
                 <div className="form-group">
                   <label>Status *</label>
-                  <select value={formData.status} onChange={(e) => setFormData({...formData, status: e.target.value})} required>
+                  <select 
+                    value={formData.status} 
+                    onChange={(e) => {
+                      setFormData({...formData, status: e.target.value});
+                      if (validationErrors.status) {
+                        setValidationErrors(prev => {
+                          const newErrors = { ...prev };
+                          delete newErrors.status;
+                          return newErrors;
+                        });
+                      }
+                    }} 
+                    className={validationErrors.status ? 'error' : ''}
+                    required
+                  >
                     <option value="pending">Pending</option>
                     <option value="approved">Approved</option>
                     <option value="rejected">Rejected</option>
                     <option value="completed">Completed</option>
                   </select>
+                  {validationErrors.status && (
+                    <small className="error-message">{validationErrors.status}</small>
+                  )}
                 </div>
                 <div className="form-group">
                   <label>Admin Notes</label>
-                  <textarea rows="3" value={formData.admin_notes} onChange={(e) => setFormData({...formData, admin_notes: e.target.value})} placeholder="Add notes about this request..." />
+                  <textarea 
+                    rows="3" 
+                    value={formData.admin_notes} 
+                    onChange={(e) => {
+                      setFormData({...formData, admin_notes: e.target.value});
+                      if (validationErrors.admin_notes) {
+                        setValidationErrors(prev => {
+                          const newErrors = { ...prev };
+                          delete newErrors.admin_notes;
+                          return newErrors;
+                        });
+                      }
+                    }} 
+                    className={validationErrors.admin_notes ? 'error' : ''}
+                    placeholder="Add notes about this request..." 
+                  />
+                  {validationErrors.admin_notes && (
+                    <small className="error-message">{validationErrors.admin_notes}</small>
+                  )}
                 </div>
                 <div className="form-actions">
                   <button type="button" className="btn-cancel" onClick={() => setShowModal(false)}>Cancel</button>
-                  <button type="submit" className="btn-submit">Update Status</button>
+                  <button type="submit" className="btn-submit" disabled={Object.keys(validationErrors).length > 0}>Update Status</button>
                 </div>
               </form>
             </div>

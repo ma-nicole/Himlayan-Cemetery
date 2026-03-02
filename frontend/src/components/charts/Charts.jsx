@@ -81,56 +81,80 @@ export const DonutChart = ({
 }) => {
   const total = data.reduce((sum, d) => sum + d.value, 0);
   const radius = (size - strokeWidth) / 2;
-  const circumference = 2 * Math.PI * radius;
   
-  const colors = ['primary', 'success', 'warning', 'error', 'info'];
+  const colorMap = {
+    'primary': '#1a472a',
+    'success': '#22c55e',
+    'warning': '#f59e0b',
+    'error': '#ef4444',
+    'info': '#3b82f6'
+  };
+  
+  const colors = ['success', 'primary', 'warning', 'error', 'info'];
+  
+  // Helper function to create arc path
+  const createArcPath = (startAngle, endAngle, innerRadius, outerRadius, cx, cy) => {
+    const toRad = (angle) => (angle - 90) * (Math.PI / 180);
+    const x1 = cx + outerRadius * Math.cos(toRad(startAngle));
+    const y1 = cy + outerRadius * Math.sin(toRad(startAngle));
+    const x2 = cx + outerRadius * Math.cos(toRad(endAngle));
+    const y2 = cy + outerRadius * Math.sin(toRad(endAngle));
+    const x3 = cx + innerRadius * Math.cos(toRad(endAngle));
+    const y3 = cy + innerRadius * Math.sin(toRad(endAngle));
+    const x4 = cx + innerRadius * Math.cos(toRad(startAngle));
+    const y4 = cy + innerRadius * Math.sin(toRad(startAngle));
+    
+    const largeArc = endAngle - startAngle > 180 ? 1 : 0;
+    
+    return `
+      M ${x1} ${y1}
+      A ${outerRadius} ${outerRadius} 0 ${largeArc} 1 ${x2} ${y2}
+      L ${x3} ${y3}
+      A ${innerRadius} ${innerRadius} 0 ${largeArc} 0 ${x4} ${y4}
+      Z
+    `;
+  };
   
   const segments = useMemo(() => {
-    let currentOffset = 0;
+    let currentAngle = 0;
     return data.map((item, index) => {
       const percentage = total > 0 ? (item.value / total) * 100 : 0;
-      const dashArray = (percentage / 100) * circumference;
-      const dashOffset = -currentOffset;
-      currentOffset += dashArray;
+      const angle = (percentage / 100) * 360;
+      const startAngle = currentAngle;
+      const endAngle = currentAngle + angle;
+      currentAngle = endAngle;
       
       return {
         ...item,
         percentage,
-        dashArray,
-        dashOffset,
+        startAngle,
+        endAngle,
         color: item.color || colors[index % colors.length],
       };
     });
-  }, [data, total, circumference]);
+  }, [data, total]);
 
   return (
     <div className="chart donut-chart">
       <div className="donut-container" style={{ width: size, height: size }}>
         <svg viewBox={`0 0 ${size} ${size}`} className={animate ? 'animate' : ''}>
-          {/* Background circle */}
-          <circle
-            cx={size / 2}
-            cy={size / 2}
-            r={radius}
-            fill="none"
-            stroke="var(--border-light, #e5e7eb)"
-            strokeWidth={strokeWidth}
-          />
-          
-          {/* Data segments */}
+          {/* Data segments using paths */}
           {segments.map((segment, index) => (
-            <circle
+            <path
               key={index}
-              cx={size / 2}
-              cy={size / 2}
-              r={radius}
-              fill="none"
+              d={createArcPath(
+                segment.startAngle,
+                segment.endAngle,
+                radius - strokeWidth / 2,
+                radius + strokeWidth / 2,
+                size / 2,
+                size / 2
+              )}
+              fill={colorMap[segment.color]}
               className={`donut-segment donut-${segment.color}`}
-              strokeWidth={strokeWidth}
-              strokeDasharray={`${segment.dashArray} ${circumference - segment.dashArray}`}
-              strokeDashoffset={segment.dashOffset}
               style={{
                 animationDelay: animate ? `${index * 0.15}s` : '0s',
+                opacity: animate ? 0 : 1,
               }}
             />
           ))}
@@ -154,7 +178,10 @@ export const DonutChart = ({
         <div className="chart-legend">
           {segments.map((segment, index) => (
             <div key={index} className="legend-item">
-              <span className={`legend-dot legend-${segment.color}`} />
+              <span 
+                className="legend-dot" 
+                style={{ backgroundColor: colorMap[segment.color] }}
+              />
               <span className="legend-label">{segment.label}</span>
               <span className="legend-value">{segment.value}</span>
               <span className="legend-percent">
@@ -302,6 +329,7 @@ export const ProgressRing = ({
           fill="none"
           stroke="var(--border-light, #e5e7eb)"
           strokeWidth={strokeWidth}
+          strokeLinecap="round"
         />
         
         {/* Progress */}

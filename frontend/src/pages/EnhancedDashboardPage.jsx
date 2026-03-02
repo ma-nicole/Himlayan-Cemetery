@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
 import Layout from '../components/common/Layout';
 import { useToast } from '../context/ToastContext';
 import useKeyboardShortcuts, { useAppShortcuts } from '../hooks/useKeyboardShortcuts';
@@ -14,10 +15,12 @@ import { DonutChart, BarChart, LineChart, ProgressRing } from '../components/cha
 import './EnhancedDashboard.css';
 
 const EnhancedDashboardPage = () => {
+  const navigate = useNavigate();
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [commandPaletteOpen, setCommandPaletteOpen] = useState(false);
+  const [sortConfig, setSortConfig] = useState({ key: 'burial_date', direction: 'desc' });
   const toast = useToast();
 
   // Demo activities for the feed
@@ -29,14 +32,16 @@ const EnhancedDashboardPage = () => {
   ]);
 
   // Demo chart data
-  const monthlyBurialData = [
-    { label: 'Jan', value: 12 },
-    { label: 'Feb', value: 8 },
-    { label: 'Mar', value: 15 },
-    { label: 'Apr', value: 10 },
-    { label: 'May', value: 18 },
-    { label: 'Jun', value: 14 },
+  const defaultMonthlyBurialData = [
+    { label: 'Jan', value: 0 },
+    { label: 'Feb', value: 0 },
+    { label: 'Mar', value: 0 },
+    { label: 'Apr', value: 0 },
+    { label: 'May', value: 0 },
+    { label: 'Jun', value: 0 },
   ];
+
+  const monthlyBurialData = stats?.monthly_burials || defaultMonthlyBurialData;
 
   const plotStatusData = [
     { label: 'Available', value: 145, color: 'success' },
@@ -51,7 +56,6 @@ const EnhancedDashboardPage = () => {
         const response = await dashboardService.getStats();
         if (response.success) {
           setStats(response.data);
-          toast?.success('Dashboard loaded successfully');
         }
       } catch (err) {
         setError('Failed to load dashboard data');
@@ -88,6 +92,41 @@ const EnhancedDashboardPage = () => {
       .finally(() => setLoading(false));
   }, [toast]);
 
+  // Sort handler for Recent Burials table
+  const handleSort = (key) => {
+    setSortConfig(prev => ({
+      key,
+      direction: prev.key === key && prev.direction === 'asc' ? 'desc' : 'asc'
+    }));
+  };
+
+  // Get sorted burials - must be before conditional returns
+  const sortedBurials = React.useMemo(() => {
+    if (!stats?.recent_burials) return [];
+    
+    return [...stats.recent_burials].sort((a, b) => {
+      let aValue, bValue;
+      
+      if (sortConfig.key === 'plot_number') {
+        aValue = a.plot_number || '';
+        bValue = b.plot_number || '';
+      } else if (sortConfig.key === 'burial_date') {
+        aValue = new Date(a.burial_date);
+        bValue = new Date(b.burial_date);
+      } else {
+        return 0;
+      }
+      
+      if (aValue < bValue) return sortConfig.direction === 'asc' ? -1 : 1;
+      if (aValue > bValue) return sortConfig.direction === 'asc' ? 1 : -1;
+      return 0;
+    });
+  }, [stats?.recent_burials, sortConfig]);
+
+  const occupancyRate = stats?.plots?.total 
+    ? Math.round((stats.plots.occupied / stats.plots.total) * 100)
+    : 0;
+
   if (loading) {
     return (
       <Layout>
@@ -111,10 +150,6 @@ const EnhancedDashboardPage = () => {
     );
   }
 
-  const occupancyRate = stats?.plots?.total 
-    ? Math.round((stats.plots.occupied / stats.plots.total) * 100)
-    : 0;
-
   return (
     <Layout>
       {/* Command Palette */}
@@ -124,23 +159,9 @@ const EnhancedDashboardPage = () => {
       />
 
       {/* Page Header */}
-      <div className="dashboard-header">
-        <div className="header-content">
-          <h1>Dashboard</h1>
-          <p className="subtitle">Welcome to Himlayan Cemetery Management System</p>
-        </div>
-        <div className="header-actions">
-          <button 
-            className="btn btn-outline" 
-            onClick={() => setCommandPaletteOpen(true)}
-            title="Open command palette (Ctrl+K)"
-          >
-            <span>⌘</span> Command
-          </button>
-          <button className="btn btn-primary" onClick={handleRefresh}>
-            Refresh
-          </button>
-        </div>
+      <div style={{ marginBottom: '24px' }}>
+        <h1 style={{ fontSize: '28px', fontWeight: '700', color: '#1a472a', marginBottom: '4px' }}>Dashboard</h1>
+        <p style={{ color: '#6b7280', fontSize: '15px' }}>Welcome to Himlayan Cemetery Management System</p>
       </div>
 
       {/* Quick Stats */}
@@ -186,9 +207,9 @@ const EnhancedDashboardPage = () => {
             <div className="chart-body">
               <DonutChart
                 data={[
-                  { label: 'Available', value: stats?.plots?.available || 145, color: 'success' },
-                  { label: 'Occupied', value: stats?.plots?.occupied || 312, color: 'primary' },
-                  { label: 'Reserved', value: stats?.plots?.reserved || 43, color: 'warning' },
+                  { label: 'Available', value: stats?.plots?.available || 0, color: 'success' },
+                  { label: 'Occupied', value: stats?.plots?.occupied || 0, color: 'primary' },
+                  { label: 'Reserved', value: stats?.plots?.reserved || 0, color: 'warning' },
                 ]}
                 size={200}
                 centerLabel="Total"
@@ -232,10 +253,10 @@ const EnhancedDashboardPage = () => {
         </div>
       </section>
 
-      {/* Burial Stats */}
+      {/* Burial Stats & Service Requests */}
       <section className="dashboard-section">
-        <h2 className="section-title">Burial Statistics</h2>
-        <div className="stats-grid-3">
+        <h2 className="section-title">Activity Overview</h2>
+        <div className="stats-grid-4">
           <StatCard
             title="Total Burials"
             value={stats?.burials?.total || 0}
@@ -243,16 +264,22 @@ const EnhancedDashboardPage = () => {
             variant="primary"
           />
           <StatCard
-            title="This Month"
+            title="Added This Month"
             value={stats?.burials?.this_month || 0}
             icon=""
             trend={{ value: 5, direction: 'up', label: 'from last month' }}
           />
           <StatCard
-            title="This Year"
+            title="Added This Year"
             value={stats?.burials?.this_year || 0}
             icon=""
             trend={{ value: 8, direction: 'up', label: 'from last year' }}
+          />
+          <StatCard
+            title="Pending Requests"
+            value={stats?.service_requests?.pending || 0}
+            icon=""
+            variant={stats?.service_requests?.pending > 0 ? 'warning' : 'success'}
           />
         </div>
       </section>
@@ -264,20 +291,41 @@ const EnhancedDashboardPage = () => {
           <div className="card">
             <div className="card-header">
               <h3>Recent Burials</h3>
-              <button className="btn btn-sm btn-outline">View All</button>
+              <button 
+                className="btn btn-sm btn-outline"
+                onClick={() => navigate('/burial-records')}
+              >
+                View All
+              </button>
             </div>
             <div className="card-body">
-              {stats?.recent_burials && stats.recent_burials.length > 0 ? (
+              {sortedBurials.length > 0 ? (
                 <table className="data-table modern">
                   <thead>
                     <tr>
                       <th>Deceased Name</th>
-                      <th>Plot</th>
-                      <th>Date</th>
+                      <th 
+                        className="sortable"
+                        onClick={() => handleSort('plot_number')}
+                        title="Click to sort by plot"
+                      >
+                        Plot {sortConfig.key === 'plot_number' && (
+                          <span className="sort-indicator">{sortConfig.direction === 'asc' ? '↑' : '↓'}</span>
+                        )}
+                      </th>
+                      <th 
+                        className="sortable"
+                        onClick={() => handleSort('burial_date')}
+                        title="Click to sort by date"
+                      >
+                        Date {sortConfig.key === 'burial_date' && (
+                          <span className="sort-indicator">{sortConfig.direction === 'asc' ? '↑' : '↓'}</span>
+                        )}
+                      </th>
                     </tr>
                   </thead>
                   <tbody>
-                    {stats.recent_burials.map(burial => (
+                    {sortedBurials.map(burial => (
                       <tr key={burial.id}>
                         <td>
                           <div className="burial-name">

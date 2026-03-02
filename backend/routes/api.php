@@ -34,6 +34,10 @@ use App\Http\Controllers\Api\InvitationController;
 Route::post('/login', [AuthController::class, 'login']);
 // Note: Registration is disabled - only admins can create accounts
 
+// Password Reset
+Route::post('/forgot-password', [AuthController::class, 'forgotPassword']);
+Route::post('/reset-password', [AuthController::class, 'resetPassword']);
+
 // Social Authentication (OAuth)
 Route::get('/auth/{provider}/redirect', [SocialAuthController::class, 'redirect']);
 Route::get('/auth/{provider}/callback', [SocialAuthController::class, 'callback']);
@@ -67,6 +71,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/logout', [AuthController::class, 'logout']);
     Route::get('/user', [AuthController::class, 'user']);
     Route::post('/auth/change-password', [AuthController::class, 'changePassword']);
+    Route::post('/profile/update', [UserController::class, 'updateProfile']);
 
     // My Loved Ones (Member access to their linked records)
     Route::get('/my-burial-records', [BurialRecordController::class, 'myRecords']);
@@ -150,6 +155,7 @@ Route::middleware('auth:sanctum')->group(function () {
     // ----------------------------------------
     Route::prefix('member')->group(function () {
         Route::get('/my-plots', [PlotController::class, 'myPlots']);
+        Route::get('/dashboard-stats', [DashboardController::class, 'memberStats']);
     });
 
     // ----------------------------------------
@@ -215,6 +221,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::prefix('feedbacks')->middleware('role:admin,staff')->group(function () {
         Route::get('/', [FeedbackController::class, 'index']);
         Route::get('/statistics', [FeedbackController::class, 'statistics']);
+        Route::post('/test-email', [FeedbackController::class, 'testEmail']);
         Route::get('/{id}', [FeedbackController::class, 'show']);
         Route::post('/{id}/respond', [FeedbackController::class, 'respond']);
         Route::delete('/{id}', [FeedbackController::class, 'destroy']);

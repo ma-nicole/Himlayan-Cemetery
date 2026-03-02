@@ -23,4 +23,16 @@ return [
         realpath(storage_path('framework/views'))
     ),
 
+    /*
+    |--------------------------------------------------------------------------
+    | Namespaced View Paths (View Hints)
+    |--------------------------------------------------------------------------
+    */
+
+    'namespaces' => [
+        'mail' => [
+            resource_path('views/emails'),
+        ],
+    ],
+
 ];

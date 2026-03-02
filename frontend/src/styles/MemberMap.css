@@ -4,6 +4,8 @@
 .map-page {
   font-family: 'Inter', sans-serif;
   min-height: 100vh;
+  display: flex;
+  flex-direction: column;
   background: #f8fafc;
   color: #1e293b;
 }
@@ -124,6 +126,8 @@
 
 /* ========== Main Content ========== */
 .map-main {
+  flex: 1;
+  width: 100%;
   max-width: 1400px;
   margin: 0 auto;
   padding: 2rem;

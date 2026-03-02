@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '../hooks/useAuth';
 import api from '../services/api';
 import Sidebar from '../components/common/Sidebar';
+import { validateName, validateEmail, validatePassword } from '../utils/formValidator';
 import '../styles/UserManagement.css';
 
 const UserManagementPage = () => {
@@ -20,6 +21,7 @@ const UserManagementPage = () => {
     password: '',
     role: 'staff'
   });
+  const [validationErrors, setValidationErrors] = useState({});
   const [formError, setFormError] = useState('');
   const [pagination, setPagination] = useState({
     currentPage: 1,
@@ -72,6 +74,7 @@ const UserManagementPage = () => {
     setModalMode(mode);
     setSelectedUser(user);
     setFormError('');
+    setValidationErrors({});
     if (mode === 'edit' && user) {
       setFormData({
         name: user.name,
@@ -99,6 +102,53 @@ const UserManagementPage = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setFormError('');
+    const newErrors = {};
+
+    // Validate name
+    if (!formData.name.trim()) {
+      newErrors.name = 'Name is required';
+    } else {
+      const nameValidation = validateName(formData.name);
+      if (!nameValidation.valid) {
+        newErrors.name = nameValidation.error;
+      }
+    }
+
+    // Validate email
+    if (!formData.email.trim()) {
+      newErrors.email = 'Email is required';
+    } else {
+      const emailValidation = validateEmail(formData.email);
+      if (!emailValidation.valid) {
+        newErrors.email = emailValidation.error;
+      }
+    }
+
+    // Validate password
+    if (modalMode === 'add') {
+      if (!formData.password.trim()) {
+        newErrors.password = 'Password is required';
+      } else {
+        const passwordValidation = validatePassword(formData.password);
+        if (!passwordValidation.valid) {
+          newErrors.password = passwordValidation.error;
+        }
+      }
+    } else {
+      // Edit mode - password is optional
+      if (formData.password.trim()) {
+        const passwordValidation = validatePassword(formData.password);
+        if (!passwordValidation.valid) {
+          newErrors.password = passwordValidation.error;
+        }
+      }
+    }
+
+    // If there are validation errors, show them
+    if (Object.keys(newErrors).length > 0) {
+      setValidationErrors(newErrors);
+      return;
+    }
 
     try {
       if (modalMode === 'add') {
@@ -142,6 +192,16 @@ const UserManagementPage = () => {
       case 'admin': return 'badge-admin';
       case 'staff': return 'badge-staff';
       default: return 'badge-member';
+    }
+  };
+
+  const getRoleLabel = (role) => {
+    switch (role) {
+      case 'admin': return 'Admin';
+      case 'staff': return 'Staff';
+      case 'member': return 'Member';
+      case 'visitor': return 'Member';
+      default: return 'Member';
     }
   };
 
@@ -279,7 +339,7 @@ const UserManagementPage = () => {
                         <td>{user.email}</td>
                         <td>
                           <span className={`role-badge ${getRoleBadgeClass(user.role)}`}>
-                            {user.role}
+                            {getRoleLabel(user.role)}
                           </span>
                         </td>
                         <td>{new Date(user.created_at).toLocaleDateString()}</td>
@@ -365,28 +425,66 @@ const UserManagementPage = () => {
                   <input
                     type="text"
                     value={formData.name}
-                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                    onChange={(e) => {
+                      setFormData({ ...formData, name: e.target.value });
+                      if (validationErrors.name) {
+                        setValidationErrors(prev => {
+                          const newErrors = { ...prev };
+                          delete newErrors.name;
+                          return newErrors;
+                        });
+                      }
+                    }}
+                    className={validationErrors.name ? 'error' : ''}
                     required
                   />
+                  {validationErrors.name && (
+                    <small className="error-message">{validationErrors.name}</small>
+                  )}
                 </div>
                 <div className="form-group">
                   <label>Email</label>
                   <input
                     type="email"
                     value={formData.email}
-                    onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                    onChange={(e) => {
+                      setFormData({ ...formData, email: e.target.value });
+                      if (validationErrors.email) {
+                        setValidationErrors(prev => {
+                          const newErrors = { ...prev };
+                          delete newErrors.email;
+                          return newErrors;
+                        });
+                      }
+                    }}
+                    className={validationErrors.email ? 'error' : ''}
                     required
                   />
+                  {validationErrors.email && (
+                    <small className="error-message">{validationErrors.email}</small>
+                  )}
                 </div>
                 <div className="form-group">
                   <label>Password {modalMode === 'edit' && '(leave blank to keep current)'}</label>
                   <input
                     type="password"
                     value={formData.password}
-                    onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                    onChange={(e) => {
+                      setFormData({ ...formData, password: e.target.value });
+                      if (validationErrors.password) {
+                        setValidationErrors(prev => {
+                          const newErrors = { ...prev };
+                          delete newErrors.password;
+                          return newErrors;
+                        });
+                      }
+                    }}
+                    className={validationErrors.password ? 'error' : ''}
                     required={modalMode === 'add'}
-                    minLength={8}
                   />
+                  {validationErrors.password && (
+                    <small className="error-message">{validationErrors.password}</small>
+                  )}
                 </div>
                 <div className="form-group">
                   <label>Role</label>
@@ -394,6 +492,7 @@ const UserManagementPage = () => {
                     value={formData.role}
                     onChange={(e) => setFormData({ ...formData, role: e.target.value })}
                   >
+                    <option value="member">Member</option>
                     <option value="staff">Staff</option>
                     <option value="admin">Admin</option>
                   </select>
@@ -402,7 +501,7 @@ const UserManagementPage = () => {
                   <button type="button" className="btn-cancel" onClick={handleCloseModal}>
                     Cancel
                   </button>
-                  <button type="submit" className="btn-submit">
+                  <button type="submit" className="btn-submit" disabled={Object.keys(validationErrors).length > 0}>
                     {modalMode === 'add' ? 'Create User' : 'Save Changes'}
                   </button>
                 </div>

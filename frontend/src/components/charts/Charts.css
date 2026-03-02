@@ -154,27 +154,21 @@
 }
 
 .donut-container svg {
-  transform: rotate(-90deg);
+  transform: rotate(0deg);
 }
 
 .donut-container svg.animate .donut-segment {
-  animation: donutGrow 1s ease forwards;
-  stroke-dasharray: 0 1000;
+  animation: donutFadeIn 0.6s ease forwards;
 }
 
-@keyframes donutGrow {
-  to { stroke-dasharray: var(--target-dasharray); }
+@keyframes donutFadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
 
 .donut-segment {
-  transition: stroke-dasharray 0.5s ease;
+  transition: opacity 0.3s ease;
 }
-
-.donut-primary { stroke: var(--color-primary-500, #1a472a); }
-.donut-success { stroke: var(--color-success-500, #22c55e); }
-.donut-warning { stroke: var(--color-warning-500, #f59e0b); }
-.donut-error { stroke: var(--color-error-500, #ef4444); }
-.donut-info { stroke: var(--color-info-500, #3b82f6); }
 
 .donut-center {
   position: absolute;

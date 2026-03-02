@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
+import { validatePassword } from '../utils/formValidator';
 import axios from 'axios';
 
 const ChangePasswordPage = () => {
@@ -12,16 +13,15 @@ const ChangePasswordPage = () => {
     confirmPassword: '',
   });
   const [error, setError] = useState('');
+  const [validationErrors, setValidationErrors] = useState({});
   const [loading, setLoading] = useState(false);
   const [passwordStrength, setPasswordStrength] = useState(0);
   const [showPasswords, setShowPasswords] = useState(false);
 
-  // Redirect if user doesn't need to change password
+  // Redirect if user is not authenticated
   useEffect(() => {
     if (!user) {
       navigate('/login');
-    } else if (!user.must_change_password) {
-      navigate('/dashboard');
     }
   }, [user, navigate]);
 
@@ -31,6 +31,15 @@ const ChangePasswordPage = () => {
       ...prev,
       [name]: value
     }));
+
+    // Clear validation error for this field when user starts correcting it
+    if (validationErrors[name]) {
+      setValidationErrors(prev => {
+        const newErrors = { ...prev };
+        delete newErrors[name];
+        return newErrors;
+      });
+    }
 
     // Check password strength for new password
     if (name === 'newPassword') {
@@ -69,20 +78,35 @@ const ChangePasswordPage = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
+    const newErrors = {};
 
-    // Validation
-    if (formData.newPassword.length < 8) {
-      setError('New password must be at least 8 characters long');
-      return;
+    // Validate current password
+    if (!formData.currentPassword.trim()) {
+      newErrors.currentPassword = 'Current password is required';
     }
 
-    if (formData.newPassword === formData.currentPassword) {
-      setError('New password must be different from current password');
-      return;
+    // Validate new password
+    if (!formData.newPassword.trim()) {
+      newErrors.newPassword = 'New password is required';
+    } else {
+      const passwordValidation = validatePassword(formData.newPassword);
+      if (!passwordValidation.valid) {
+        newErrors.newPassword = passwordValidation.error;
+      } else if (formData.newPassword === formData.currentPassword) {
+        newErrors.newPassword = 'New password must be different from current password';
+      }
     }
 
-    if (formData.newPassword !== formData.confirmPassword) {
-      setError('New password and confirmation do not match');
+    // Validate confirm password
+    if (!formData.confirmPassword.trim()) {
+      newErrors.confirmPassword = 'Confirm password is required';
+    } else if (formData.confirmPassword !== formData.newPassword) {
+      newErrors.confirmPassword = 'Passwords do not match';
+    }
+
+    // If there are validation errors, show them
+    if (Object.keys(newErrors).length > 0) {
+      setValidationErrors(newErrors);
       return;
     }
 
@@ -281,15 +305,24 @@ const ChangePasswordPage = () => {
                   type={showPasswords ? "text" : "password"}
                   id="currentPassword"
                   name="currentPassword"
-                  style={styles.input}
+                  style={{
+                    ...styles.input,
+                    borderColor: validationErrors.currentPassword ? '#ef4444' : '#d1d5db',
+                    backgroundColor: validationErrors.currentPassword ? '#fef2f2' : 'white',
+                  }}
                   value={formData.currentPassword}
                   onChange={handleChange}
                   required
                   placeholder="Enter the password from your email"
                   onFocus={(e) => e.target.style.borderColor = '#166534'}
-                  onBlur={(e) => e.target.style.borderColor = '#d1d5db'}
+                  onBlur={(e) => e.target.style.borderColor = validationErrors.currentPassword ? '#ef4444' : '#d1d5db'}
                 />
               </div>
+              {validationErrors.currentPassword && (
+                <small style={{ color: '#ef4444', fontSize: '12px', marginTop: '4px', display: 'block' }}>
+                  {validationErrors.currentPassword}
+                </small>
+              )}
             </div>
 
             <div style={styles.formGroup}>
@@ -299,13 +332,17 @@ const ChangePasswordPage = () => {
                   type={showPasswords ? "text" : "password"}
                   id="newPassword"
                   name="newPassword"
-                  style={styles.input}
+                  style={{
+                    ...styles.input,
+                    borderColor: validationErrors.newPassword ? '#ef4444' : '#d1d5db',
+                    backgroundColor: validationErrors.newPassword ? '#fef2f2' : 'white',
+                  }}
                   value={formData.newPassword}
                   onChange={handleChange}
                   required
                   placeholder="Min. 8 characters"
                   onFocus={(e) => e.target.style.borderColor = '#166534'}
-                  onBlur={(e) => e.target.style.borderColor = '#d1d5db'}
+                  onBlur={(e) => e.target.style.borderColor = validationErrors.newPassword ? '#ef4444' : '#d1d5db'}
                 />
                 <button 
                   type="button" 
@@ -315,8 +352,13 @@ const ChangePasswordPage = () => {
                   {showPasswords ? "HIDE" : "SHOW"}
                 </button>
               </div>
+              {validationErrors.newPassword && (
+                <small style={{ color: '#ef4444', fontSize: '12px', marginTop: '4px', display: 'block' }}>
+                  {validationErrors.newPassword}
+                </small>
+              )}
               
-              {formData.newPassword && (
+              {formData.newPassword && !validationErrors.newPassword && (
                 <>
                   <div style={styles.strengthBar}>
                     <div style={styles.strengthFill}></div>
@@ -333,26 +375,35 @@ const ChangePasswordPage = () => {
                   type={showPasswords ? "text" : "password"}
                   id="confirmPassword"
                   name="confirmPassword"
-                  style={styles.input}
+                  style={{
+                    ...styles.input,
+                    borderColor: validationErrors.confirmPassword ? '#ef4444' : '#d1d5db',
+                    backgroundColor: validationErrors.confirmPassword ? '#fef2f2' : 'white',
+                  }}
                   value={formData.confirmPassword}
                   onChange={handleChange}
                   required
                   placeholder="Re-enter your new password"
                   onFocus={(e) => e.target.style.borderColor = '#166534'}
-                  onBlur={(e) => e.target.style.borderColor = '#d1d5db'}
+                  onBlur={(e) => e.target.style.borderColor = validationErrors.confirmPassword ? '#ef4444' : '#d1d5db'}
                 />
               </div>
+              {validationErrors.confirmPassword && (
+                <small style={{ color: '#ef4444', fontSize: '12px', marginTop: '4px', display: 'block' }}>
+                  {validationErrors.confirmPassword}
+                </small>
+              )}
             </div>
 
             <button
               type="submit"
               style={{
                 ...styles.button,
-                ...(loading ? styles.buttonDisabled : {})
+                ...(loading || Object.keys(validationErrors).length > 0 ? styles.buttonDisabled : {})
               }}
-              disabled={loading}
-              onMouseOver={(e) => !loading && (e.target.style.backgroundColor = '#15803d')}
-              onMouseOut={(e) => !loading && (e.target.style.backgroundColor = '#166534')}
+              disabled={loading || Object.keys(validationErrors).length > 0}
+              onMouseOver={(e) => !loading && Object.keys(validationErrors).length === 0 && (e.target.style.backgroundColor = '#15803d')}
+              onMouseOut={(e) => !loading && Object.keys(validationErrors).length === 0 && (e.target.style.backgroundColor = '#166534')}
             >
               {loading ? 'Updating Password...' : 'Set New Password'}
             </button>

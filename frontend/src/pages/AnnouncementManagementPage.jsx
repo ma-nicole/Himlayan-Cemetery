@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import api from '../services/api';
 import Sidebar from '../components/common/Sidebar';
+import { validateRequired, validateTextArea } from '../utils/formValidator';
 import '../styles/AdminManagement.css';
 
 const AnnouncementManagementPage = () => {
@@ -19,6 +20,7 @@ const AnnouncementManagementPage = () => {
     is_active: true,
     expires_at: ''
   });
+  const [validationErrors, setValidationErrors] = useState({});
   const [formError, setFormError] = useState('');
   const [pagination, setPagination] = useState({ currentPage: 1, lastPage: 1, total: 0 });
 
@@ -68,6 +70,7 @@ const AnnouncementManagementPage = () => {
     setModalMode(mode);
     setSelectedItem(item);
     setFormError('');
+    setValidationErrors({});
     if (mode === 'edit' && item) {
       setFormData({
         title: item.title,
@@ -85,6 +88,34 @@ const AnnouncementManagementPage = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setFormError('');
+    const newErrors = {};
+
+    // Validate title
+    const titleValidation = validateRequired(formData.title, 'Title');
+    if (!titleValidation.valid) {
+      newErrors.title = titleValidation.error;
+    }
+
+    // Validate content
+    const contentValidation = validateRequired(formData.content, 'Content');
+    if (!contentValidation.valid) {
+      newErrors.content = contentValidation.error;
+    }
+
+    // Validate content length
+    if (formData.content.trim()) {
+      const textAreaValidation = validateTextArea(formData.content, { minLength: 10, maxLength: 5000 });
+      if (!textAreaValidation.valid) {
+        newErrors.content = textAreaValidation.error;
+      }
+    }
+
+    // If there are validation errors, show them
+    if (Object.keys(newErrors).length > 0) {
+      setValidationErrors(newErrors);
+      return;
+    }
+
     try {
       const payload = { ...formData };
       if (!payload.expires_at) delete payload.expires_at;
@@ -230,11 +261,47 @@ const AnnouncementManagementPage = () => {
               <form onSubmit={handleSubmit}>
                 <div className="form-group">
                   <label>Title *</label>
-                  <input type="text" value={formData.title} onChange={(e) => setFormData({...formData, title: e.target.value})} required />
+                  <input 
+                    type="text" 
+                    value={formData.title} 
+                    onChange={(e) => {
+                      setFormData({...formData, title: e.target.value});
+                      if (validationErrors.title) {
+                        setValidationErrors(prev => {
+                          const newErrors = { ...prev };
+                          delete newErrors.title;
+                          return newErrors;
+                        });
+                      }
+                    }} 
+                    className={validationErrors.title ? 'error' : ''}
+                    required 
+                  />
+                  {validationErrors.title && (
+                    <small className="error-message">{validationErrors.title}</small>
+                  )}
                 </div>
                 <div className="form-group">
                   <label>Content *</label>
-                  <textarea rows="4" value={formData.content} onChange={(e) => setFormData({...formData, content: e.target.value})} required />
+                  <textarea 
+                    rows="4" 
+                    value={formData.content} 
+                    onChange={(e) => {
+                      setFormData({...formData, content: e.target.value});
+                      if (validationErrors.content) {
+                        setValidationErrors(prev => {
+                          const newErrors = { ...prev };
+                          delete newErrors.content;
+                          return newErrors;
+                        });
+                      }
+                    }} 
+                    className={validationErrors.content ? 'error' : ''}
+                    required 
+                  />
+                  {validationErrors.content && (
+                    <small className="error-message">{validationErrors.content}</small>
+                  )}
                 </div>
                 <div className="form-row">
                   <div className="form-group">
@@ -259,7 +326,7 @@ const AnnouncementManagementPage = () => {
                 </div>
                 <div className="form-actions">
                   <button type="button" className="btn-cancel" onClick={() => setShowModal(false)}>Cancel</button>
-                  <button type="submit" className="btn-submit">{modalMode === 'add' ? 'Create' : 'Update'}</button>
+                  <button type="submit" className="btn-submit" disabled={Object.keys(validationErrors).length > 0}>{modalMode === 'add' ? 'Create' : 'Update'}</button>
                 </div>
               </form>
             </div>

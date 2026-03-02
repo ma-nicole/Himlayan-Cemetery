@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { Link, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import MemberHeader from '../components/common/MemberHeader';
 import MemberFooter from '../components/common/MemberFooter';
@@ -8,6 +8,7 @@ import '../styles/MemberServices.css';
 
 const MemberServicesPage = () => {
   const { user, logout } = useAuth();
+  const [searchParams] = useSearchParams();
   const [activeTab, setActiveTab] = useState('all');
   const [expandedFaq, setExpandedFaq] = useState(null);
   const [showRequestModal, setShowRequestModal] = useState(false);
@@ -15,10 +16,43 @@ const MemberServicesPage = () => {
   const [requestForm, setRequestForm] = useState({
     description: '',
     preferred_date: '',
-    contact_number: ''
+    contact_number: '',
+    country_code: '+63'
   });
   const [submitting, setSubmitting] = useState(false);
   const [submitSuccess, setSubmitSuccess] = useState(false);
+  const [myRequests, setMyRequests] = useState([]);
+  const [requestsLoading, setRequestsLoading] = useState(false);
+
+  useEffect(() => {
+    // Check URL params to switch to my-requests tab
+    const tab = searchParams.get('tab');
+    if (tab === 'my-requests') {
+      setActiveTab('my-requests');
+      loadMyRequests();
+    }
+  }, [searchParams]);
+
+  useEffect(() => {
+    if (activeTab === 'my-requests') {
+      loadMyRequests();
+    }
+  }, [activeTab]);
+
+  const loadMyRequests = async () => {
+    setRequestsLoading(true);
+    try {
+      const response = await api.get('/service-requests');
+      if (response.data.success) {
+        setMyRequests(response.data.data || []);
+      }
+    } catch (error) {
+      console.error('Failed to load service requests:', error);
+      setMyRequests([]);
+    } finally {
+      setRequestsLoading(false);
+    }
+  };
 
   const handleLogout = async () => {
     await logout();
@@ -26,7 +60,7 @@ const MemberServicesPage = () => {
 
   const openRequestModal = (service) => {
     setSelectedService(service);
-    setRequestForm({ description: '', preferred_date: '', contact_number: '' });
+    setRequestForm({ description: '', preferred_date: '', contact_number: '', country_code: '+63' });
     setSubmitSuccess(false);
     setShowRequestModal(true);
   };
@@ -35,9 +69,14 @@ const MemberServicesPage = () => {
     e.preventDefault();
     setSubmitting(true);
     try {
+      const fullContactNumber = requestForm.contact_number 
+        ? `${requestForm.country_code} ${requestForm.contact_number}` 
+        : '';
       await api.post('/service-requests', {
         service_type: selectedService.title.toLowerCase().replace(/\s+/g, '_'),
-        ...requestForm
+        description: requestForm.description,
+        preferred_date: requestForm.preferred_date,
+        contact_number: fullContactNumber
       });
       setSubmitSuccess(true);
     } catch (error) {
@@ -248,9 +287,98 @@ const MemberServicesPage = () => {
               </svg>
               Additional Services
             </button>
+            <button 
+              className={`filter-tab ${activeTab === 'my-requests' ? 'active' : ''}`}
+              onClick={() => setActiveTab('my-requests')}
+            >
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                <polyline points="14 2 14 8 20 8"/>
+                <line x1="16" y1="13" x2="8" y2="13"/>
+                <line x1="16" y1="17" x2="8" y2="17"/>
+              </svg>
+              My Requests
+            </button>
           </div>
         </div>
 
+        {/* My Requests Section */}
+        {activeTab === 'my-requests' ? (
+          <section className="my-requests-section">
+            <div className="requests-header">
+              <h2>My Service Requests</h2>
+              <p>Track the status of your service requests</p>
+            </div>
+            
+            {requestsLoading ? (
+              <div className="loading-spinner-container">
+                <div className="loading-spinner"></div>
+                <p>Loading your requests...</p>
+              </div>
+            ) : myRequests.length === 0 ? (
+              <div className="no-requests">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                  <polyline points="14 2 14 8 20 8"/>
+                </svg>
+                <h3>No Service Requests</h3>
+                <p>You haven't submitted any service requests yet.</p>
+                <button className="btn-browse" onClick={() => setActiveTab('all')}>
+                  Browse Services
+                </button>
+              </div>
+            ) : (
+              <div className="requests-list">
+                {myRequests.map((request) => (
+                  <div key={request.id} className="request-card">
+                    <div className="request-header">
+                      <div className="request-type">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                          <polyline points="14 2 14 8 20 8"/>
+                        </svg>
+                        <span>{request.service_type.split('_').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')}</span>
+                      </div>
+                      <span className={`status-badge status-${request.status}`}>
+                        {request.status.charAt(0).toUpperCase() + request.status.slice(1)}
+                      </span>
+                    </div>
+                    <div className="request-body">
+                      {request.description && (
+                        <p className="request-description">{request.description}</p>
+                      )}
+                      <div className="request-meta">
+                        <span>
+                          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                            <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
+                            <line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/>
+                            <line x1="3" y1="10" x2="21" y2="10"/>
+                          </svg>
+                          Submitted: {new Date(request.created_at).toLocaleDateString()}
+                        </span>
+                        {request.preferred_date && (
+                          <span>
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                              <circle cx="12" cy="12" r="10"/>
+                              <polyline points="12 6 12 12 16 14"/>
+                            </svg>
+                            Preferred: {new Date(request.preferred_date).toLocaleDateString()}
+                          </span>
+                        )}
+                      </div>
+                      {request.admin_notes && (
+                        <div className="admin-notes">
+                          <strong>Admin Notes:</strong> {request.admin_notes}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </section>
+        ) : (
+        <>
         {/* Services Grid */}
         <section className="services-grid">
           {filteredServices.map((service) => (
@@ -391,6 +519,8 @@ const MemberServicesPage = () => {
             </div>
           </div>
         </section>
+        </>
+        )}
       </main>
 
       {/* Service Request Modal */}
@@ -428,12 +558,38 @@ const MemberServicesPage = () => {
                   </div>
                   <div className="form-group">
                     <label>Contact Number</label>
-                    <input
-                      type="tel"
-                      value={requestForm.contact_number}
-                      onChange={(e) => setRequestForm({...requestForm, contact_number: e.target.value})}
-                      placeholder="09XX XXX XXXX"
-                    />
+                    <div style={{ display: 'flex', gap: '8px' }}>
+                      <select 
+                        className="form-control"
+                        value={requestForm.country_code}
+                        onChange={(e) => setRequestForm({...requestForm, country_code: e.target.value})}
+                        style={{ flex: '0 0 100px' }}
+                      >
+                        <option value="+63">🇵🇭 +63</option>
+                        <option value="+1">🇺🇸 +1</option>
+                        <option value="+44">🇬🇧 +44</option>
+                        <option value="+81">🇯🇵 +81</option>
+                        <option value="+82">🇰🇷 +82</option>
+                        <option value="+86">🇨🇳 +86</option>
+                        <option value="+65">🇸🇬 +65</option>
+                        <option value="+60">🇲🇾 +60</option>
+                        <option value="+61">🇦🇺 +61</option>
+                        <option value="+971">🇦🇪 +971</option>
+                        <option value="+966">🇸🇦 +966</option>
+                        <option value="+39">🇮🇹 +39</option>
+                        <option value="+49">🇩🇪 +49</option>
+                        <option value="+33">🇫🇷 +33</option>
+                        <option value="+34">🇪🇸 +34</option>
+                      </select>
+                      <input
+                        type="tel"
+                        className="form-control"
+                        value={requestForm.contact_number}
+                        onChange={(e) => setRequestForm({...requestForm, contact_number: e.target.value})}
+                        placeholder="9123456789"
+                        style={{ flex: '1' }}
+                      />
+                    </div>
                   </div>
                   <div className="form-group">
                     <label>Additional Details</label>

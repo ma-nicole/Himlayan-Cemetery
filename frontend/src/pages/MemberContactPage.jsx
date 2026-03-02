@@ -1,284 +1,363 @@
 import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
+import { useToast } from '../context/ToastContext';
 import MemberHeader from '../components/common/MemberHeader';
 import MemberFooter from '../components/common/MemberFooter';
-import '../styles/MemberDashboard.css';
+import api from '../services/api';
+import { validateName, validateEmail, validatePhone, validateRequired, validateTextArea } from '../utils/formValidator';
+import './FeedbackPage.css';
 
 const MemberContactPage = () => {
-  const { user, logout } = useAuth();
-  const [formData, setFormData] = useState({
-    subject: '',
-    message: ''
-  });
+  const { user } = useAuth();
+  const toast = useToast();
+  const [loading, setLoading] = useState(false);
   const [submitted, setSubmitted] = useState(false);
+  const [rating, setRating] = useState(0);
+  const [hoverRating, setHoverRating] = useState(0);
+  const [validationErrors, setValidationErrors] = useState({});
+  
+  const [formData, setFormData] = useState({
+    name: user?.name || '',
+    email: user?.email || '',
+    phone_country_code: '+63',
+    phone: '',
+    subject: '',
+    message: '',
+  });
 
-  const handleLogout = async () => {
-    await logout();
+  const getPhoneRequirements = (countryCode) => {
+    const requirements = {
+      '+63': { digits: 10, country: 'Philippines' },
+      '+1': { digits: 10, country: 'USA/Canada' },
+      '+44': { digits: 10, country: 'UK' },
+      '+61': { digits: 9, country: 'Australia' },
+      '+81': { digits: 10, country: 'Japan' },
+      '+82': { digits: 10, country: 'South Korea' },
+      '+86': { digits: 11, country: 'China' },
+      '+65': { digits: 8, country: 'Singapore' },
+      '+60': { digits: 10, country: 'Malaysia' },
+      '+971': { digits: 9, country: 'UAE' }
+    };
+    return requirements[countryCode] || { digits: 10, country: 'Selected Country' };
   };
 
-  const handleSubmit = (e) => {
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    
+    // Handle phone number input - only allow digits and enforce length limit
+    if (name === 'phone') {
+      const digitsOnly = value.replace(/\D/g, '');
+      const maxLength = getPhoneRequirements(formData.phone_country_code).digits;
+      setFormData(prev => ({ 
+        ...prev, 
+        [name]: digitsOnly.slice(0, maxLength)
+      }));
+    } else if (name === 'phone_country_code') {
+      // Handle country code changes - clear phone if it exceeds new country's limit
+      const currentPhone = formData.phone;
+      const newMaxLength = getPhoneRequirements(value).digits;
+      
+      setFormData(prev => ({
+        ...prev,
+        [name]: value,
+        phone: currentPhone.length > newMaxLength ? '' : currentPhone
+      }));
+    } else {
+      setFormData(prev => ({ ...prev, [name]: value }));
+    }
+
+    // Clear validation error for this field when user starts typing
+    if (validationErrors[name]) {
+      setValidationErrors(prev => {
+        const newErrors = { ...prev };
+        delete newErrors[name];
+        return newErrors;
+      });
+    }
+  };
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    // TODO: Implement actual submission
-    console.log('Form submitted:', formData);
-    setSubmitted(true);
-    setTimeout(() => setSubmitted(false), 5000);
-    setFormData({ subject: '', message: '' });
+    console.log('Form submission started', { formData, rating, loading });
+    
+    const newErrors = {};
+
+    // Validate name
+    const nameValidation = validateName(formData.name);
+    if (!nameValidation.valid) {
+      newErrors.name = nameValidation.error;
+    }
+
+    // Validate email
+    const emailValidation = validateEmail(formData.email);
+    if (!emailValidation.valid) {
+      newErrors.email = emailValidation.error;
+    }
+
+    // Validate phone if provided
+    if (formData.phone) {
+      const phoneValidation = validatePhone(formData.phone, formData.phone_country_code);
+      if (!phoneValidation.valid) {
+        newErrors.phone = phoneValidation.error;
+      }
+    }
+
+    // Validate message
+    const messageValidation = validateTextArea(formData.message);
+    if (!messageValidation.valid) {
+      newErrors.message = messageValidation.error;
+    }
+
+    console.log('Validation errors:', newErrors);
+
+    // If there are validation errors, display them and don't submit
+    if (Object.keys(newErrors).length > 0) {
+      console.log('Validation failed, stopping submission');
+      setValidationErrors(newErrors);
+      return;
+    }
+
+    setValidationErrors({});
+    setLoading(true);
+    console.log('Starting API call...');
+    
+    try {
+      const response = await api.post('/feedback', {
+        ...formData,
+        rating: rating > 0 ? rating : null
+      });
+      
+      console.log('API response:', response);
+      
+      // Always treat 200 response as success
+      if (response.status === 200 || response.data?.success) {
+        console.log('Feedback submitted successfully!');
+        toast?.success('Thank you for your feedback!');
+        setSubmitted(true);
+      } else {
+        console.log('Response was not successful');
+        toast?.error(response.data?.message || 'Failed to submit feedback');
+      }
+    } catch (error) {
+      console.error('Error submitting feedback:', error);
+      toast?.error(error.response?.data?.message || 'Failed to submit feedback. Please try again.');
+    } finally {
+      setLoading(false);
+    }
   };
+
+  const handleReset = () => {
+    setFormData({
+      name: user?.name || '',
+      email: user?.email || '',
+      phone_country_code: '+63',
+      phone: '',
+      subject: '',
+      message: '',
+    });
+    setRating(0);
+    setSubmitted(false);
+  };
+
+  if (submitted) {
+    return (
+      <div className="member-dashboard">
+        <MemberHeader />
+        <main className="member-main">
+          <div className="feedback-page">
+            <div className="feedback-success">
+              <div className="success-icon">Success</div>
+              <h2>Thank You!</h2>
+              <p>Your feedback has been submitted successfully.</p>
+              <p className="success-note">We appreciate your input and will review it shortly.</p>
+              <div className="success-actions">
+                <button className="btn btn-primary" onClick={handleReset}>
+                  Submit Another Feedback
+                </button>
+              </div>
+            </div>
+          </div>
+        </main>
+        <MemberFooter />
+      </div>
+    );
+  }
 
   return (
     <div className="member-dashboard">
-      {/* Header */}
       <MemberHeader />
-
-      {/* Main Content */}
       <main className="member-main">
-        <section className="welcome-section">
-          <h2>Contact Us</h2>
-          <p>We are ready to help with your inquiries</p>
-        </section>
+        <div className="feedback-page">
+          <div className="page-header">
+            <h1>Feedback & Suggestions</h1>
+            <p>We value your feedback. Help us improve our services.</p>
+          </div>
 
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(350px, 1fr))', gap: '30px' }}>
-          {/* Contact Information */}
-          <section style={{
-            background: 'white',
-            borderRadius: '15px',
-            padding: '30px',
-            boxShadow: '0 5px 20px rgba(0,0,0,0.08)'
-          }}>
-            <h3 style={{ color: '#1a472a', marginBottom: '25px' }}>Contact Information</h3>
-            
-            <div style={{ marginBottom: '25px' }}>
-              <div style={{ display: 'flex', alignItems: 'flex-start', gap: '15px', marginBottom: '20px' }}>
-                <div>
-                  <strong style={{ color: '#1a472a', display: 'block', marginBottom: '5px' }}>Address</strong>
-                  <p style={{ color: '#666', margin: 0, lineHeight: '1.6' }}>
-                    240 Tandang Sora Avenue<br />
-                    Barangay Culiat<br />
-                    Quezon City, Metro Manila 1128
-                  </p>
-                </div>
-              </div>
-
-              <div style={{ display: 'flex', alignItems: 'flex-start', gap: '15px', marginBottom: '20px' }}>
-                <div>
-                  <strong style={{ color: '#1a472a', display: 'block', marginBottom: '5px' }}>Telephone</strong>
-                  <p style={{ color: '#666', margin: 0 }}>
-                    <a href="tel:+6328921-6947" style={{ color: '#1a472a' }}>(02) 8921-6947</a><br />
-                    <a href="tel:+6328453-4057" style={{ color: '#1a472a' }}>(02) 8453-4057</a>
-                  </p>
-                </div>
-              </div>
-
-              <div style={{ display: 'flex', alignItems: 'flex-start', gap: '15px', marginBottom: '20px' }}>
-                <div>
-                  <strong style={{ color: '#1a472a', display: 'block', marginBottom: '5px' }}>Email</strong>
-                  <p style={{ color: '#666', margin: 0 }}>
-                    <a href="mailto:info@himlayan.ph" style={{ color: '#1a472a' }}>info@himlayan.ph</a>
-                  </p>
-                </div>
-              </div>
-
-              <div style={{ display: 'flex', alignItems: 'flex-start', gap: '15px' }}>
-                <div>
-                  <strong style={{ color: '#1a472a', display: 'block', marginBottom: '5px' }}>Office Hours</strong>
-                  <p style={{ color: '#666', margin: 0 }}>
-                    Monday - Sunday: 6:00 AM - 6:00 PM<br />
-                    <em style={{ fontSize: '0.9rem' }}>Undas: 24 hours (Oct 31 - Nov 2)</em>
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            {/* Quick Call Buttons */}
-            <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
-              <a href="tel:+6328921-6947" style={{
-                background: 'linear-gradient(135deg, #1a472a 0%, #2d5a3d 100%)',
-                color: 'white',
-                padding: '12px 24px',
-                borderRadius: '8px',
-                textDecoration: 'none',
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '8px'
-              }}>
-                Call Now
-              </a>
-              <a href="https://maps.google.com/?q=Himlayang+Pilipino+Memorial+Park+Quezon+City" 
-                target="_blank" 
-                rel="noopener noreferrer"
-                style={{
-                  background: '#f0f0f0',
-                  color: '#1a472a',
-                  padding: '12px 24px',
-                  borderRadius: '8px',
-                  textDecoration: 'none',
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: '8px'
-                }}>
-                Open in Maps
-              </a>
-            </div>
-          </section>
-
-          {/* Contact Form */}
-          <section style={{
-            background: 'white',
-            borderRadius: '15px',
-            padding: '30px',
-            boxShadow: '0 5px 20px rgba(0,0,0,0.08)'
-          }}>
-            <h3 style={{ color: '#1a472a', marginBottom: '25px' }}>Send a Message</h3>
-            
-            {submitted ? (
-              <div style={{
-                background: '#d4edda',
-                border: '1px solid #c3e6cb',
-                borderRadius: '10px',
-                padding: '20px',
-                textAlign: 'center',
-                color: '#155724'
-              }}>
-                <strong>Your message has been sent!</strong>
-                <p style={{ margin: '10px 0 0' }}>You will receive a response within 24-48 hours.</p>
-              </div>
-            ) : (
-              <form onSubmit={handleSubmit}>
-                <div style={{ marginBottom: '20px' }}>
-                  <label style={{ display: 'block', marginBottom: '8px', color: '#333', fontWeight: '500' }}>
-                    Your Name
+          <div className="feedback-card">
+            <form onSubmit={handleSubmit} className="feedback-form">
+              <div className="form-row">
+                <div className="form-group">
+                  <label className="form-label">
+                    Name <span className="required">*</span>
                   </label>
                   <input
                     type="text"
-                    value={user?.name || ''}
-                    disabled
-                    style={{
-                      width: '100%',
-                      padding: '12px 15px',
-                      border: '2px solid #e0e0e0',
-                      borderRadius: '8px',
-                      background: '#f5f5f5',
-                      color: '#666'
-                    }}
+                    name="name"
+                    value={formData.name}
+                    onChange={handleChange}
+                    className={`form-input ${validationErrors.name ? 'error' : ''}`}
+                    placeholder="Your full name"
+                    required
+                    style={{ borderColor: validationErrors.name ? '#ef4444' : undefined }}
                   />
+                  {validationErrors.name && (
+                    <small style={{ color: '#ef4444', marginTop: '4px', display: 'block' }}>
+                      {validationErrors.name}
+                    </small>
+                  )}
                 </div>
 
-                <div style={{ marginBottom: '20px' }}>
-                  <label style={{ display: 'block', marginBottom: '8px', color: '#333', fontWeight: '500' }}>
-                    Your Email
+                <div className="form-group">
+                  <label className="form-label">
+                    Email <span className="required">*</span>
                   </label>
                   <input
                     type="email"
-                    value={user?.email || ''}
-                    disabled
-                    style={{
-                      width: '100%',
-                      padding: '12px 15px',
-                      border: '2px solid #e0e0e0',
-                      borderRadius: '8px',
-                      background: '#f5f5f5',
-                      color: '#666'
-                    }}
-                  />
-                </div>
-
-                <div style={{ marginBottom: '20px' }}>
-                  <label style={{ display: 'block', marginBottom: '8px', color: '#333', fontWeight: '500' }}>
-                    Subject *
-                  </label>
-                  <select
-                    value={formData.subject}
-                    onChange={(e) => setFormData({ ...formData, subject: e.target.value })}
+                    name="email"
+                    value={formData.email}
+                    onChange={handleChange}
+                    className={`form-input ${validationErrors.email ? 'error' : ''}`}
+                    placeholder="your.email@example.com"
                     required
-                    style={{
-                      width: '100%',
-                      padding: '12px 15px',
-                      border: '2px solid #e0e0e0',
-                      borderRadius: '8px',
-                      background: 'white'
+                    style={{ borderColor: validationErrors.email ? '#ef4444' : undefined }}
+                  />
+                  {validationErrors.email && (
+                    <small style={{ color: '#ef4444', marginTop: '4px', display: 'block' }}>
+                      {validationErrors.email}
+                    </small>
+                  )}
+                </div>
+              </div>
+
+              <div className="form-group">
+                <label className="form-label">Phone Number (Optional)</label>
+                <div style={{ display: 'flex', gap: '8px', alignItems: 'flex-start' }}>
+                  <select
+                    name="phone_country_code"
+                    className="form-input form-select"
+                    value={formData.phone_country_code}
+                    onChange={handleChange}
+                    style={{ 
+                      flex: '0 0 120px',
+                      padding: '0.875rem 1rem'
                     }}
                   >
-                    <option value="">Select a subject...</option>
-                    <option value="inquiry">General Inquiry</option>
-                    <option value="reservation">Lot Reservation</option>
-                    <option value="pricing">Pricing Information</option>
-                    <option value="visitation">Visitation Assistance</option>
-                    <option value="maintenance">Maintenance Concern</option>
-                    <option value="other">Other</option>
+                    <option value="+63">🇵🇭 +63</option>
+                    <option value="+1">🇺🇸 +1</option>
+                    <option value="+44">🇬🇧 +44</option>
+                    <option value="+61">🇦🇺 +61</option>
+                    <option value="+81">🇯🇵 +81</option>
+                    <option value="+82">🇰🇷 +82</option>
+                    <option value="+86">🇨🇳 +86</option>
+                    <option value="+65">🇸🇬 +65</option>
+                    <option value="+60">🇲🇾 +60</option>
+                    <option value="+971">🇦🇪 +971</option>
                   </select>
-                </div>
-
-                <div style={{ marginBottom: '20px' }}>
-                  <label style={{ display: 'block', marginBottom: '8px', color: '#333', fontWeight: '500' }}>
-                    Message *
-                  </label>
-                  <textarea
-                    value={formData.message}
-                    onChange={(e) => setFormData({ ...formData, message: e.target.value })}
-                    required
-                    rows={5}
-                    placeholder="Write your message here..."
-                    style={{
-                      width: '100%',
-                      padding: '12px 15px',
-                      border: '2px solid #e0e0e0',
-                      borderRadius: '8px',
-                      resize: 'vertical'
-                    }}
+                  <input
+                    type="tel"
+                    name="phone"
+                    className={`form-input ${validationErrors.phone ? 'error' : ''}`}
+                    value={formData.phone}
+                    onChange={handleChange}
+                    placeholder="e.g., 9123456789"
+                    style={{ flex: '1', borderColor: validationErrors.phone ? '#ef4444' : undefined }}
+                    title={`Please enter exactly ${getPhoneRequirements(formData.phone_country_code).digits} digits for ${getPhoneRequirements(formData.phone_country_code).country}`}
                   />
                 </div>
+                {validationErrors.phone && (
+                  <small style={{ color: '#ef4444', marginTop: '4px', display: 'block' }}>
+                    {validationErrors.phone}
+                  </small>
+                )}
+                {!validationErrors.phone && (
+                  <small style={{ color: '#666', display: 'block', marginTop: '0.5rem' }}>
+                    {formData.phone ? (
+                      formData.phone.length === getPhoneRequirements(formData.phone_country_code).digits
+                        ? '✓ Valid'
+                        : `Enter exactly ${getPhoneRequirements(formData.phone_country_code).digits} digits for ${getPhoneRequirements(formData.phone_country_code).country}`
+                    ) : (
+                      `Optional - Enter exactly ${getPhoneRequirements(formData.phone_country_code).digits} digits for ${getPhoneRequirements(formData.phone_country_code).country}`
+                    )}
+                  </small>
+                )}
+              </div>
 
-                <button
-                  type="submit"
-                  style={{
-                    width: '100%',
-                    background: 'linear-gradient(135deg, #1a472a 0%, #2d5a3d 100%)',
-                    color: 'white',
-                    border: 'none',
-                    padding: '15px',
-                    borderRadius: '8px',
-                    fontSize: '1rem',
-                    fontWeight: '500',
-                    cursor: 'pointer'
-                  }}
+              <div className="form-group">
+                <label className="form-label">Subject</label>
+                <input
+                  type="text"
+                  name="subject"
+                  value={formData.subject}
+                  onChange={handleChange}
+                  className="form-input"
+                  placeholder="What is your feedback about?"
+                />
+              </div>
+
+              <div className="form-group">
+                <label className="form-label">Rating (Optional)</label>
+                <div className="star-rating">
+                  {[1, 2, 3, 4, 5].map((star) => (
+                    <span
+                      key={star}
+                      className={`star ${star <= (hoverRating || rating) ? 'filled' : ''}`}
+                      onClick={() => setRating(star)}
+                      onMouseEnter={() => setHoverRating(star)}
+                      onMouseLeave={() => setHoverRating(0)}
+                    >
+                      ★
+                    </span>
+                  ))}
+                </div>
+              </div>
+
+              <div className="form-group">
+                <label className="form-label">
+                  Message <span className="required">*</span>
+                </label>
+                <textarea
+                  name="message"
+                  value={formData.message}
+                  onChange={handleChange}
+                  className={`form-input form-textarea ${validationErrors.message ? 'error' : ''}`}
+                  placeholder="Write your feedback or suggestions here..."
+                  rows={6}
+                  required
+                  style={{ borderColor: validationErrors.message ? '#ef4444' : undefined }}
+                />
+                {validationErrors.message && (
+                  <small style={{ color: '#ef4444', marginTop: '4px', display: 'block' }}>
+                    {validationErrors.message}
+                  </small>
+                )}
+                {!validationErrors.message && (
+                  <span className="char-count">{formData.message.length} / 1000</span>
+                )}
+              </div>
+
+              <div className="form-actions">
+                <button 
+                  type="submit" 
+                  className="btn btn-primary"
+                  disabled={loading}
                 >
-                  Send Message
+                  {loading ? 'Submitting...' : 'Submit Feedback'}
                 </button>
-              </form>
-            )}
-          </section>
+              </div>
+            </form>
+          </div>
         </div>
-
-        {/* Emergency Contact */}
-        <section style={{
-          background: '#fff3cd',
-          borderRadius: '15px',
-          padding: '25px',
-          marginTop: '30px',
-          borderLeft: '4px solid #ffc107'
-        }}>
-          <h3 style={{ color: '#856404', marginBottom: '15px' }}>Emergency or Urgent Concern?</h3>
-          <p style={{ color: '#856404', marginBottom: '15px' }}>
-            For immediate assistance, call our hotline directly:
-          </p>
-          <a href="tel:+6328921-6947" style={{
-            background: '#ffc107',
-            color: '#856404',
-            padding: '10px 20px',
-            borderRadius: '5px',
-            textDecoration: 'none',
-            fontWeight: 'bold',
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: '8px'
-          }}>
-            (02) 8921-6947
-          </a>
-        </section>
       </main>
-
-      {/* Footer */}
       <MemberFooter />
     </div>
   );

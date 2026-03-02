@@ -11,6 +11,8 @@ import './styles/design-system.css';
 // Pages
 import LandingPage from './pages/LandingPage';
 import LoginPage from './pages/LoginPage';
+import ForgotPasswordPage from './pages/ForgotPasswordPage';
+import ResetPasswordPage from './pages/ResetPasswordPage';
 import ChangePasswordPage from './pages/ChangePasswordPage';
 import DashboardPage from './pages/DashboardPage';
 import EnhancedDashboardPage from './pages/EnhancedDashboardPage';
@@ -33,6 +35,7 @@ import PaymentManagementPage from './pages/PaymentManagementPage';
 import FeedbackManagementPage from './pages/FeedbackManagementPage';
 import FeedbackPage from './pages/FeedbackPage';
 import AnnouncementsPage from './pages/AnnouncementsPage';
+import MemberAnnouncementsPage from './pages/MemberAnnouncementsPage';
 import PayDuesPage from './pages/PayDuesPage';
 import AuthCallback from './pages/AuthCallback';
 import AcceptInvitation from './pages/AcceptInvitation';
@@ -46,6 +49,8 @@ function App() {
             {/* Public Routes */}
           <Route path="/" element={<LandingPage />} />
           <Route path="/login" element={<LoginPage />} />
+          <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+          <Route path="/reset-password" element={<ResetPasswordPage />} />
           <Route path="/auth/callback" element={<AuthCallback />} />
           {/* NEW PUBLIC ROUTE: Grave search accessible without login */}
           <Route path="/search" element={<PublicSearchPage />} />
@@ -194,6 +199,14 @@ function App() {
             element={
               <ProtectedRoute>
                 <MemberContactPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/member/announcements"
+            element={
+              <ProtectedRoute>
+                <MemberAnnouncementsPage />
               </ProtectedRoute>
             }
           />

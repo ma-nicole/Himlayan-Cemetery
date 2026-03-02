@@ -4,6 +4,8 @@
   background: #1e293b;
   padding: 1.5rem 2rem;
   font-family: 'Inter', sans-serif;
+  flex-shrink: 0;
+  margin-top: auto;
 }
 
 .member-footer-container {

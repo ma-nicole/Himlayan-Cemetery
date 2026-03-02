@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import api from '../services/api';
 import Sidebar from '../components/common/Sidebar';
+import { validateRequired, validateTextArea } from '../utils/formValidator';
 import '../styles/AdminManagement.css';
 
 const PaymentManagementPage = () => {
@@ -12,6 +13,7 @@ const PaymentManagementPage = () => {
   const [showModal, setShowModal] = useState(false);
   const [selectedItem, setSelectedItem] = useState(null);
   const [formData, setFormData] = useState({ status: '', notes: '' });
+  const [validationErrors, setValidationErrors] = useState({});
   const [formError, setFormError] = useState('');
   const [pagination, setPagination] = useState({ currentPage: 1, lastPage: 1, total: 0 });
 
@@ -60,15 +62,34 @@ const PaymentManagementPage = () => {
     setSelectedItem(item);
     setFormData({ status: '', notes: item.notes || '' });
     setFormError('');
+    setValidationErrors({});
     setShowModal(true);
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!formData.status) {
-      setFormError('Please select a status');
+    const newErrors = {};
+
+    // Validate status
+    const statusValidation = validateRequired(formData.status, 'Verification decision');
+    if (!statusValidation.valid) {
+      newErrors.status = statusValidation.error;
+    }
+
+    // Validate notes if provided
+    if (formData.notes.trim()) {
+      const notesValidation = validateTextArea(formData.notes, { minLength: 2, maxLength: 1500 });
+      if (!notesValidation.valid) {
+        newErrors.notes = notesValidation.error;
+      }
+    }
+
+    // If there are validation errors, show them
+    if (Object.keys(newErrors).length > 0) {
+      setValidationErrors(newErrors);
       return;
     }
+
     setFormError('');
     try {
       await api.post(`/payments/${selectedItem.id}/verify`, formData);
@@ -234,19 +255,54 @@ const PaymentManagementPage = () => {
               <form onSubmit={handleSubmit}>
                 <div className="form-group">
                   <label>Verification Decision *</label>
-                  <select value={formData.status} onChange={(e) => setFormData({...formData, status: e.target.value})} required>
+                  <select 
+                    value={formData.status} 
+                    onChange={(e) => {
+                      setFormData({...formData, status: e.target.value});
+                      if (validationErrors.status) {
+                        setValidationErrors(prev => {
+                          const newErrors = { ...prev };
+                          delete newErrors.status;
+                          return newErrors;
+                        });
+                      }
+                    }} 
+                    className={validationErrors.status ? 'error' : ''}
+                    required
+                  >
                     <option value="">Select...</option>
                     <option value="verified">Verify Payment</option>
                     <option value="rejected">Reject Payment</option>
                   </select>
+                  {validationErrors.status && (
+                    <small className="error-message">{validationErrors.status}</small>
+                  )}
                 </div>
                 <div className="form-group">
                   <label>Notes</label>
-                  <textarea rows="3" value={formData.notes} onChange={(e) => setFormData({...formData, notes: e.target.value})} placeholder="Add verification notes..." />
+                  <textarea 
+                    rows="3" 
+                    value={formData.notes} 
+                    onChange={(e) => {
+                      setFormData({...formData, notes: e.target.value});
+                      if (validationErrors.notes) {
+                        setValidationErrors(prev => {
+                          const newErrors = { ...prev };
+                          delete newErrors.notes;
+                          return newErrors;
+                        });
+                      }
+                    }} 
+                    className={validationErrors.notes ? 'error' : ''}
+                    placeholder="Add verification notes..." 
+                  />
+                  {validationErrors.notes && (
+                    <small className="error-message">{validationErrors.notes}</small>
+                  )}
                 </div>
                 <div className="form-actions">
                   <button type="button" className="btn-cancel" onClick={() => setShowModal(false)}>Cancel</button>
-                  <button type="submit" className="btn-submit">Submit</button>
+                  <button type="submit" className="btn-submit" disabled={Object.keys(validationErrors).length > 0}>Submit</button>
                 </div>
               </form>
             </div>
