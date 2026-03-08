@@ -148,6 +148,12 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/markers', [MapController::class, 'markers']);
         Route::get('/marker/{plotId}', [MapController::class, 'markerDetails']);
         Route::get('/bounds', [MapController::class, 'bounds']);
+        
+        // Admin only routes
+        Route::middleware('auth:sanctum')->group(function () {
+            Route::post('/plots', [MapController::class, 'createPlot']);
+            Route::delete('/plots/{plotId}', [MapController::class, 'deletePlot']);
+        });
     });
 
     // ----------------------------------------

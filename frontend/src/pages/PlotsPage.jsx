@@ -16,21 +16,24 @@ const PlotsPage = () => {
   const [selectedPlot, setSelectedPlot] = useState(null);
   
   const [filter, setFilter] = useState('all');
+  const [search, setSearch] = useState('');
   const [pagination, setPagination] = useState({ current_page: 1, last_page: 1 });
   const [sortField, setSortField] = useState('plot_number');
   const [sortOrder, setSortOrder] = useState('asc');
   
   const { isAdmin } = useAuth();
 
-  const loadPlots = useCallback(async (page = 1) => {
+  // Load plots function - doesn't depend on search/filter/sort to avoid infinite loops
+  const loadPlots = useCallback(async (page = 1, searchVal = '', filterVal = 'all', sortFieldVal = 'plot_number', sortOrderVal = 'asc') => {
     try {
       setLoading(true);
       const response = await plotService.getAll({ 
         page, 
-        status: filter !== 'all' ? filter : undefined,
+        status: filterVal !== 'all' ? filterVal : undefined,
+        search: searchVal || undefined,
         per_page: 15,
-        sort_by: sortField,
-        sort_order: sortOrder
+        sort_by: sortFieldVal,
+        sort_order: sortOrderVal
       });
       if (response.success) {
         setPlots(response.data.data);
@@ -44,11 +47,17 @@ const PlotsPage = () => {
     } finally {
       setLoading(false);
     }
-  }, [filter, sortField, sortOrder]);
+  }, []);
 
+  // Watch for changes in search, filter, or sort - reload plots on page 1
   useEffect(() => {
-    loadPlots();
-  }, [loadPlots]);
+    loadPlots(1, search, filter, sortField, sortOrder);
+  }, [search, filter, sortField, sortOrder, loadPlots]);
+
+  // Watch for pagination changes - reload plots on current page
+  const handlePageChange = useCallback((page) => {
+    loadPlots(page, search, filter, sortField, sortOrder);
+  }, [search, filter, sortField, sortOrder, loadPlots]);
 
   const handleSort = (field) => {
     // If clicking same field, toggle order; otherwise set to asc
@@ -58,8 +67,12 @@ const PlotsPage = () => {
       setSortField(field);
       setSortOrder('asc');
     }
-    // Reset to page 1 when sorting changes
-    loadPlots(1);
+    // Don't call loadPlots here - the useEffect will handle it
+  };
+
+  const handleSearch = (e) => {
+    setSearch(e.target.value);
+    // Don't call loadPlots here - the useEffect will handle it
   };
 
   const handleCreate = () => {
@@ -82,7 +95,7 @@ const PlotsPage = () => {
         setSuccess('Plot created successfully');
       }
       setShowForm(false);
-      loadPlots(pagination.current_page);
+      handlePageChange(pagination.current_page);
       setTimeout(() => setSuccess(''), 3000);
     } catch (err) {
       throw err;
@@ -97,7 +110,7 @@ const PlotsPage = () => {
     try {
       await plotService.delete(id);
       setSuccess('Plot deleted successfully');
-      loadPlots(pagination.current_page);
+      handlePageChange(pagination.current_page);
       setTimeout(() => setSuccess(''), 3000);
     } catch (err) {
       setError(err.response?.data?.message || 'Failed to delete plot');
@@ -119,22 +132,51 @@ const PlotsPage = () => {
       {error && <div className="alert alert-error">{error}</div>}
       {success && <div className="alert alert-success">{success}</div>}
 
-      {/* Filter */}
+      {/* Filter and Search */}
       <div className="card" style={{ marginBottom: '20px' }}>
-        <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
-          <label><strong>Filter by Status:</strong></label>
-          <select
-            className="form-control"
-            style={{ width: 'auto' }}
-            value={filter}
-            onChange={(e) => setFilter(e.target.value)}
-          >
-            <option value="all">All</option>
-            <option value="available">Available</option>
-            <option value="occupied">Occupied</option>
-            <option value="reserved">Reserved</option>
-            <option value="maintenance">Maintenance</option>
-          </select>
+        <div style={{ display: 'flex', gap: '15px', alignItems: 'center', flexWrap: 'wrap' }}>
+          <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+            <label><strong>Filter by Status:</strong></label>
+            <select
+              className="form-control"
+              style={{ width: 'auto' }}
+              value={filter}
+              onChange={(e) => setFilter(e.target.value)}
+            >
+              <option value="all">All</option>
+              <option value="available">Available</option>
+              <option value="occupied">Occupied</option>
+              <option value="reserved">Reserved</option>
+              <option value="maintenance">Maintenance</option>
+            </select>
+          </div>
+          <div style={{ display: 'flex', gap: '10px', alignItems: 'center', flex: 1, minWidth: '250px' }}>
+            <label><strong>Search:</strong></label>
+            <input
+              type="text"
+              className="form-control"
+              placeholder="Search by plot number (e.g., PLT-0001)..."
+              value={search}
+              onChange={handleSearch}
+              style={{ flex: 1 }}
+            />
+            {search && (
+              <button
+                onClick={() => setSearch('')}
+                style={{
+                  padding: '8px 12px',
+                  backgroundColor: '#e74c3c',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '4px',
+                  cursor: 'pointer',
+                  fontSize: '0.9rem',
+                }}
+              >
+                ✕ Clear
+              </button>
+            )}
+          </div>
         </div>
       </div>
 
@@ -156,7 +198,7 @@ const PlotsPage = () => {
             <div className="pagination">
               <button
                 disabled={pagination.current_page === 1}
-                onClick={() => loadPlots(pagination.current_page - 1)}
+                onClick={() => handlePageChange(pagination.current_page - 1)}
               >
                 Previous
               </button>
@@ -164,14 +206,14 @@ const PlotsPage = () => {
                 <button
                   key={i + 1}
                   className={pagination.current_page === i + 1 ? 'active' : ''}
-                  onClick={() => loadPlots(i + 1)}
+                  onClick={() => handlePageChange(i + 1)}
                 >
                   {i + 1}
                 </button>
               ))}
               <button
                 disabled={pagination.current_page === pagination.last_page}
-                onClick={() => loadPlots(pagination.current_page + 1)}
+                onClick={() => handlePageChange(pagination.current_page + 1)}
               >
                 Next
               </button>

@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import plotService from '../../services/plotService';
-import { validateNumber } from '../../utils/formValidator';
 
 const PlotForm = ({ plot, onSubmit, onCancel }) => {
   const [formData, setFormData] = useState({
@@ -107,26 +106,26 @@ const PlotForm = ({ plot, onSubmit, onCancel }) => {
     setError('');
     const newErrors = {};
 
-    // Validate latitude
-    if (!formData.latitude) {
+    // Validate latitude - accept decimal numbers between -90 and 90
+    if (!formData.latitude && formData.latitude !== 0) {
       newErrors.latitude = 'Latitude is required';
     } else {
-      const latValidation = validateNumber(formData.latitude);
-      if (!latValidation.isValid) {
-        newErrors.latitude = 'Latitude must be a valid number (e.g., 14.5547)';
-      } else if (formData.latitude < -90 || formData.latitude > 90) {
+      const lat = parseFloat(formData.latitude);
+      if (isNaN(lat)) {
+        newErrors.latitude = 'Latitude must be a valid number (e.g., 14.5558893)';
+      } else if (lat < -90 || lat > 90) {
         newErrors.latitude = 'Latitude must be between -90 and 90';
       }
     }
 
-    // Validate longitude
-    if (!formData.longitude) {
+    // Validate longitude - accept decimal numbers between -180 and 180
+    if (!formData.longitude && formData.longitude !== 0) {
       newErrors.longitude = 'Longitude is required';
     } else {
-      const lngValidation = validateNumber(formData.longitude);
-      if (!lngValidation.isValid) {
-        newErrors.longitude = 'Longitude must be a valid number (e.g., 121.0244)';
-      } else if (formData.longitude < -180 || formData.longitude > 180) {
+      const lng = parseFloat(formData.longitude);
+      if (isNaN(lng)) {
+        newErrors.longitude = 'Longitude must be a valid number (e.g., 121.0244567)';
+      } else if (lng < -180 || lng > 180) {
         newErrors.longitude = 'Longitude must be between -180 and 180';
       }
     }

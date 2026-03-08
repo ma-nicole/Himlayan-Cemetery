@@ -2,9 +2,15 @@ import React, { useState, useEffect } from 'react';
 import Layout from '../components/common/Layout';
 import LoadingSpinner from '../components/common/LoadingSpinner';
 import CemeteryMap from '../components/map/CemeteryMap';
-import mapService from '../services/mapService';
+import AddPlotModal from '../components/map/AddPlotModal';
+import DeletePlotModal from '../components/map/DeletePlotModal';
+import { mapService } from '../services/mapService';
+import { useAuth } from '../hooks/useAuth';
 
 const MapPage = () => {
+  const { user } = useAuth();
+  const isAdmin = user?.role === 'admin';
+
   const [markers, setMarkers] = useState([]);
   const [mapCenter, setMapCenter] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -15,33 +21,42 @@ const MapPage = () => {
   const [loadingDetails, setLoadingDetails] = useState(false);
   
   const [filter, setFilter] = useState('all');
+  
+  // Modal states
+  const [showAddPlotModal, setShowAddPlotModal] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [plotToDelete, setPlotToDelete] = useState(null);
+  
+  // Add plot mode state
+  const [addPlotMode, setAddPlotMode] = useState(false);
+  const [selectedPlotCoordinates, setSelectedPlotCoordinates] = useState(null);
+
+  const loadMapData = async () => {
+    try {
+      setLoading(true);
+      
+      // Load markers and bounds in parallel
+      const [markersRes, boundsRes] = await Promise.all([
+        mapService.getMarkers(),
+        mapService.getBounds(),
+      ]);
+      
+      if (markersRes.success) {
+        setMarkers(markersRes.data);
+      }
+      
+      if (boundsRes.success && boundsRes.data.center) {
+        setMapCenter([boundsRes.data.center.lat, boundsRes.data.center.lng]);
+      }
+    } catch (err) {
+      setError('Failed to load map data');
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    const loadMapData = async () => {
-      try {
-        setLoading(true);
-        
-        // Load markers and bounds in parallel
-        const [markersRes, boundsRes] = await Promise.all([
-          mapService.getMarkers(),
-          mapService.getBounds(),
-        ]);
-        
-        if (markersRes.success) {
-          setMarkers(markersRes.data);
-        }
-        
-        if (boundsRes.success && boundsRes.data.center) {
-          setMapCenter([boundsRes.data.center.lat, boundsRes.data.center.lng]);
-        }
-      } catch (err) {
-        setError('Failed to load map data');
-        console.error(err);
-      } finally {
-        setLoading(false);
-      }
-    };
-
     loadMapData();
   }, []);
 
@@ -59,6 +74,60 @@ const MapPage = () => {
       console.error('Failed to load marker details:', err);
     } finally {
       setLoadingDetails(false);
+    }
+  };
+
+  const handlePlotAdded = (newPlot) => {
+    // Reload all markers to get the updated list
+    loadMapData();
+    // Clear selection
+    setSelectedMarker(null);
+    setMarkerDetails(null);
+  };
+
+  const handleDeleteClick = (marker) => {
+    if (isAdmin) {
+      setPlotToDelete(marker);
+      setShowDeleteModal(true);
+    }
+  };
+
+  const handlePlotDeleted = (plotId) => {
+    // Remove deleted plot from markers
+    setMarkers(prev => prev.filter(m => m.id !== plotId));
+    setSelectedMarker(null);
+    setMarkerDetails(null);
+  };
+
+  const handleMapClick = (coordinates) => {
+    if (addPlotMode) {
+      setSelectedPlotCoordinates(coordinates);
+      setShowAddPlotModal(true);
+    }
+  };
+
+  const handleAddPlotClick = () => {
+    // Just open the modal - don't enable map click mode yet
+    setShowAddPlotModal(true);
+    setSelectedPlotCoordinates(null);
+    setSelectedMarker(null);
+  };
+
+  const handleAddPlotModalClose = () => {
+    setShowAddPlotModal(false);
+    setAddPlotMode(false);
+    setSelectedPlotCoordinates(null);
+  };
+
+  const toggleMapClickMode = () => {
+    if (!addPlotMode) {
+      // Entering map click mode - close modal to allow map interaction
+      setShowAddPlotModal(false);
+      setAddPlotMode(true);
+    } else {
+      // Exiting map click mode - reopen modal
+      setShowAddPlotModal(true);
+      setAddPlotMode(false);
     }
   };
 
@@ -128,20 +197,73 @@ const MapPage = () => {
           </div>
 
           {/* Map */}
-          <div className="card" style={{ padding: 0 }}>
+          <div className="card" style={{ padding: 0, position: 'relative' }}>
+            {addPlotMode && (
+              <div style={{
+                position: 'absolute',
+                top: '10px',
+                left: '10px',
+                backgroundColor: '#f39c12',
+                color: 'white',
+                padding: '10px 15px',
+                borderRadius: '6px',
+                fontSize: '0.9rem',
+                fontWeight: '600',
+                zIndex: 100,
+                boxShadow: '0 2px 8px rgba(0,0,0,0.2)',
+              }}>
+                📍 Click on the map to select plot location
+              </div>
+            )}
             <CemeteryMap
               markers={filteredMarkers}
               center={mapCenter}
               zoom={18}
               onMarkerClick={handleMarkerClick}
+              onMapClick={handleMapClick}
             />
           </div>
         </div>
 
         {/* Details Panel */}
         <div style={{ width: '350px' }}>
+          {isAdmin && (
+            <button
+              onClick={handleAddPlotClick}
+              style={{
+                width: '100%',
+                padding: '10px 16px',
+                marginBottom: '15px',
+                backgroundColor: '#27ae60',
+                color: 'white',
+                border: 'none',
+                borderRadius: '6px',
+                cursor: 'pointer',
+                fontSize: '0.95rem',
+                fontWeight: '600',
+                whiteSpace: 'nowrap',
+                boxShadow: '0 2px 8px rgba(39, 174, 96, 0.3)',
+                transition: 'all 0.3s ease',
+              }}
+              onMouseEnter={(e) => {
+                e.target.style.backgroundColor = '#229954';
+                e.target.style.transform = 'translateY(-2px)';
+                e.target.style.boxShadow = '0 4px 12px rgba(39, 174, 96, 0.4)';
+              }}
+              onMouseLeave={(e) => {
+                e.target.style.backgroundColor = '#27ae60';
+                e.target.style.transform = 'translateY(0)';
+                e.target.style.boxShadow = '0 2px 8px rgba(39, 174, 96, 0.3)';
+              }}
+            >
+              + Add Plot
+            </button>
+          )}
+          
           <div className="card">
-            <h3 style={{ marginBottom: '15px' }}>Plot Details</h3>
+            <div style={{ marginBottom: '15px' }}>
+              <h3 style={{ margin: 0 }}>Plot Details</h3>
+            </div>
             
             {!selectedMarker && (
               <p style={{ color: '#666', textAlign: 'center' }}>
@@ -210,11 +332,54 @@ const MapPage = () => {
                     </div>
                   </>
                 )}
+
+                {/* Admin Actions */}
+                {isAdmin && (
+                  <div style={{ marginTop: '20px' }}>
+                    <hr style={{ margin: '15px 0' }} />
+                    <button
+                      onClick={() => handleDeleteClick(selectedMarker)}
+                      style={{
+                        width: '100%',
+                        padding: '10px',
+                        backgroundColor: '#e74c3c',
+                        color: 'white',
+                        border: 'none',
+                        borderRadius: '4px',
+                        cursor: 'pointer',
+                        fontSize: '0.9rem',
+                        fontWeight: '500',
+                      }}
+                    >
+                      🗑️ Delete Plot
+                    </button>
+                  </div>
+                )}
               </div>
             )}
           </div>
         </div>
       </div>
+
+      {/* Modals */}
+      <AddPlotModal
+        isOpen={showAddPlotModal}
+        onClose={handleAddPlotModalClose}
+        onPlotAdded={handlePlotAdded}
+        center={mapCenter}
+        selectedCoordinates={selectedPlotCoordinates}
+        addPlotMode={addPlotMode}
+        toggleMapClickMode={toggleMapClickMode}
+        onMapClick={handleMapClick}
+      />
+
+      <DeletePlotModal
+        isOpen={showDeleteModal}
+        onClose={() => setShowDeleteModal(false)}
+        plot={plotToDelete}
+        onPlotDeleted={handlePlotDeleted}
+        isAdmin={isAdmin}
+      />
     </Layout>
   );
 };

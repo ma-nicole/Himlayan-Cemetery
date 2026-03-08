@@ -64,7 +64,7 @@ class PlotController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'plot_number' => ['required', 'string', Rule::unique('plots', 'plot_number')->whereNull('deleted_at')],
+            'plot_number' => 'required|string|unique:plots,plot_number',
             'section' => 'nullable|string|max:50',
             'row_number' => 'nullable|integer|min:1',
             'column_number' => 'nullable|integer|min:1',
@@ -145,9 +145,14 @@ class PlotController extends Controller
             return $this->errorResponse('Cannot delete plot with burial record. Remove burial record first.', 400);
         }
 
-        $plot->delete();
+        try {
+            $plotNumber = $plot->plot_number;
+            $plot->forceDelete();
 
-        return $this->successResponse(null, 'Plot deleted successfully');
+            return $this->successResponse(null, "Plot {$plotNumber} deleted successfully");
+        } catch (\Exception $e) {
+            return $this->errorResponse('Failed to delete plot: ' . $e->getMessage(), 500);
+        }
     }
 
     /**

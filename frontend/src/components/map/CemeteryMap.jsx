@@ -1,32 +1,9 @@
-import React, { useEffect, useState } from 'react';
-import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
-import L from 'leaflet';
+import React, { useEffect, useState, useRef } from 'react';
+import { GoogleMap, MarkerF, InfoWindowF, useJsApiLoader } from '@react-google-maps/api';
 
-// Fix for default marker icons in react-leaflet
-delete L.Icon.Default.prototype._getIconUrl;
-L.Icon.Default.mergeOptions({
-  iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon-2x.png',
-  iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png',
-  shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
-});
-
-// Custom icons for different statuses
-const createCustomIcon = (color) => {
-  return L.divIcon({
-    className: 'custom-marker',
-    html: `<div style="
-      background-color: ${color};
-      width: 24px;
-      height: 24px;
-      border-radius: 50% 50% 50% 0;
-      transform: rotate(-45deg);
-      border: 2px solid white;
-      box-shadow: 0 2px 5px rgba(0,0,0,0.3);
-    "></div>`,
-    iconSize: [24, 24],
-    iconAnchor: [12, 24],
-    popupAnchor: [0, -24],
-  });
+const mapContainerStyle = {
+  width: '100%',
+  height: '100%',
 };
 
 const statusColors = {
@@ -36,101 +13,186 @@ const statusColors = {
   maintenance: '#95a5a6',
 };
 
-// Component to update map view
-const MapUpdater = ({ center, zoom }) => {
-  const map = useMap();
-  
-  useEffect(() => {
-    if (center) {
-      map.setView(center, zoom || 18);
-    }
-  }, [center, zoom, map]);
-  
-  return null;
+// Create SVG marker icon as data URL
+const createMarkerIcon = (color) => {
+  const svg = `
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 32" width="24" height="32">
+      <path d="M12 0C5.4 0 0 5.4 0 12c0 7 12 20 12 20s12-13 12-20c0-6.6-5.4-12-12-12z" 
+            fill="${color}" 
+            stroke="white" 
+            stroke-width="1.5"/>
+      <circle cx="12" cy="12.5" r="6" fill="white" opacity="0.3"/>
+    </svg>
+  `;
+  return `data:image/svg+xml;base64,${btoa(svg)}`;
 };
 
-const CemeteryMap = ({ markers, center, zoom, onMarkerClick }) => {
-  const [mapCenter, setMapCenter] = useState(center || [14.5547, 121.0244]);
+const CemeteryMap = ({ markers, center, zoom, onMarkerClick, onMapClick }) => {
+  const [mapCenter, setMapCenter] = useState(
+    center ? { lat: center[0], lng: center[1] } : { lat: 14.5547, lng: 121.0244 }
+  );
   const [mapZoom] = useState(zoom || 18);
+  const [selectedMarkerId, setSelectedMarkerId] = useState(null);
+  const mapRef = useRef(null);
+
+  const { isLoaded, loadError } = useJsApiLoader({
+    googleMapsApiKey: process.env.REACT_APP_GOOGLE_MAPS_API_KEY || '',
+    libraries: [],
+  });
+
+  useEffect(() => {
+    // Debug: Check if API key is loaded
+    if (!process.env.REACT_APP_GOOGLE_MAPS_API_KEY) {
+      console.error('⚠️ REACT_APP_GOOGLE_MAPS_API_KEY is not set in .env');
+    } else {
+      console.log('✓ Google Maps API Key is configured');
+    }
+  }, []);
 
   useEffect(() => {
     if (center) {
-      setMapCenter(center);
+      setMapCenter({ lat: center[0], lng: center[1] });
     }
   }, [center]);
 
+  useEffect(() => {
+    if (markers && markers.length > 0) {
+      console.log(`✓ Markers loaded: ${markers.length} plots on map`);
+    } else {
+      console.warn('⚠️ No markers to display');
+    }
+  }, [markers]);
+
+  const handleMarkerClick = (marker) => {
+    setSelectedMarkerId(marker.id);
+    if (onMarkerClick) {
+      onMarkerClick(marker);
+    }
+  };
+
+  const handleInfoWindowClose = () => {
+    setSelectedMarkerId(null);
+  };
+
+  if (loadError) {
+    console.error('Google Maps Load Error:', loadError);
+    return (
+      <div style={{ padding: '20px', color: '#e74c3c', textAlign: 'center', backgroundColor: '#ffe6e6', borderRadius: '4px' }}>
+        <strong>Error loading Google Maps</strong>
+        <p style={{ fontSize: '0.9rem', marginTop: '8px' }}>
+          Please verify:
+          <br />• API key is set in .env file
+          <br />• Maps JavaScript API is enabled in Google Cloud Console
+          <br />• API key restrictions allow this domain
+        </p>
+        <p style={{ fontSize: '0.85rem', color: '#999' }}>Check browser console for details</p>
+      </div>
+    );
+  }
+
+  if (!isLoaded) {
+    return (
+      <div style={{ padding: '20px', textAlign: 'center', color: '#666', minHeight: '400px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <div>
+          <div style={{ fontSize: '2rem', marginBottom: '10px' }}>🗺️</div>
+          <p>Loading map...</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className="map-container">
-      <MapContainer
+    <div className="map-container" style={{ height: '500px', width: '100%', position: 'relative', overflow: 'hidden' }}>
+      <GoogleMap
+        mapContainerStyle={{ width: '100%', height: '100%' }}
         center={mapCenter}
         zoom={mapZoom}
-        style={{ height: '100%', width: '100%' }}
-        scrollWheelZoom={true}
+        ref={mapRef}
+        options={{
+          scrollwheel: true,
+          streetViewControl: false,
+          fullscreenControl: true,
+          mapTypeControl: true,
+        }}
+        onClick={(e) => {
+          if (onMapClick) {
+            onMapClick({
+              latitude: e.latLng.lat(),
+              longitude: e.latLng.lng(),
+            });
+          }
+        }}
       >
-        <TileLayer
-          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-        />
-        <MapUpdater center={mapCenter} zoom={mapZoom} />
-        
-        {markers && markers.map(marker => (
-          <Marker
-            key={marker.id}
-            position={[marker.latitude, marker.longitude]}
-            icon={createCustomIcon(statusColors[marker.status] || '#333')}
-            eventHandlers={{
-              click: () => onMarkerClick && onMarkerClick(marker),
-            }}
-          >
-            <Popup>
-              <div style={{ minWidth: '150px' }}>
-                <strong style={{ fontSize: '14px' }}>{marker.plot_number}</strong>
-                <br />
-                <span style={{ 
-                  display: 'inline-block',
-                  padding: '2px 8px',
-                  borderRadius: '10px',
-                  fontSize: '11px',
-                  backgroundColor: statusColors[marker.status],
-                  color: 'white',
-                  marginTop: '5px',
-                }}>
-                  {marker.status}
-                </span>
-                {marker.deceased_name && (
-                  <>
-                    <hr style={{ margin: '8px 0' }} />
-                    <p style={{ margin: 0 }}>
-                      <strong>{marker.deceased_name}</strong>
-                    </p>
-                    {marker.burial_date && (
-                      <small>Buried: {marker.burial_date}</small>
+        {markers &&
+          markers.map((marker) => (
+            <React.Fragment key={marker.id}>
+              <MarkerF
+                position={{ lat: marker.latitude, lng: marker.longitude }}
+                icon={{
+                  url: createMarkerIcon(statusColors[marker.status] || '#333'),
+                  scaledSize: new window.google.maps.Size(32, 40),
+                  anchor: new window.google.maps.Point(16, 40),
+                }}
+                onClick={() => handleMarkerClick(marker)}
+                title={marker.plot_number}
+              />
+
+              {selectedMarkerId === marker.id && (
+                <InfoWindowF
+                  position={{ lat: marker.latitude, lng: marker.longitude }}
+                  onCloseClick={handleInfoWindowClose}
+                >
+                  <div style={{ minWidth: '150px', color: '#333' }}>
+                    <strong style={{ fontSize: '14px' }}>{marker.plot_number}</strong>
+                    <br />
+                    <span
+                      style={{
+                        display: 'inline-block',
+                        padding: '2px 8px',
+                        borderRadius: '10px',
+                        fontSize: '11px',
+                        backgroundColor: statusColors[marker.status],
+                        color: 'white',
+                        marginTop: '5px',
+                      }}
+                    >
+                      {marker.status}
+                    </span>
+                    {marker.deceased_name && (
+                      <>
+                        <hr style={{ margin: '8px 0' }} />
+                        <p style={{ margin: 0 }}>
+                          <strong>{marker.deceased_name}</strong>
+                        </p>
+                        {marker.burial_date && (
+                          <small>Buried: {marker.burial_date}</small>
+                        )}
+                      </>
                     )}
-                  </>
-                )}
-                {onMarkerClick && (
-                  <button
-                    style={{
-                      marginTop: '10px',
-                      padding: '5px 10px',
-                      fontSize: '12px',
-                      cursor: 'pointer',
-                      backgroundColor: '#1a1a2e',
-                      color: 'white',
-                      border: 'none',
-                      borderRadius: '4px',
-                      width: '100%',
-                    }}
-                    onClick={() => onMarkerClick(marker)}
-                  >
-                    View Details
-                  </button>
-                )}
-              </div>
-            </Popup>
-          </Marker>
-        ))}
-      </MapContainer>
+                    {onMarkerClick && (
+                      <button
+                        style={{
+                          marginTop: '10px',
+                          padding: '5px 10px',
+                          fontSize: '12px',
+                          cursor: 'pointer',
+                          backgroundColor: '#1a1a2e',
+                          color: 'white',
+                          border: 'none',
+                          borderRadius: '4px',
+                          width: '100%',
+                        }}
+                        onClick={() => handleMarkerClick(marker)}
+                      >
+                        View Details
+                      </button>
+                    )}
+                  </div>
+                </InfoWindowF>
+              )}
+            </React.Fragment>
+          ))}
+      </GoogleMap>
     </div>
   );
 };

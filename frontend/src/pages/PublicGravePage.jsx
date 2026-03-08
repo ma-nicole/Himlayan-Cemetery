@@ -1,22 +1,23 @@
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
-import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
-import L from 'leaflet';
+import { GoogleMap, MarkerF, InfoWindowF, useJsApiLoader } from '@react-google-maps/api';
 import publicService from '../services/publicService';
 
-// Fix for default marker icons
-delete L.Icon.Default.prototype._getIconUrl;
-L.Icon.Default.mergeOptions({
-  iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon-2x.png',
-  iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png',
-  shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
-});
+const mapContainerStyle = {
+  width: '100%',
+  height: '100%',
+};
 
 const PublicGravePage = () => {
   const { code } = useParams();
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [markerInfoOpen, setMarkerInfoOpen] = useState(false);
+
+  const { isLoaded, loadError } = useJsApiLoader({
+    googleMapsApiKey: process.env.REACT_APP_GOOGLE_MAPS_API_KEY || '',
+  });
 
   useEffect(() => {
     const loadProfile = async () => {
@@ -133,26 +134,43 @@ const PublicGravePage = () => {
           </div>
 
           {/* Map showing location */}
-          {profile.location?.latitude && profile.location?.longitude && (
+          {profile.location?.latitude && profile.location?.longitude && isLoaded && !loadError && (
             <div className="grave-map">
-              <MapContainer
-                center={[profile.location.latitude, profile.location.longitude]}
+              <GoogleMap
+                mapContainerStyle={mapContainerStyle}
+                center={{ lat: profile.location.latitude, lng: profile.location.longitude }}
                 zoom={18}
-                style={{ height: '100%', width: '100%' }}
-                scrollWheelZoom={false}
+                options={{
+                  scrollwheel: false,
+                  streetViewControl: false,
+                  fullscreenControl: true,
+                  mapTypeControl: true,
+                }}
               >
-                <TileLayer
-                  attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-                  url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                <MarkerF
+                  position={{ lat: profile.location.latitude, lng: profile.location.longitude }}
+                  onClick={() => setMarkerInfoOpen(true)}
+                  title={profile.deceased_name}
                 />
-                <Marker position={[profile.location.latitude, profile.location.longitude]}>
-                  <Popup>
-                    <strong>{profile.deceased_name}</strong>
-                    <br />
-                    Plot: {profile.location.plot_number}
-                  </Popup>
-                </Marker>
-              </MapContainer>
+                {markerInfoOpen && (
+                  <InfoWindowF
+                    position={{ lat: profile.location.latitude, lng: profile.location.longitude }}
+                    onCloseClick={() => setMarkerInfoOpen(false)}
+                  >
+                    <div style={{ color: '#333' }}>
+                      <strong>{profile.deceased_name}</strong>
+                      <br />
+                      Plot: {profile.location.plot_number}
+                    </div>
+                  </InfoWindowF>
+                )}
+              </GoogleMap>
+            </div>
+          )}
+
+          {profile.location?.latitude && profile.location?.longitude && (loadError || !isLoaded) && (
+            <div className="grave-map" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: '#f0f0f0' }}>
+              <p style={{ color: '#999' }}>Map unavailable. Please use directions below.</p>
             </div>
           )}
 

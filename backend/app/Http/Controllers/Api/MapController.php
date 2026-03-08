@@ -113,4 +113,70 @@ class MapController extends Controller
             ],
         ], 'Map bounds retrieved successfully');
     }
+
+    /**
+     * Create a new plot
+     * 
+     * @param Request $request
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function createPlot(Request $request)
+    {
+        $validated = $request->validate([
+            'plot_number' => 'required|string|unique:plots,plot_number',
+            'section' => 'nullable|string',
+            'row_number' => 'nullable|integer',
+            'column_number' => 'nullable|integer',
+            'latitude' => 'required|numeric',
+            'longitude' => 'required|numeric',
+            'status' => 'nullable|in:available,occupied,reserved,maintenance',
+            'notes' => 'nullable|string',
+        ]);
+
+        $validated['status'] = $validated['status'] ?? 'available';
+
+        try {
+            $plot = Plot::create($validated);
+
+            return $this->successResponse([
+                'id' => $plot->id,
+                'plot_number' => $plot->plot_number,
+                'section' => $plot->section,
+                'latitude' => (float) $plot->latitude,
+                'longitude' => (float) $plot->longitude,
+                'status' => $plot->status,
+            ], 'Plot created successfully', 201);
+        } catch (\Exception $e) {
+            return $this->errorResponse('Failed to create plot: ' . $e->getMessage(), 500);
+        }
+    }
+
+    /**
+     * Delete a plot (admin only)
+     * 
+     * @param int $plotId
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function deletePlot($plotId)
+    {
+        // Check if user is admin
+        if (!auth('sanctum')->check() || !auth('sanctum')->user()->isAdmin()) {
+            return $this->errorResponse('Unauthorized. Only administrators can delete plots.', 403);
+        }
+
+        $plot = Plot::find($plotId);
+
+        if (!$plot) {
+            return $this->errorResponse('Plot not found', 404);
+        }
+
+        try {
+            $plotNumber = $plot->plot_number;
+            $plot->forceDelete();
+
+            return $this->successResponse(null, "Plot {$plotNumber} deleted successfully");
+        } catch (\Exception $e) {
+            return $this->errorResponse('Failed to delete plot: ' . $e->getMessage(), 500);
+        }
+    }
 }

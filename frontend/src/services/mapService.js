@@ -28,6 +28,24 @@ export const mapService = {
     const response = await api.get('/map/bounds');
     return response.data;
   },
-};
 
-export default mapService;
+  /**
+   * Create a new plot
+   * @param {Object} plotData
+   * @returns {Promise}
+   */
+  async createPlot(plotData) {
+    const response = await api.post('/map/plots', plotData);
+    return response.data;
+  },
+
+  /**
+   * Delete a plot (admin only)
+   * @param {number} plotId
+   * @returns {Promise}
+   */
+  async deletePlot(plotId) {
+    const response = await api.delete(`/map/plots/${plotId}`);
+    return response.data;
+  },
+};
