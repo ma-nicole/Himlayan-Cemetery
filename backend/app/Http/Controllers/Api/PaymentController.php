@@ -10,6 +10,41 @@ use Illuminate\Support\Facades\Http;
 class PaymentController extends Controller
 {
     /**
+     * Retry without strict payment method filter when Xendit rejects business method choices.
+     */
+    private function createXenditInvoiceWithFallback(string $xenditSecret, array $payload): array
+    {
+        $response = Http::withBasicAuth($xenditSecret, '')
+            ->acceptJson()
+            ->post('https://api.xendit.co/v2/invoices', $payload);
+
+        if ($response->successful()) {
+            return [$response, false];
+        }
+
+        $gatewayBody = $response->json() ?? [];
+        $gatewayMessage = strtolower((string) $this->extractXenditErrorMessage($gatewayBody));
+
+        $shouldRetryWithoutFilter = isset($payload['payment_methods']) && (
+            str_contains($gatewayMessage, 'payment method choices') ||
+            str_contains($gatewayMessage, 'did not match') ||
+            str_contains($gatewayMessage, 'available one on this business')
+        );
+
+        if (!$shouldRetryWithoutFilter) {
+            return [$response, false];
+        }
+
+        unset($payload['payment_methods']);
+
+        $retryResponse = Http::withBasicAuth($xenditSecret, '')
+            ->acceptJson()
+            ->post('https://api.xendit.co/v2/invoices', $payload);
+
+        return [$retryResponse, true];
+    }
+
+    /**
      * Build a readable gateway error message from Xendit response body.
      */
     private function extractXenditErrorMessage(array $body): ?string
@@ -164,9 +199,7 @@ class PaymentController extends Controller
         }
 
         try {
-            $xenditResponse = Http::withBasicAuth($xenditSecret, '')
-                ->acceptJson()
-                ->post('https://api.xendit.co/v2/invoices', $payload);
+            [$xenditResponse] = $this->createXenditInvoiceWithFallback($xenditSecret, $payload);
 
             if (!$xenditResponse->successful()) {
                 $gatewayBody = $xenditResponse->json() ?? [];
@@ -255,9 +288,7 @@ class PaymentController extends Controller
         }
 
         try {
-            $xenditResponse = Http::withBasicAuth($xenditSecret, '')
-                ->acceptJson()
-                ->post('https://api.xendit.co/v2/invoices', $payload);
+            [$xenditResponse] = $this->createXenditInvoiceWithFallback($xenditSecret, $payload);
 
             if (!$xenditResponse->successful()) {
                 $gatewayBody = $xenditResponse->json() ?? [];
