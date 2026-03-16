@@ -36,14 +36,14 @@ const MemberHeader = () => {
   };
 
   const mobileNavItems = [
-    { path: '/member/dashboard', label: 'Dashboard', icon: 'Home', onClick: () => navigate('/member/dashboard') },
-    { path: '/member/search', label: 'Find a Grave', icon: 'Search', onClick: () => navigate('/member/search') },
-    { path: '/member/loved-ones', label: 'My Loved Ones', icon: 'Family', onClick: () => navigate('/member/loved-ones') },
-    { path: '/member/map', label: 'Map', icon: 'Map', onClick: () => navigate('/member/map') },
-    { path: '/member/services', label: 'Services', icon: 'Service', onClick: () => navigate('/member/services') },
-    { path: '/pay-dues', label: 'Pay Dues', icon: 'Pay', onClick: () => navigate('/pay-dues') },
-    { path: '/member/contact', label: 'Feedback', icon: 'Feedback', onClick: () => navigate('/member/contact') },
-    { path: '/profile', label: 'Profile', icon: 'User', onClick: () => navigate('/profile') },
+    { path: '/member/dashboard', label: 'Dashboard', icon: '🏠', onClick: () => navigate('/member/dashboard') },
+    { path: '/member/search', label: 'Find a Grave', icon: '🔎', onClick: () => navigate('/member/search') },
+    { path: '/member/loved-ones', label: 'My Loved Ones', icon: '❤️', onClick: () => navigate('/member/loved-ones') },
+    { path: '/member/map', label: 'Map', icon: '🗺️', onClick: () => navigate('/member/map') },
+    { path: '/member/services', label: 'Services', icon: '🛎️', onClick: () => navigate('/member/services') },
+    { path: '/pay-dues', label: 'Pay Dues', icon: '💳', onClick: () => navigate('/pay-dues') },
+    { path: '/member/contact', label: 'Feedback', icon: '💬', onClick: () => navigate('/member/contact') },
+    { path: '/profile', label: 'Profile', icon: '👤', onClick: () => navigate('/profile') },
   ];
 
   return (

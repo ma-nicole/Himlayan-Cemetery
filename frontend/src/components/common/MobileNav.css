@@ -250,8 +250,8 @@
   transform: translateY(-7px) rotate(-45deg);
 }
 
-/* Show hamburger on mobile */
-@media (max-width: 768px) {
+/* Show hamburger whenever desktop nav is hidden */
+@media (max-width: 900px) {
   .hamburger-btn {
     display: flex;
   }
