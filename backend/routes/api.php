@@ -14,6 +14,7 @@ use App\Http\Controllers\Api\ServiceRequestController;
 use App\Http\Controllers\Api\PaymentController;
 use App\Http\Controllers\Api\FeedbackController;
 use App\Http\Controllers\Api\SecurityAuditLogController;
+use App\Http\Controllers\Api\ProfileController;
 use App\Http\Controllers\Auth\SocialAuthController;
 use App\Http\Controllers\Api\InvitationController;
 
@@ -73,6 +74,7 @@ Route::middleware(['auth:sanctum', 'sanitize.input'])->group(function () {
     Route::get('/user', [AuthController::class, 'user']);
     Route::post('/auth/change-password', [AuthController::class, 'changePassword'])->middleware('recent_auth');
     Route::post('/profile/update', [UserController::class, 'updateProfile'])->middleware('recent_auth');
+    Route::get('/get-profile', [ProfileController::class, 'getProfile']);
     Route::post('/save-token', [UserController::class, 'saveToken']);
 
     // My Loved Ones (Member access to their linked records)
