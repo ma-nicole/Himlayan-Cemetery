@@ -10,6 +10,27 @@ use Illuminate\Support\Facades\Http;
 class PaymentController extends Controller
 {
     /**
+     * Build a readable gateway error message from Xendit response body.
+     */
+    private function extractXenditErrorMessage(array $body): ?string
+    {
+        $candidates = [
+            $body['message'] ?? null,
+            $body['error_message'] ?? null,
+            $body['errors'][0]['message'] ?? null,
+            $body['error']['message'] ?? null,
+        ];
+
+        foreach ($candidates as $candidate) {
+            if (is_string($candidate) && trim($candidate) !== '') {
+                return trim($candidate);
+            }
+        }
+
+        return null;
+    }
+
+    /**
      * Resolve a safe absolute frontend base URL for payment redirects.
      */
     private function resolveFrontendBaseUrl(): string
@@ -148,10 +169,15 @@ class PaymentController extends Controller
                 ->post('https://api.xendit.co/v2/invoices', $payload);
 
             if (!$xenditResponse->successful()) {
+                $gatewayBody = $xenditResponse->json() ?? [];
+                $gatewayMessage = $this->extractXenditErrorMessage($gatewayBody);
+
                 return response()->json([
                     'success' => false,
-                    'message' => 'Failed to create payment checkout. Please try again.',
-                    'errors' => $xenditResponse->json(),
+                    'message' => $gatewayMessage
+                        ? 'Failed to create payment checkout: ' . $gatewayMessage
+                        : 'Failed to create payment checkout. Please verify Xendit configuration and try again.',
+                    'errors' => $gatewayBody,
                 ], 502);
             }
 
@@ -234,10 +260,15 @@ class PaymentController extends Controller
                 ->post('https://api.xendit.co/v2/invoices', $payload);
 
             if (!$xenditResponse->successful()) {
+                $gatewayBody = $xenditResponse->json() ?? [];
+                $gatewayMessage = $this->extractXenditErrorMessage($gatewayBody);
+
                 return response()->json([
                     'success' => false,
-                    'message' => 'Failed to create payment checkout. Please try again.',
-                    'errors' => $xenditResponse->json(),
+                    'message' => $gatewayMessage
+                        ? 'Failed to create payment checkout: ' . $gatewayMessage
+                        : 'Failed to create payment checkout. Please verify Xendit configuration and try again.',
+                    'errors' => $gatewayBody,
                 ], 502);
             }
 
