@@ -162,7 +162,7 @@ class FeedbackController extends Controller
                     'sender_email' => $validated['email'],
                     'sender_name' => $validated['name'],
                 ]);
-            } catch (\Exception $e) {
+            } catch (\Throwable $e) {
                 Log::error('Failed to send feedback notification email', [
                     'error' => $e->getMessage(),
                     'feedback_id' => $feedback->id,
@@ -339,7 +339,7 @@ class FeedbackController extends Controller
                     'username' => config('mail.mailers.smtp.username'),
                 ]
             ]);
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
             Log::error('Test email failed', [
                 'error' => $e->getMessage(),
                 'code' => $e->getCode(),

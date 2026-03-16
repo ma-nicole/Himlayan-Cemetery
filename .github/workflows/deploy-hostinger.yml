@@ -85,6 +85,7 @@ jobs:
           MAIL_ENCRYPTION: ${{ secrets.MAIL_ENCRYPTION }}
           MAIL_FROM_ADDRESS: ${{ secrets.MAIL_FROM_ADDRESS }}
           MAIL_FROM_NAME: ${{ secrets.MAIL_FROM_NAME }}
+          MAIL_FEEDBACK_TO: ${{ secrets.MAIL_FEEDBACK_TO }}
         with:
           debug: true
           host: ${{ secrets.HOSTINGER_HOST }}
@@ -94,7 +95,7 @@ jobs:
           port: ${{ secrets.HOSTINGER_SSH_PORT || '65002' }}
           timeout: 120s
           command_timeout: 30m
-          envs: REPO_URL,BRANCH,DEPLOY_PATH,APP_URL,FRONTEND_URL,MAIL_MAILER,MAIL_HOST,MAIL_PORT,MAIL_USERNAME,MAIL_PASSWORD,MAIL_ENCRYPTION,MAIL_FROM_ADDRESS,MAIL_FROM_NAME
+          envs: REPO_URL,BRANCH,DEPLOY_PATH,APP_URL,FRONTEND_URL,MAIL_MAILER,MAIL_HOST,MAIL_PORT,MAIL_USERNAME,MAIL_PASSWORD,MAIL_ENCRYPTION,MAIL_FROM_ADDRESS,MAIL_FROM_NAME,MAIL_FEEDBACK_TO
           script_stop: false
           script: |
             set -eux
@@ -163,6 +164,7 @@ jobs:
               upsert_env "MAIL_ENCRYPTION" "$MAIL_ENCRYPTION" ".env"
               upsert_env "MAIL_FROM_ADDRESS" "$MAIL_FROM_ADDRESS" ".env"
               upsert_env "MAIL_FROM_NAME" "$MAIL_FROM_NAME" ".env"
+              upsert_env "MAIL_FEEDBACK_TO" "$MAIL_FEEDBACK_TO" ".env"
             fi
 
             # Ensure Laravel runtime directories exist before composer scripts run.
