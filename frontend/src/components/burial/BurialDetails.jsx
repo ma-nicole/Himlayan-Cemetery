@@ -5,6 +5,7 @@ const BurialDetails = ({ burial, qrData, onClose, onGenerateQR }) => {
   const [invitationStatus, setInvitationStatus] = useState(null);
   const [loadingInvitation, setLoadingInvitation] = useState(false);
   const [invitationMessage, setInvitationMessage] = useState('');
+  const [invitationMessageType, setInvitationMessageType] = useState('success');
   const [loadingStatus, setLoadingStatus] = useState(true);
   const [statusError, setStatusError] = useState(null);
   
@@ -42,14 +43,23 @@ const BurialDetails = ({ burial, qrData, onClose, onGenerateQR }) => {
   const handleSendInvitation = async () => {
     setLoadingInvitation(true);
     setInvitationMessage('');
+    setInvitationMessageType('success');
     try {
       const response = await sendInvitation(burial.id);
       setInvitationMessage(response.message);
+      setInvitationMessageType('success');
       // Refresh status
       const status = await getInvitationStatus(burial.id);
       setInvitationStatus(status);
     } catch (error) {
       setInvitationMessage(error.message || 'Failed to send invitation');
+      setInvitationMessageType('error');
+      try {
+        const status = await getInvitationStatus(burial.id);
+        setInvitationStatus(status);
+      } catch (_) {
+        // Keep current status if refresh fails.
+      }
     } finally {
       setLoadingInvitation(false);
     }
@@ -59,14 +69,23 @@ const BurialDetails = ({ burial, qrData, onClose, onGenerateQR }) => {
   const handleResendInvitation = async () => {
     setLoadingInvitation(true);
     setInvitationMessage('');
+    setInvitationMessageType('success');
     try {
       const response = await resendInvitation(burial.id);
       setInvitationMessage(response.message);
+      setInvitationMessageType('success');
       // Refresh status
       const status = await getInvitationStatus(burial.id);
       setInvitationStatus(status);
     } catch (error) {
       setInvitationMessage(error.message || 'Failed to resend invitation');
+      setInvitationMessageType('error');
+      try {
+        const status = await getInvitationStatus(burial.id);
+        setInvitationStatus(status);
+      } catch (_) {
+        // Keep current status if refresh fails.
+      }
     } finally {
       setLoadingInvitation(false);
     }
@@ -280,8 +299,8 @@ const BurialDetails = ({ burial, qrData, onClose, onGenerateQR }) => {
                   <div style={{
                     marginTop: '15px',
                     padding: '10px',
-                    backgroundColor: invitationMessage.includes('Failed') ? '#f8d7da' : '#d4edda',
-                    color: invitationMessage.includes('Failed') ? '#721c24' : '#155724',
+                    backgroundColor: invitationMessageType === 'error' ? '#f8d7da' : '#d4edda',
+                    color: invitationMessageType === 'error' ? '#721c24' : '#155724',
                     borderRadius: '4px',
                     fontSize: '14px'
                   }}>

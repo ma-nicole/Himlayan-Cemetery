@@ -133,21 +133,16 @@ class InvitationController extends Controller
             'accept_url' => config('app.frontend_url') . '/accept-invitation?token=' . $token
         ];
 
-        // Store invitation data temporarily (24 hour expiration)
-        cache()->put('invitation_' . $token, $invitationData, now()->addDay());
-
-        // Store status snapshot per burial record so admin UI can show pending before account creation
-        cache()->put('invitation_status_burial_' . $burialRecord->id, [
-            'status' => 'pending',
-            'email' => $burialRecord->contact_email,
-            'token' => $token,
-            'expires_at' => now()->addDay()->toDateTimeString(),
-        ], now()->addDay());
+        $expiresAt = now()->addDay();
 
         // Send email with credentials
         try {
             Mail::to($burialRecord->contact_email)->send(new UserInvitation($invitationData, $burialRecord));
         } catch (\Throwable $e) {
+            // Keep status accurate: do not leave record as pending when email was not sent.
+            cache()->forget('invitation_' . $token);
+            cache()->forget('invitation_status_burial_' . $burialRecord->id);
+
             Log::error('Email send failed for ' . $burialRecord->contact_email, [
                 'error' => $e->getMessage(),
                 'file' => $e->getFile(),
@@ -155,6 +150,15 @@ class InvitationController extends Controller
             ]);
             return $this->errorResponse($this->mapMailErrorToMessage($e), 500);
         }
+
+        // Persist invitation only after successful delivery.
+        cache()->put('invitation_' . $token, $invitationData, $expiresAt);
+        cache()->put('invitation_status_burial_' . $burialRecord->id, [
+            'status' => 'pending',
+            'email' => $burialRecord->contact_email,
+            'token' => $token,
+            'expires_at' => $expiresAt->toDateTimeString(),
+        ], $expiresAt);
 
         return $this->successResponse([
             'message' => 'Invitation sent successfully. User account will be created when they accept the invitation.'
@@ -210,21 +214,15 @@ class InvitationController extends Controller
             'accept_url' => config('app.frontend_url') . '/accept-invitation?token=' . $token
         ];
 
-        // Store invitation data in cache (also serves as a flag that invitation was sent)
-        cache()->put('invitation_' . $token, $invitationData, now()->addDay());
-
-        // Refresh status snapshot for admin UI
-        cache()->put('invitation_status_burial_' . $burialRecord->id, [
-            'status' => 'pending',
-            'email' => $burialRecord->contact_email,
-            'token' => $token,
-            'expires_at' => now()->addDay()->toDateTimeString(),
-        ], now()->addDay());
+        $expiresAt = now()->addDay();
 
         // Send email
         try {
             Mail::to($burialRecord->contact_email)->send(new UserInvitation($invitationData, $burialRecord));
         } catch (\Throwable $e) {
+            cache()->forget('invitation_' . $token);
+            cache()->forget('invitation_status_burial_' . $burialRecord->id);
+
             Log::error('Email resend failed for ' . $burialRecord->contact_email, [
                 'error' => $e->getMessage(),
                 'file' => $e->getFile(),
@@ -232,6 +230,14 @@ class InvitationController extends Controller
             ]);
             return $this->errorResponse($this->mapMailErrorToMessage($e), 500);
         }
+
+        cache()->put('invitation_' . $token, $invitationData, $expiresAt);
+        cache()->put('invitation_status_burial_' . $burialRecord->id, [
+            'status' => 'pending',
+            'email' => $burialRecord->contact_email,
+            'token' => $token,
+            'expires_at' => $expiresAt->toDateTimeString(),
+        ], $expiresAt);
 
         return $this->successResponse([
             'message' => 'Invitation resent successfully. User account will be created when they accept the invitation.'
