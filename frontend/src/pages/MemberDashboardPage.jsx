@@ -337,7 +337,7 @@ const MemberDashboardPage = () => {
                 </svg>
                 My Plots
               </h2>
-              <Link to="/member/plots" className="see-all-link">View All</Link>
+              <Link to="/member/loved-ones" className="see-all-link">View All</Link>
             </div>
             
             {plotsLoading ? (
