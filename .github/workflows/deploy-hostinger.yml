@@ -150,9 +150,8 @@ jobs:
             RewriteRule . /index.html [L]
             EOF
 
-            # Keep Let's Encrypt challenge folder if present.
-            # Keep API bridge folder so frontend deploy doesn't break backend routes.
-            find "$FRONTEND_PUBLIC_PATH" -mindepth 1 -maxdepth 1 ! -name '.well-known' ! -name 'api' -exec rm -rf {} +
+            # Keep Let's Encrypt challenge folder, API bridge folder, and root SPA rewrite rules.
+            find "$FRONTEND_PUBLIC_PATH" -mindepth 1 -maxdepth 1 ! -name '.well-known' ! -name 'api' ! -name '.htaccess' -exec rm -rf {} +
 
             mkdir -p "$FRONTEND_PUBLIC_PATH/api"
 
