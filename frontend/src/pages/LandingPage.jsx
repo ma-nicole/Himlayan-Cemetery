@@ -176,6 +176,8 @@ const LandingPage = () => {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
+  const closeMobileMenu = () => setMobileMenuOpen(false);
+
   // Handle grave search
   const handleSearch = async (e) => {
     e.preventDefault();
@@ -342,19 +344,21 @@ const LandingPage = () => {
           <button 
             className="mobile-menu-btn"
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+            aria-expanded={mobileMenuOpen}
+            aria-label={mobileMenuOpen ? 'Close menu' : 'Open menu'}
           >
-            Menu
+            {mobileMenuOpen ? 'Close' : 'Menu'}
           </button>
 
           <ul className={`landing-nav-menu ${mobileMenuOpen ? 'open' : ''}`}>
-            <li><a href="#home">Home</a></li>
+            <li><a href="#home" onClick={closeMobileMenu}>Home</a></li>
             {/* Find a Grave - scrolls to search section on same page */}
-            <li><a href="#search">Find a Grave</a></li>
-            <li><a href="#about">About</a></li>
-            <li><a href="#services">Services</a></li>
-            <li><a href="#gallery">Gallery</a></li>
-            <li><a href="#contact">Contact</a></li>
-            <li><Link to="/login" className="mobile-login-link">Login</Link></li>
+            <li><a href="#search" onClick={closeMobileMenu}>Find a Grave</a></li>
+            <li><a href="#about" onClick={closeMobileMenu}>About</a></li>
+            <li><a href="#services" onClick={closeMobileMenu}>Services</a></li>
+            <li><a href="#gallery" onClick={closeMobileMenu}>Gallery</a></li>
+            <li><a href="#contact" onClick={closeMobileMenu}>Contact</a></li>
+            <li><Link to="/login" className="mobile-login-link" onClick={closeMobileMenu}>Login</Link></li>
           </ul>
 
           <div className="landing-nav-actions">
