@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Feedback;
+use App\Models\User;
 use App\Mail\FeedbackNotification;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Mail;
@@ -11,6 +12,46 @@ use Illuminate\Support\Facades\Log;
 
 class FeedbackController extends Controller
 {
+    /**
+     * Resolve recipients for feedback notification emails.
+     */
+    private function resolveFeedbackRecipients(): array
+    {
+        $configured = config('mail.feedback_to');
+
+        if (is_string($configured) && trim($configured) !== '') {
+            $emails = array_filter(array_map('trim', explode(',', $configured)), function ($email) {
+                return filter_var($email, FILTER_VALIDATE_EMAIL) !== false;
+            });
+
+            if (!empty($emails)) {
+                return array_values(array_unique($emails));
+            }
+        }
+
+        $adminAndStaffEmails = User::whereIn('role', ['admin', 'staff'])
+            ->whereNotNull('email')
+            ->pluck('email')
+            ->filter(function ($email) {
+                return filter_var($email, FILTER_VALIDATE_EMAIL) !== false;
+            })
+            ->unique()
+            ->values()
+            ->toArray();
+
+        if (!empty($adminAndStaffEmails)) {
+            return $adminAndStaffEmails;
+        }
+
+        $fallback = config('mail.from.address');
+
+        if (is_string($fallback) && filter_var($fallback, FILTER_VALIDATE_EMAIL)) {
+            return [$fallback];
+        }
+
+        return [];
+    }
+
     /**
      * Display a listing of feedbacks (admin only)
      */
@@ -107,17 +148,17 @@ class FeedbackController extends Controller
         } else {
             // When using SMTP, send the email
             try {
-                $cemeteryEmail = config('mail.from.address');
-                
-                if (!$cemeteryEmail) {
-                    throw new \Exception('MAIL_FROM_ADDRESS is not configured in .env');
+                $recipients = $this->resolveFeedbackRecipients();
+
+                if (empty($recipients)) {
+                    throw new \Exception('No valid feedback notification recipients configured');
                 }
-                
-                Mail::to($cemeteryEmail)->send(new FeedbackNotification($feedback));
+
+                Mail::to($recipients)->send(new FeedbackNotification($feedback));
                 
                 Log::info('Feedback email sent successfully', [
                     'feedback_id' => $feedback->id,
-                    'recipient' => $cemeteryEmail,
+                    'recipients' => $recipients,
                     'sender_email' => $validated['email'],
                     'sender_name' => $validated['name'],
                 ]);

@@ -44,4 +44,7 @@ return [
         'name' => env('MAIL_FROM_NAME', 'Example'),
     ],
 
+    // Comma-separated list of emails for contact/feedback notifications.
+    'feedback_to' => env('MAIL_FEEDBACK_TO', ''),
+
 ];

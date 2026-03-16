@@ -1426,6 +1426,10 @@ body {
   color: var(--accent-color);
 }
 
+.mobile-login-link {
+  display: none;
+}
+
 .landing-nav-actions {
   display: flex;
   gap: 12px;
