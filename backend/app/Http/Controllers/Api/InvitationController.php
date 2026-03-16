@@ -252,9 +252,8 @@ class InvitationController extends Controller
                 'line' => $e->getLine(),
                 'full_trace' => $e->getTraceAsString()
             ]);
-            
-            // Return raw exception details
-            return $this->errorResponse("[" . get_class($e) . "] " . $e->getMessage(), 500);
+
+            return $this->errorResponse($this->mapMailErrorToMessage($e), 500);
         }
 
         // Persist invitation only after successful delivery.
@@ -364,9 +363,8 @@ class InvitationController extends Controller
                 'line' => $e->getLine(),
                 'full_trace' => $e->getTraceAsString()
             ]);
-            
-            // Return raw exception details
-            return $this->errorResponse("[" . get_class($e) . "] " . $e->getMessage(), 500);
+
+            return $this->errorResponse($this->mapMailErrorToMessage($e), 500);
         }
 
         cache()->put('invitation_' . $token, $invitationData, $expiresAt);

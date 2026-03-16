@@ -33,6 +33,41 @@ jobs:
           npm ci
           npm run build
 
+      - name: Validate SSH secrets and reachability
+        env:
+          HOSTINGER_HOST: ${{ secrets.HOSTINGER_HOST }}
+          HOSTINGER_SSH_PORT: ${{ secrets.HOSTINGER_SSH_PORT }}
+        run: |
+          set -eux
+
+          if [ -z "${HOSTINGER_HOST}" ]; then
+            echo "Missing required secret: HOSTINGER_HOST"
+            exit 1
+          fi
+
+          PORT="${HOSTINGER_SSH_PORT:-65002}"
+          if [ -z "${HOSTINGER_SSH_PORT}" ]; then
+            echo "HOSTINGER_SSH_PORT is empty. Using default Hostinger SSH port 65002 for preflight checks."
+          fi
+
+          echo "Checking TCP reachability to ${HOSTINGER_HOST}:${PORT}"
+          ok=0
+          for i in 1 2 3; do
+            if timeout 10 bash -lc "</dev/tcp/${HOSTINGER_HOST}/${PORT}"; then
+              echo "SSH port reachable on attempt ${i}."
+              ok=1
+              break
+            fi
+            echo "Attempt ${i} failed. Retrying in 5s..."
+            sleep 5
+          done
+
+          if [ "${ok}" -ne 1 ]; then
+            echo "Cannot reach ${HOSTINGER_HOST}:${PORT} from GitHub Actions (network timeout)."
+            echo "Verify Hostinger IP/hostname, SSH port (usually 65002), and firewall/SSH access settings."
+            exit 1
+          fi
+
       - name: Deploy backend via SSH
         uses: appleboy/ssh-action@v1.2.0
         env:
@@ -55,7 +90,9 @@ jobs:
           username: ${{ secrets.HOSTINGER_USERNAME }}
           key: ${{ secrets.HOSTINGER_SSH_KEY }}
           passphrase: ${{ secrets.HOSTINGER_SSH_PASSPHRASE }}
-          port: ${{ secrets.HOSTINGER_SSH_PORT }}
+          port: ${{ secrets.HOSTINGER_SSH_PORT || '65002' }}
+          timeout: 120s
+          command_timeout: 30m
           envs: REPO_URL,BRANCH,DEPLOY_PATH,APP_URL,FRONTEND_URL,MAIL_MAILER,MAIL_HOST,MAIL_PORT,MAIL_USERNAME,MAIL_PASSWORD,MAIL_ENCRYPTION,MAIL_FROM_ADDRESS,MAIL_FROM_NAME
           script_stop: false
           script: |
@@ -159,7 +196,9 @@ jobs:
           username: ${{ secrets.HOSTINGER_USERNAME }}
           key: ${{ secrets.HOSTINGER_SSH_KEY }}
           passphrase: ${{ secrets.HOSTINGER_SSH_PASSPHRASE }}
-          port: ${{ secrets.HOSTINGER_SSH_PORT }}
+          port: ${{ secrets.HOSTINGER_SSH_PORT || '65002' }}
+          timeout: 120s
+          command_timeout: 30m
           envs: FRONTEND_PUBLIC_PATH,DEPLOY_PATH
           script_stop: false
           script: |
@@ -242,7 +281,8 @@ jobs:
           username: ${{ secrets.HOSTINGER_USERNAME }}
           key: ${{ secrets.HOSTINGER_SSH_KEY }}
           passphrase: ${{ secrets.HOSTINGER_SSH_PASSPHRASE }}
-          port: ${{ secrets.HOSTINGER_SSH_PORT }}
+          port: ${{ secrets.HOSTINGER_SSH_PORT || '65002' }}
+          timeout: 120s
           source: "frontend/build/*"
           strip_components: 2
           target: ${{ secrets.HOSTINGER_FRONTEND_PUBLIC_PATH }}
