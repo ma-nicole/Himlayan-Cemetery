@@ -98,6 +98,8 @@ jobs:
           script: |
             set -eux
 
+            MAIL_MAILER="${MAIL_MAILER:-smtp}"
+
             upsert_env() {
               key="$1"
               val="$2"
