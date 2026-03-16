@@ -17,6 +17,42 @@ use App\Mail\UserInvitation;
 class InvitationController extends Controller
 {
     /**
+     * Convert low-level mail exceptions into actionable user-facing messages.
+     */
+    private function mapMailErrorToMessage(\Throwable $exception): string
+    {
+        $error = strtolower($exception->getMessage());
+
+        if (
+            str_contains($error, 'authentication') ||
+            str_contains($error, '535') ||
+            str_contains($error, 'username and password not accepted')
+        ) {
+            return 'Email service authentication failed. Please verify SMTP credentials on the server.';
+        }
+
+        if (
+            str_contains($error, 'failed to connect') ||
+            str_contains($error, 'connection could not be established') ||
+            str_contains($error, 'connection refused') ||
+            str_contains($error, 'timed out')
+        ) {
+            return 'Email service is unreachable right now. Please try again later.';
+        }
+
+        if (
+            str_contains($error, 'recipient address rejected') ||
+            str_contains($error, 'user unknown') ||
+            str_contains($error, 'no such user') ||
+            str_contains($error, '550')
+        ) {
+            return 'Recipient address was rejected by the mail provider. Please double-check the email address.';
+        }
+
+        return 'Unable to send invitation email right now. Please try again later or contact support.';
+    }
+
+    /**
      * Generate password based on burial record
      * Format: plotnumber+Lastname+lastfourdigits
      */
@@ -111,13 +147,13 @@ class InvitationController extends Controller
         // Send email with credentials
         try {
             Mail::to($burialRecord->contact_email)->send(new UserInvitation($invitationData, $burialRecord));
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
             Log::error('Email send failed for ' . $burialRecord->contact_email, [
                 'error' => $e->getMessage(),
                 'file' => $e->getFile(),
                 'line' => $e->getLine()
             ]);
-            return $this->errorResponse('This email is invalid or does not exist.', 400);
+            return $this->errorResponse($this->mapMailErrorToMessage($e), 500);
         }
 
         return $this->successResponse([
@@ -188,13 +224,13 @@ class InvitationController extends Controller
         // Send email
         try {
             Mail::to($burialRecord->contact_email)->send(new UserInvitation($invitationData, $burialRecord));
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
             Log::error('Email resend failed for ' . $burialRecord->contact_email, [
                 'error' => $e->getMessage(),
                 'file' => $e->getFile(),
                 'line' => $e->getLine()
             ]);
-            return $this->errorResponse('Failed to send email. Please check the email address.', 400);
+            return $this->errorResponse($this->mapMailErrorToMessage($e), 500);
         }
 
         return $this->successResponse([
