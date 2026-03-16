@@ -1472,10 +1472,17 @@ body {
 
 .mobile-menu-btn {
   display: none;
-  background: none;
-  border: none;
-  font-size: 1.5rem;
+  background: rgba(255, 255, 255, 0.14);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  border-radius: 10px;
+  color: #ffffff;
+  font-size: 1.2rem;
+  font-weight: 600;
+  padding: 8px 12px;
+  min-width: 88px;
+  min-height: 40px;
   cursor: pointer;
+  z-index: 1002;
 }
 
 /* Hero Section */
@@ -5040,6 +5047,36 @@ textarea.form-input {
 
   .mobile-menu-btn {
     display: block;
+  }
+
+  .landing-nav-container {
+    position: relative;
+  }
+
+  .landing-nav-menu.open {
+    display: flex;
+    position: absolute;
+    top: calc(100% + 10px);
+    left: 12px;
+    right: 12px;
+    flex-direction: column;
+    gap: 6px;
+    padding: 12px;
+    border-radius: 12px;
+    background: rgba(18, 26, 21, 0.95);
+    backdrop-filter: blur(10px);
+    box-shadow: 0 14px 28px rgba(0, 0, 0, 0.3);
+    z-index: 1001;
+  }
+
+  .landing-nav-menu.open a {
+    color: #ffffff;
+    padding: 12px;
+  }
+
+  .landing-nav-menu.open a:hover {
+    background: rgba(255, 255, 255, 0.14);
+    color: #ffffff;
   }
 
   .hero-text-center h1 {
