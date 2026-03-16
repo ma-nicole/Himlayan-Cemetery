@@ -16,6 +16,24 @@ use App\Mail\UserInvitation;
 class InvitationController extends Controller
 {
     /**
+     * Resolve a usable mailer even when MAIL_MAILER is blank/misconfigured.
+     */
+    private function resolveMailer(): string
+    {
+        $configured = trim((string) config('mail.default', ''));
+
+        if ($configured !== '' && is_array(config("mail.mailers.$configured"))) {
+            return $configured;
+        }
+
+        if (is_array(config('mail.mailers.smtp'))) {
+            return 'smtp';
+        }
+
+        return $configured !== '' ? $configured : 'smtp';
+    }
+
+    /**
      * Sanitize low-level mail error text for safe API responses.
      */
     private function sanitizeMailErrorMessage(string $message): string
@@ -44,9 +62,13 @@ class InvitationController extends Controller
      */
     private function validateMailConfiguration(): ?string
     {
-        $mailer = (string) config('mail.default', 'smtp');
+        $mailer = $this->resolveMailer();
 
         if ($mailer !== 'smtp') {
+            if (!is_array(config("mail.mailers.$mailer"))) {
+                return 'Mail transport is misconfigured. Please set MAIL_MAILER to a valid mailer (for example: smtp).';
+            }
+
             return null;
         }
 
@@ -277,7 +299,9 @@ class InvitationController extends Controller
 
         // Send email with credentials
         try {
-            Mail::to($burialRecord->contact_email)->send(new UserInvitation($invitationData, $burialRecord));
+            Mail::mailer($this->resolveMailer())
+                ->to($burialRecord->contact_email)
+                ->send(new UserInvitation($invitationData, $burialRecord));
         } catch (\Throwable $e) {
             // Keep status accurate: do not leave record as pending when email was not sent.
             cache()->forget('invitation_' . $token);
@@ -389,7 +413,9 @@ class InvitationController extends Controller
 
         // Send email
         try {
-            Mail::to($burialRecord->contact_email)->send(new UserInvitation($invitationData, $burialRecord));
+            Mail::mailer($this->resolveMailer())
+                ->to($burialRecord->contact_email)
+                ->send(new UserInvitation($invitationData, $burialRecord));
         } catch (\Throwable $e) {
             cache()->forget('invitation_' . $token);
             cache()->forget('invitation_status_burial_' . $burialRecord->id);
