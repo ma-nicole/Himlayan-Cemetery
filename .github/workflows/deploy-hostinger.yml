@@ -40,6 +40,7 @@ jobs:
           BRANCH: main
           DEPLOY_PATH: ${{ secrets.HOSTINGER_DEPLOY_PATH }}
         with:
+          debug: true
           host: ${{ secrets.HOSTINGER_HOST }}
           username: ${{ secrets.HOSTINGER_USERNAME }}
           key: ${{ secrets.HOSTINGER_SSH_KEY }}
@@ -48,7 +49,11 @@ jobs:
           envs: REPO_URL,BRANCH,DEPLOY_PATH
           script_stop: true
           script: |
-            set -e
+            set -eux
+
+            echo "Connected as $(whoami)"
+            echo "Current dir: $(pwd)"
+            echo "DEPLOY_PATH=$DEPLOY_PATH"
 
             if [ -z "$DEPLOY_PATH" ]; then
               echo "HOSTINGER_DEPLOY_PATH is required"
@@ -105,6 +110,7 @@ jobs:
         env:
           FRONTEND_PUBLIC_PATH: ${{ secrets.HOSTINGER_FRONTEND_PUBLIC_PATH }}
         with:
+          debug: true
           host: ${{ secrets.HOSTINGER_HOST }}
           username: ${{ secrets.HOSTINGER_USERNAME }}
           key: ${{ secrets.HOSTINGER_SSH_KEY }}
@@ -113,7 +119,7 @@ jobs:
           envs: FRONTEND_PUBLIC_PATH
           script_stop: true
           script: |
-            set -e
+            set -eux
 
             if [ -z "$FRONTEND_PUBLIC_PATH" ]; then
               echo "HOSTINGER_FRONTEND_PUBLIC_PATH is required"
