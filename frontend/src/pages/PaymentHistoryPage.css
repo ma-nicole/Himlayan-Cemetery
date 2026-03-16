@@ -1,0 +1,136 @@
+.payment-history-page {
+  max-width: 1120px;
+  margin: 0 auto;
+  padding: 8px 24px 40px;
+}
+
+.payment-history-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.payment-history-header h1 {
+  margin: 0;
+  color: #1a472a;
+  font-size: 2rem;
+}
+
+.payment-history-header p {
+  margin: 6px 0 0;
+  color: #4b5563;
+}
+
+.payment-history-back-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
+  border: 1px solid #1a472a;
+  color: #1a472a;
+  background: #e8f2eb;
+  border-radius: 10px;
+  min-height: 42px;
+  padding: 0 14px;
+  font-weight: 600;
+}
+
+.payment-history-list {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 14px;
+}
+
+.payment-history-card {
+  background: #ffffff;
+  border: 1px solid #d6e2da;
+  border-radius: 14px;
+  padding: 16px;
+}
+
+.payment-history-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+
+.payment-history-row h3 {
+  margin: 0;
+  color: #0f2f1d;
+  font-size: 1rem;
+}
+
+.payment-status {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  padding: 4px 10px;
+  text-transform: capitalize;
+}
+
+.payment-status.pending {
+  color: #8a5a00;
+  background: #fef3c7;
+}
+
+.payment-status.verified {
+  color: #166534;
+  background: #dcfce7;
+}
+
+.payment-status.rejected {
+  color: #991b1b;
+  background: #fee2e2;
+}
+
+.payment-history-meta {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px 14px;
+}
+
+.payment-history-meta p {
+  margin: 0;
+  color: #374151;
+  font-size: 0.92rem;
+}
+
+.payment-history-state {
+  background: #ffffff;
+  border: 1px solid #d6e2da;
+  border-radius: 14px;
+  padding: 18px;
+  color: #374151;
+}
+
+.payment-history-state.error {
+  border-color: #fca5a5;
+  color: #991b1b;
+  background: #fff1f2;
+}
+
+@media (max-width: 768px) {
+  .payment-history-page {
+    padding: 8px 16px 28px;
+  }
+
+  .payment-history-header {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .payment-history-back-btn {
+    width: 100%;
+  }
+
+  .payment-history-meta {
+    grid-template-columns: 1fr;
+  }
+}

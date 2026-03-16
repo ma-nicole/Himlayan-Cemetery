@@ -244,7 +244,10 @@ const PayDuesPage = () => {
 
         {/* Payment History Link */}
         <div className="history-link">
-          <button className="btn btn-outline">
+          <button
+            className="btn btn-outline"
+            onClick={() => navigate('/pay-dues/history')}
+          >
             View Payment History
           </button>
         </div>

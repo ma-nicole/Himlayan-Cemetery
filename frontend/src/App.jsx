@@ -37,6 +37,7 @@ import FeedbackPage from './pages/FeedbackPage';
 import AnnouncementsPage from './pages/AnnouncementsPage';
 import MemberAnnouncementsPage from './pages/MemberAnnouncementsPage';
 import PayDuesPage from './pages/PayDuesPage';
+import PaymentHistoryPage from './pages/PaymentHistoryPage';
 import AuthCallback from './pages/AuthCallback';
 import AcceptInvitation from './pages/AcceptInvitation';
 
@@ -223,6 +224,14 @@ function App() {
             element={
               <ProtectedRoute>
                 <PayDuesPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/pay-dues/history"
+            element={
+              <ProtectedRoute>
+                <PaymentHistoryPage />
               </ProtectedRoute>
             }
           />
