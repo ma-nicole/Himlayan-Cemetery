@@ -354,6 +354,7 @@ const LandingPage = () => {
             <li><a href="#services">Services</a></li>
             <li><a href="#gallery">Gallery</a></li>
             <li><a href="#contact">Contact</a></li>
+            <li><Link to="/login" className="mobile-login-link">Login</Link></li>
           </ul>
 
           <div className="landing-nav-actions">

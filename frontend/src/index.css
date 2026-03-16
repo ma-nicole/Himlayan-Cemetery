@@ -5079,6 +5079,15 @@ textarea.form-input {
     color: #ffffff;
   }
 
+  .landing-nav-menu.open .mobile-login-link {
+    background: rgba(255, 255, 255, 0.16);
+    border: 1px solid rgba(255, 255, 255, 0.28);
+    border-radius: 10px;
+    font-weight: 700;
+    text-align: center;
+    margin-top: 6px;
+  }
+
   .hero-text-center h1 {
     font-size: 1.8rem;
   }
