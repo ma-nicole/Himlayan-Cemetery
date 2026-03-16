@@ -9,6 +9,17 @@ use Illuminate\Http\Request;
 
 class MapController extends Controller
 {
+    private const HIMS_LAT_MIN = 14.6796000;
+    private const HIMS_LAT_MAX = 14.6858000;
+    private const HIMS_LNG_MIN = 121.0500000;
+    private const HIMS_LNG_MAX = 121.0552000;
+
+    private function cemeteryPlotsQuery()
+    {
+        return Plot::whereBetween('latitude', [self::HIMS_LAT_MIN, self::HIMS_LAT_MAX])
+            ->whereBetween('longitude', [self::HIMS_LNG_MIN, self::HIMS_LNG_MAX]);
+    }
+
     /**
      * Get all map markers for cemetery view
      * 
@@ -16,7 +27,7 @@ class MapController extends Controller
      */
     public function markers()
     {
-        $plots = Plot::with('burialRecord')->get();
+        $plots = $this->cemeteryPlotsQuery()->with('burialRecord')->get();
 
         $markers = $plots->map(function ($plot) {
             return [
@@ -42,7 +53,7 @@ class MapController extends Controller
      */
     public function markerDetails($plotId)
     {
-        $plot = Plot::with('burialRecord.qrCode')->find($plotId);
+        $plot = $this->cemeteryPlotsQuery()->with('burialRecord.qrCode')->find($plotId);
 
         if (!$plot) {
             return $this->errorResponse('Plot not found', 404);
@@ -85,11 +96,11 @@ class MapController extends Controller
      */
     public function bounds()
     {
-        $plots = Plot::all();
+        $plots = $this->cemeteryPlotsQuery()->get();
 
         if ($plots->isEmpty()) {
             return $this->successResponse([
-                'center' => ['lat' => 14.5547, 'lng' => 121.0244],
+                'center' => ['lat' => 14.682462, 'lng' => 121.0530409],
                 'zoom' => 17,
             ], 'Default map bounds');
         }
@@ -124,16 +135,22 @@ class MapController extends Controller
     {
         $validated = $request->validate([
             'plot_number' => 'required|string|unique:plots,plot_number',
-            'section' => 'nullable|string',
-            'row_number' => 'nullable|integer',
-            'column_number' => 'nullable|integer',
-            'latitude' => 'required|numeric',
-            'longitude' => 'required|numeric',
-            'status' => 'nullable|in:available,occupied,reserved,maintenance',
-            'notes' => 'nullable|string',
+            'section' => 'required|string|max:50',
+            'row_number' => 'required|integer|min:1',
+            'column_number' => 'required|integer|min:1',
+            'latitude' => 'required|numeric|between:' . self::HIMS_LAT_MIN . ',' . self::HIMS_LAT_MAX,
+            'longitude' => 'required|numeric|between:' . self::HIMS_LNG_MIN . ',' . self::HIMS_LNG_MAX,
+            'status' => 'required|in:available,occupied,reserved,maintenance',
+            'notes' => 'required|string',
+        ], [
+            'section.required' => 'Section is required.',
+            'row_number.required' => 'Row number is required.',
+            'column_number.required' => 'Column number is required.',
+            'status.required' => 'Status is required.',
+            'notes.required' => 'Notes is required.',
+            'latitude.between' => 'Latitude must be inside Himlayang Pilipino Memorial Park area.',
+            'longitude.between' => 'Longitude must be inside Himlayang Pilipino Memorial Park area.',
         ]);
-
-        $validated['status'] = $validated['status'] ?? 'available';
 
         try {
             $plot = Plot::create($validated);

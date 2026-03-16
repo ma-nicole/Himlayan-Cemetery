@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Casts\NullableEncryptedCast;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
@@ -58,6 +59,8 @@ class BurialRecord extends Model
         'death_date' => 'date',
         'burial_date' => 'date',
         'is_publicly_searchable' => 'boolean',
+        'contact_phone' => NullableEncryptedCast::class,
+        'contact2_phone' => NullableEncryptedCast::class,
     ];
 
     /**

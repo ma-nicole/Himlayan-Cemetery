@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Services\ValidationRules;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
@@ -60,7 +61,7 @@ class UserController extends Controller
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'email' => 'required|string|email|max:255|unique:users',
-            'password' => 'required|string|min:8',
+            'password' => ['required', 'string', ValidationRules::strongPasswordRule()],
             'role' => 'required|in:admin,staff,member',
         ]);
 
@@ -122,7 +123,7 @@ class UserController extends Controller
                 'max:255',
                 Rule::unique('users')->ignore($user->id),
             ],
-            'password' => 'sometimes|nullable|string|min:8',
+            'password' => ['sometimes', 'nullable', 'string', ValidationRules::strongPasswordRule()],
             'role' => 'sometimes|required|in:admin,staff,member',
         ]);
 

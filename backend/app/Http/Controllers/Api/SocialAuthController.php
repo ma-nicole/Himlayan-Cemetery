@@ -81,14 +81,17 @@ class SocialAuthController extends Controller
             // Delete existing tokens
             $user->tokens()->delete();
 
-            // Create new token
-            $token = $user->createToken('auth_token')->plainTextToken;
+            // Create new token with explicit expiry
+            $expiryMinutes = (int) config('sanctum.expiration', 120);
+            $tokenExpiresAt = now()->addMinutes($expiryMinutes);
+            $token = $user->createToken('auth_token', ['*'], $tokenExpiresAt)->plainTextToken;
 
             // Redirect to frontend with token
             $frontendUrl = config('app.frontend_url', 'http://localhost:3000');
             
             return redirect($frontendUrl . '/auth/callback?' . http_build_query([
                 'token' => $token,
+                'token_expires_at' => $tokenExpiresAt->toISOString(),
                 'user' => json_encode([
                     'id' => $user->id,
                     'name' => $user->name,

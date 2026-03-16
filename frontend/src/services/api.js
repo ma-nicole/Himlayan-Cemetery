@@ -1,5 +1,29 @@
 import axios from 'axios';
 
+const TOKEN_KEY = 'token';
+const USER_KEY = 'user';
+const TOKEN_EXPIRES_AT_KEY = 'token_expires_at';
+
+const clearStoredAuth = () => {
+  localStorage.removeItem(TOKEN_KEY);
+  localStorage.removeItem(USER_KEY);
+  localStorage.removeItem(TOKEN_EXPIRES_AT_KEY);
+};
+
+const isTokenExpired = () => {
+  const expiresAt = localStorage.getItem(TOKEN_EXPIRES_AT_KEY);
+  if (!expiresAt) {
+    return false;
+  }
+
+  const expiresAtMs = Date.parse(expiresAt);
+  if (Number.isNaN(expiresAtMs)) {
+    return true;
+  }
+
+  return Date.now() >= expiresAtMs;
+};
+
 const rawApiUrl = process.env.REACT_APP_API_URL || 'http://localhost:8000';
 const trimmedApiUrl = rawApiUrl.replace(/\/$/, '');
 const normalizedApiBaseUrl = trimmedApiUrl.endsWith('/api')
@@ -17,8 +41,16 @@ const api = axios.create({
 // Request interceptor to add auth token and handle FormData
 api.interceptors.request.use(
   (config) => {
-    const token = localStorage.getItem('token');
+    const token = localStorage.getItem(TOKEN_KEY);
     if (token) {
+      if (isTokenExpired()) {
+        clearStoredAuth();
+        if (!window.location.pathname.includes('/login')) {
+          window.location.href = '/login?reason=session_expired';
+        }
+        return Promise.reject(new Error('Session expired'));
+      }
+
       config.headers.Authorization = `Bearer ${token}`;
     }
     
@@ -44,8 +76,7 @@ api.interceptors.response.use(
     
     if (error.response?.status === 401 && !isAuthEndpoint) {
       // Clear token and redirect to login only for authenticated routes
-      localStorage.removeItem('token');
-      localStorage.removeItem('user');
+      clearStoredAuth();
       window.location.href = '/login';
     }
     return Promise.reject(error);

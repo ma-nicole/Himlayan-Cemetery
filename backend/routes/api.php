@@ -13,6 +13,7 @@ use App\Http\Controllers\Api\AnnouncementController;
 use App\Http\Controllers\Api\ServiceRequestController;
 use App\Http\Controllers\Api\PaymentController;
 use App\Http\Controllers\Api\FeedbackController;
+use App\Http\Controllers\Api\SecurityAuditLogController;
 use App\Http\Controllers\Auth\SocialAuthController;
 use App\Http\Controllers\Api\InvitationController;
 
@@ -65,13 +66,13 @@ Route::get('/users/by-email', [UserController::class, 'getByEmail']);
 // PROTECTED ROUTES (Authentication Required)
 // ============================================
 
-Route::middleware('auth:sanctum')->group(function () {
+Route::middleware(['auth:sanctum', 'sanitize.input'])->group(function () {
     
     // Auth Management
     Route::post('/logout', [AuthController::class, 'logout']);
     Route::get('/user', [AuthController::class, 'user']);
-    Route::post('/auth/change-password', [AuthController::class, 'changePassword']);
-    Route::post('/profile/update', [UserController::class, 'updateProfile']);
+    Route::post('/auth/change-password', [AuthController::class, 'changePassword'])->middleware('recent_auth');
+    Route::post('/profile/update', [UserController::class, 'updateProfile'])->middleware('recent_auth');
 
     // My Loved Ones (Member access to their linked records)
     Route::get('/my-burial-records', [BurialRecordController::class, 'myRecords']);
@@ -173,7 +174,14 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/{id}', [UserController::class, 'show']);
         Route::post('/', [UserController::class, 'store']);
         Route::put('/{id}', [UserController::class, 'update']);
-        Route::delete('/{id}', [UserController::class, 'destroy']);
+        Route::delete('/{id}', [UserController::class, 'destroy'])->middleware('recent_auth');
+    });
+
+    // ----------------------------------------
+    // SECURITY AUDIT LOGS (Admin Only)
+    // ----------------------------------------
+    Route::prefix('security-audit-logs')->middleware('role:admin')->group(function () {
+        Route::get('/', [SecurityAuditLogController::class, 'index']);
     });
 
     // ----------------------------------------
@@ -216,7 +224,7 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/{id}', [PaymentController::class, 'show']);
         
         Route::middleware('role:admin,staff')->group(function () {
-            Route::post('/{id}/verify', [PaymentController::class, 'verify']);
+            Route::post('/{id}/verify', [PaymentController::class, 'verify'])->middleware('recent_auth');
             Route::delete('/{id}', [PaymentController::class, 'destroy']);
         });
     });

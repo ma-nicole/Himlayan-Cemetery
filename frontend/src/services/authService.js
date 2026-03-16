@@ -1,5 +1,34 @@
 import api from './api';
 
+const TOKEN_KEY = 'token';
+const USER_KEY = 'user';
+const TOKEN_EXPIRES_AT_KEY = 'token_expires_at';
+
+const DEFAULT_TOKEN_EXPIRY_MINUTES = 120;
+
+const getFallbackTokenExpiry = () => {
+  const expiresAt = new Date(Date.now() + DEFAULT_TOKEN_EXPIRY_MINUTES * 60 * 1000);
+  return expiresAt.toISOString();
+};
+
+const clearStoredAuth = () => {
+  localStorage.removeItem(TOKEN_KEY);
+  localStorage.removeItem(USER_KEY);
+  localStorage.removeItem(TOKEN_EXPIRES_AT_KEY);
+};
+
+const isStoredTokenExpired = () => {
+  const expiresAt = localStorage.getItem(TOKEN_EXPIRES_AT_KEY);
+  if (!expiresAt) return false;
+
+  const expiresAtMs = Date.parse(expiresAt);
+  if (Number.isNaN(expiresAtMs)) {
+    return true;
+  }
+
+  return Date.now() >= expiresAtMs;
+};
+
 export const authService = {
   /**
    * Login user
@@ -10,9 +39,10 @@ export const authService = {
   async login(email, password) {
     const response = await api.post('/login', { email, password });
     if (response.data.success) {
-      const { token, user } = response.data.data;
-      localStorage.setItem('token', token);
-      localStorage.setItem('user', JSON.stringify(user));
+      const { token, user, token_expires_at: tokenExpiresAt } = response.data.data;
+      localStorage.setItem(TOKEN_KEY, token);
+      localStorage.setItem(USER_KEY, JSON.stringify(user));
+      localStorage.setItem(TOKEN_EXPIRES_AT_KEY, tokenExpiresAt || getFallbackTokenExpiry());
     }
     return response.data;
   },
@@ -25,8 +55,7 @@ export const authService = {
     try {
       await api.post('/logout');
     } finally {
-      localStorage.removeItem('token');
-      localStorage.removeItem('user');
+      clearStoredAuth();
     }
   },
 
@@ -48,7 +77,17 @@ export const authService = {
    * @returns {boolean}
    */
   isAuthenticated() {
-    return !!localStorage.getItem('token');
+    const token = localStorage.getItem(TOKEN_KEY);
+    if (!token) {
+      return false;
+    }
+
+    if (isStoredTokenExpired()) {
+      clearStoredAuth();
+      return false;
+    }
+
+    return true;
   },
 
   /**
@@ -56,7 +95,7 @@ export const authService = {
    * @returns {object|null}
    */
   getUser() {
-    const user = localStorage.getItem('user');
+    const user = localStorage.getItem(USER_KEY);
     return user ? JSON.parse(user) : null;
   },
 
@@ -65,7 +104,22 @@ export const authService = {
    * @returns {string|null}
    */
   getToken() {
-    return localStorage.getItem('token');
+    if (!this.isAuthenticated()) {
+      return null;
+    }
+    return localStorage.getItem(TOKEN_KEY);
+  },
+
+  /**
+   * Set auth session from social callback
+   * @param {string} token
+   * @param {object} user
+   * @param {string|null} tokenExpiresAt
+   */
+  setSession(token, user, tokenExpiresAt = null) {
+    localStorage.setItem(TOKEN_KEY, token);
+    localStorage.setItem(USER_KEY, JSON.stringify(user));
+    localStorage.setItem(TOKEN_EXPIRES_AT_KEY, tokenExpiresAt || getFallbackTokenExpiry());
   },
 
   /**

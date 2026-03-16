@@ -3239,6 +3239,14 @@ textarea.form-input {
   padding: 80px 24px 40px;
 }
 
+.landing-footer p,
+.landing-footer li,
+.landing-footer a,
+.landing-footer span {
+  color: #ffffff !important;
+  opacity: 1;
+}
+
 .footer-grid {
   display: grid;
   grid-template-columns: 2fr 1fr 1fr 1fr 1fr;
@@ -3261,10 +3269,10 @@ textarea.form-input {
 
 .footer-brand p {
   margin-top: 16px;
-  opacity: 0.85;
+  opacity: 1;
   font-size: 0.95rem;
   line-height: 1.7;
-  color: #a7f3d0;
+  color: #ffffff;
 }
 
 .footer-social {
@@ -3307,7 +3315,7 @@ textarea.form-input {
 }
 
 .footer-links a {
-  color: #bbf7d0;
+  color: #ffffff;
   text-decoration: none;
   transition: var(--transition);
   font-size: 0.9rem;
@@ -3321,7 +3329,8 @@ textarea.form-input {
   padding-top: 40px;
   border-top: 1px solid rgba(255, 255, 255, 0.1);
   text-align: center;
-  opacity: 0.7;
+  opacity: 1;
+  color: #ffffff;
   font-size: 0.9rem;
 }
 

@@ -106,6 +106,22 @@ const PlotForm = ({ plot, onSubmit, onCancel }) => {
     setError('');
     const newErrors = {};
 
+    if (!formData.section || !formData.section.trim()) {
+      newErrors.section = 'Section is required';
+    }
+
+    if (!formData.row_number) {
+      newErrors.row_number = 'Row number is required';
+    }
+
+    if (!formData.column_number) {
+      newErrors.column_number = 'Column number is required';
+    }
+
+    if (!formData.notes || !formData.notes.trim()) {
+      newErrors.notes = 'Notes is required';
+    }
+
     // Validate latitude - accept decimal numbers between -90 and 90
     if (!formData.latitude && formData.latitude !== 0) {
       newErrors.latitude = 'Latitude is required';
@@ -173,11 +189,16 @@ const PlotForm = ({ plot, onSubmit, onCancel }) => {
           <input
             type="text"
             name="section"
-            className="form-control"
+            className={`form-control ${validationErrors.section ? 'error' : ''}`}
             value={formData.section}
             onChange={handleChange}
             placeholder="e.g., A, B, C"
           />
+          {validationErrors.section && (
+            <small style={{ color: '#ef4444', marginTop: '4px', display: 'block' }}>
+              {validationErrors.section}
+            </small>
+          )}
         </div>
       </div>
 
@@ -187,22 +208,32 @@ const PlotForm = ({ plot, onSubmit, onCancel }) => {
           <input
             type="number"
             name="row_number"
-            className="form-control"
+            className={`form-control ${validationErrors.row_number ? 'error' : ''}`}
             value={formData.row_number}
             onChange={handleChange}
             min="1"
           />
+          {validationErrors.row_number && (
+            <small style={{ color: '#ef4444', marginTop: '4px', display: 'block' }}>
+              {validationErrors.row_number}
+            </small>
+          )}
         </div>
         <div className="form-group">
           <label>Column Number</label>
           <input
             type="number"
             name="column_number"
-            className="form-control"
+            className={`form-control ${validationErrors.column_number ? 'error' : ''}`}
             value={formData.column_number}
             onChange={handleChange}
             min="1"
           />
+          {validationErrors.column_number && (
+            <small style={{ color: '#ef4444', marginTop: '4px', display: 'block' }}>
+              {validationErrors.column_number}
+            </small>
+          )}
         </div>
       </div>
 
@@ -264,11 +295,16 @@ const PlotForm = ({ plot, onSubmit, onCancel }) => {
         <label>Notes</label>
         <textarea
           name="notes"
-          className="form-control"
+          className={`form-control ${validationErrors.notes ? 'error' : ''}`}
           value={formData.notes}
           onChange={handleChange}
           rows="3"
         />
+        {validationErrors.notes && (
+          <small style={{ color: '#ef4444', marginTop: '4px', display: 'block' }}>
+            {validationErrors.notes}
+          </small>
+        )}
       </div>
 
       <div className="modal-footer" style={{ padding: '20px 0 0 0', borderTop: 'none' }}>

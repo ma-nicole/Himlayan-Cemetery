@@ -5,6 +5,8 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\User;
 use App\Mail\PasswordResetMail;
+use App\Services\SecurityAuditService;
+use App\Services\ValidationRules;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
@@ -32,6 +34,15 @@ class AuthController extends Controller
 
         // Check if email exists
         if (!$user) {
+            SecurityAuditService::log(
+                'auth.login',
+                'failed',
+                'Login failed: email not found',
+                $request,
+                null,
+                ['email' => $request->email]
+            );
+
             return $this->errorResponse(
                 'The email address you entered isn\'t connected to an account. Please check your email and try again.',
                 401
@@ -40,17 +51,48 @@ class AuthController extends Controller
 
         // Check if password is correct
         if (!Hash::check($request->password, $user->password)) {
+            SecurityAuditService::log(
+                'auth.login',
+                'failed',
+                'Login failed: invalid password',
+                $request,
+                $user->id,
+                ['email' => $request->email]
+            );
+
             return $this->errorResponse(
                 'The password you entered is incorrect. Please try again or reset your password.',
                 401
             );
         }
 
+        // Prevent session fixation for stateful requests.
+        if ($request->hasSession()) {
+            $request->session()->regenerate();
+            $request->session()->regenerateToken();
+        }
+
         // Delete existing tokens
         $user->tokens()->delete();
 
-        // Create new token
-        $token = $user->createToken('auth_token')->plainTextToken;
+        // Create new token with explicit expiry
+        $expiryMinutes = (int) config('sanctum.expiration', 120);
+        $sensitiveExpiryMinutes = (int) config('sanctum.sensitive_operation_expiration', 15);
+        $tokenExpiresAt = now()->addMinutes($expiryMinutes);
+        $sensitiveOperationExpiresAt = now()->addMinutes($sensitiveExpiryMinutes);
+        $token = $user->createToken('auth_token', ['*'], $tokenExpiresAt)->plainTextToken;
+
+        SecurityAuditService::log(
+            'auth.login',
+            'success',
+            'Login successful',
+            $request,
+            $user->id,
+            [
+                'role' => $user->role,
+                'token_expires_at' => $tokenExpiresAt->toISOString(),
+            ]
+        );
 
         return $this->successResponse([
             'user' => [
@@ -62,6 +104,8 @@ class AuthController extends Controller
             ],
             'token' => $token,
             'token_type' => 'Bearer',
+            'token_expires_at' => $tokenExpiresAt->toISOString(),
+            'sensitive_operation_expires_at' => $sensitiveOperationExpiresAt->toISOString(),
         ], 'Login successful');
     }
 
@@ -73,7 +117,21 @@ class AuthController extends Controller
      */
     public function logout(Request $request)
     {
+        $user = $request->user();
         $request->user()->currentAccessToken()->delete();
+
+        if ($request->hasSession()) {
+            $request->session()->invalidate();
+            $request->session()->regenerateToken();
+        }
+
+        SecurityAuditService::log(
+            'auth.logout',
+            'success',
+            'Logout successful',
+            $request,
+            $user?->id
+        );
 
         return $this->successResponse(null, 'Logged out successfully');
     }
@@ -117,7 +175,7 @@ class AuthController extends Controller
         $request->validate([
             'name' => 'required|string|max:255',
             'email' => 'required|email|unique:users,email',
-            'password' => 'required|string|min:6|confirmed',
+            'password' => ['required', 'string', 'confirmed', ValidationRules::strongPasswordRule()],
         ]);
 
         $user = User::create([
@@ -147,18 +205,34 @@ class AuthController extends Controller
     {
         $request->validate([
             'current_password' => 'required|string',
-            'new_password' => 'required|string|min:8|confirmed',
+            'new_password' => ['required', 'string', 'confirmed', ValidationRules::strongPasswordRule()],
         ]);
 
         $user = $request->user();
 
         // Verify current password
         if (!Hash::check($request->current_password, $user->password)) {
+            SecurityAuditService::log(
+                'auth.password_change',
+                'failed',
+                'Password change failed: current password invalid',
+                $request,
+                $user->id
+            );
+
             return $this->errorResponse('Current password is incorrect', 401);
         }
 
         // Check if new password is different from current
         if (Hash::check($request->new_password, $user->password)) {
+            SecurityAuditService::log(
+                'auth.password_change',
+                'failed',
+                'Password change failed: new password same as old password',
+                $request,
+                $user->id
+            );
+
             return $this->errorResponse('New password must be different from current password', 422);
         }
 
@@ -176,6 +250,14 @@ class AuthController extends Controller
 
         // Revoke all tokens to force re-login
         $user->tokens()->delete();
+
+        SecurityAuditService::log(
+            'auth.password_change',
+            'success',
+            'Password changed successfully',
+            $request,
+            $user->id
+        );
 
         return $this->successResponse(null, 'Password changed successfully. Please log in again with your new password.');
     }
@@ -196,6 +278,15 @@ class AuthController extends Controller
 
         // Always return success message for security (don't reveal if email exists)
         if (!$user) {
+            SecurityAuditService::log(
+                'auth.forgot_password',
+                'success',
+                'Password reset requested for non-existing email',
+                $request,
+                null,
+                ['email' => $request->email]
+            );
+
             return $this->successResponse(null, 'If an account with that email exists, we have sent a password reset link.');
         }
 
@@ -206,6 +297,15 @@ class AuthController extends Controller
             ->first();
 
         if ($recentReset) {
+            SecurityAuditService::log(
+                'auth.forgot_password',
+                'failed',
+                'Password reset rate limited',
+                $request,
+                $user->id,
+                ['email' => $request->email]
+            );
+
             return $this->errorResponse('Please wait a few minutes before requesting another reset link.', 429);
         }
 
@@ -230,8 +330,27 @@ class AuthController extends Controller
             Mail::to($request->email)->send(new PasswordResetMail($resetUrl, $user->name));
         } catch (\Exception $e) {
             \Log::error('Password reset email failed: ' . $e->getMessage());
+
+            SecurityAuditService::log(
+                'auth.forgot_password',
+                'failed',
+                'Password reset email send failed',
+                $request,
+                $user->id,
+                ['email' => $request->email]
+            );
+
             return $this->errorResponse('Failed to send reset email. Please try again later.', 500);
         }
+
+        SecurityAuditService::log(
+            'auth.forgot_password',
+            'success',
+            'Password reset email sent',
+            $request,
+            $user->id,
+            ['email' => $request->email]
+        );
 
         return $this->successResponse(null, 'If an account with that email exists, we have sent a password reset link.');
     }
@@ -247,7 +366,7 @@ class AuthController extends Controller
         $request->validate([
             'email' => 'required|email',
             'token' => 'required|string',
-            'password' => 'required|string|min:8|confirmed',
+            'password' => ['required', 'string', 'confirmed', ValidationRules::strongPasswordRule()],
         ]);
 
         // Find the reset record
@@ -256,17 +375,45 @@ class AuthController extends Controller
             ->first();
 
         if (!$resetRecord) {
+            SecurityAuditService::log(
+                'auth.reset_password',
+                'failed',
+                'Password reset failed: reset record not found',
+                $request,
+                null,
+                ['email' => $request->email]
+            );
+
             return $this->errorResponse('Invalid or expired reset link.', 400);
         }
 
         // Check if token is expired (60 minutes)
         if (now()->diffInMinutes($resetRecord->created_at) > 60) {
             DB::table('password_resets')->where('email', $request->email)->delete();
+
+            SecurityAuditService::log(
+                'auth.reset_password',
+                'failed',
+                'Password reset failed: token expired',
+                $request,
+                null,
+                ['email' => $request->email]
+            );
+
             return $this->errorResponse('This reset link has expired. Please request a new one.', 400);
         }
 
         // Verify token
         if (!Hash::check($request->token, $resetRecord->token)) {
+            SecurityAuditService::log(
+                'auth.reset_password',
+                'failed',
+                'Password reset failed: token mismatch',
+                $request,
+                null,
+                ['email' => $request->email]
+            );
+
             return $this->errorResponse('Invalid reset link.', 400);
         }
 
@@ -274,6 +421,15 @@ class AuthController extends Controller
         $user = User::where('email', $request->email)->first();
 
         if (!$user) {
+            SecurityAuditService::log(
+                'auth.reset_password',
+                'failed',
+                'Password reset failed: user not found',
+                $request,
+                null,
+                ['email' => $request->email]
+            );
+
             return $this->errorResponse('User not found.', 404);
         }
 
@@ -288,6 +444,15 @@ class AuthController extends Controller
 
         // Delete the reset record
         DB::table('password_resets')->where('email', $request->email)->delete();
+
+        SecurityAuditService::log(
+            'auth.reset_password',
+            'success',
+            'Password reset successful',
+            $request,
+            $user->id,
+            ['email' => $request->email]
+        );
 
         return $this->successResponse(null, 'Password has been reset successfully. You can now log in with your new password.');
     }

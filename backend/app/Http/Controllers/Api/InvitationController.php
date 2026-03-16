@@ -22,7 +22,7 @@ class InvitationController extends Controller
      */
     private function generatePassword(BurialRecord $burialRecord)
     {
-        $plotNumber = $burialRecord->plot->plot_number;
+        $plotNumber = preg_replace('/[^A-Za-z0-9]/', '', (string) $burialRecord->plot->plot_number);
         
         // Get last name - use contact_last_name if available, otherwise extract from full name
         if ($burialRecord->contact_last_name) {
@@ -31,11 +31,21 @@ class InvitationController extends Controller
             $nameParts = explode(' ', $burialRecord->contact_name);
             $lastName = end($nameParts); // Get the last part of the name
         }
+
+        $lastName = preg_replace('/[^A-Za-z]/', '', (string) $lastName);
+        $lastName = ucfirst(strtolower($lastName));
         
-        $phone = $burialRecord->contact_phone;
+        $phone = preg_replace('/\D/', '', (string) $burialRecord->contact_phone);
         $lastFourDigits = substr($phone, -4);
-        
-        return $plotNumber . $lastName . $lastFourDigits;
+
+        $password = $plotNumber . $lastName . $lastFourDigits . '!Aa';
+
+        // Ensure minimum length for strong password baseline.
+        if (strlen($password) < 12) {
+            $password .= Str::upper(Str::random(12 - strlen($password)));
+        }
+
+        return $password;
     }
 
     /**

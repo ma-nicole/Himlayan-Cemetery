@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\Announcement;
 use Illuminate\Http\Request;
+use Carbon\Carbon;
 
 class AnnouncementController extends Controller
 {
@@ -69,6 +70,7 @@ class AnnouncementController extends Controller
             ...$validated,
             'created_by' => auth()->id(),
             'published_at' => $validated['published_at'] ?? now(),
+            'expires_at' => !empty($validated['expires_at']) ? Carbon::parse($validated['expires_at'])->endOfDay() : null,
         ]);
 
         return response()->json([
@@ -120,6 +122,12 @@ class AnnouncementController extends Controller
             'published_at' => 'nullable|date',
             'expires_at' => 'nullable|date',
         ]);
+
+        if (array_key_exists('expires_at', $validated)) {
+            $validated['expires_at'] = !empty($validated['expires_at'])
+                ? Carbon::parse($validated['expires_at'])->endOfDay()
+                : null;
+        }
 
         $announcement->update($validated);
 

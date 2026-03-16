@@ -9,6 +9,11 @@ use Illuminate\Validation\Rule;
 
 class PlotController extends Controller
 {
+    private const HIMS_LAT_MIN = 14.6796000;
+    private const HIMS_LAT_MAX = 14.6858000;
+    private const HIMS_LNG_MIN = 121.0500000;
+    private const HIMS_LNG_MAX = 121.0552000;
+
     /**
      * Display a listing of plots
      * 
@@ -65,13 +70,21 @@ class PlotController extends Controller
     {
         $validated = $request->validate([
             'plot_number' => 'required|string|unique:plots,plot_number',
-            'section' => 'nullable|string|max:50',
-            'row_number' => 'nullable|integer|min:1',
-            'column_number' => 'nullable|integer|min:1',
-            'latitude' => 'required|numeric|between:-90,90',
-            'longitude' => 'required|numeric|between:-180,180',
-            'status' => ['nullable', Rule::in(['available', 'occupied', 'reserved', 'maintenance'])],
-            'notes' => 'nullable|string',
+            'section' => 'required|string|max:50',
+            'row_number' => 'required|integer|min:1',
+            'column_number' => 'required|integer|min:1',
+            'latitude' => 'required|numeric|between:' . self::HIMS_LAT_MIN . ',' . self::HIMS_LAT_MAX,
+            'longitude' => 'required|numeric|between:' . self::HIMS_LNG_MIN . ',' . self::HIMS_LNG_MAX,
+            'status' => ['required', Rule::in(['available', 'occupied', 'reserved', 'maintenance'])],
+            'notes' => 'required|string',
+        ], [
+            'section.required' => 'Section is required.',
+            'row_number.required' => 'Row number is required.',
+            'column_number.required' => 'Column number is required.',
+            'status.required' => 'Status is required.',
+            'notes.required' => 'Notes is required.',
+            'latitude.between' => 'Latitude must be inside Himlayang Pilipino Memorial Park area.',
+            'longitude.between' => 'Longitude must be inside Himlayang Pilipino Memorial Park area.',
         ]);
 
         $plot = Plot::create($validated);
@@ -115,10 +128,13 @@ class PlotController extends Controller
             'section' => 'nullable|string|max:50',
             'row_number' => 'nullable|integer|min:1',
             'column_number' => 'nullable|integer|min:1',
-            'latitude' => 'sometimes|numeric|between:-90,90',
-            'longitude' => 'sometimes|numeric|between:-180,180',
+            'latitude' => 'sometimes|numeric|between:' . self::HIMS_LAT_MIN . ',' . self::HIMS_LAT_MAX,
+            'longitude' => 'sometimes|numeric|between:' . self::HIMS_LNG_MIN . ',' . self::HIMS_LNG_MAX,
             'status' => ['nullable', Rule::in(['available', 'occupied', 'reserved', 'maintenance'])],
             'notes' => 'nullable|string',
+        ], [
+            'latitude.between' => 'Latitude must be inside Himlayang Pilipino Memorial Park area.',
+            'longitude.between' => 'Longitude must be inside Himlayang Pilipino Memorial Park area.',
         ]);
 
         $plot->update($validated);

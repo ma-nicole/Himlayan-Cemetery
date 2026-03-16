@@ -2,7 +2,7 @@
 
 .member-footer {
   background: #1e293b;
-  padding: 1.5rem 2rem;
+  padding: 0.75rem 2rem;
   font-family: 'Inter', sans-serif;
   flex-shrink: 0;
   margin-top: auto;
@@ -12,7 +12,7 @@
   max-width: 1400px;
   margin: 0 auto;
   display: flex;
-  justify-content: space-between;
+  justify-content: center;
   align-items: center;
 }
 
@@ -20,6 +20,7 @@
   color: #94a3b8;
   font-size: 0.875rem;
   margin: 0;
+  text-align: center;
 }
 
 .member-footer-links {

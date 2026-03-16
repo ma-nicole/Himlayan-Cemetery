@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
+import authService from '../services/authService';
 import './AuthCallback.css';
 
 const AuthCallback = () => {
@@ -12,6 +13,7 @@ const AuthCallback = () => {
 
   useEffect(() => {
     const token = searchParams.get('token');
+    const tokenExpiresAt = searchParams.get('token_expires_at');
     const userParam = searchParams.get('user');
     const error = searchParams.get('error');
 
@@ -25,9 +27,8 @@ const AuthCallback = () => {
       try {
         const user = JSON.parse(decodeURIComponent(userParam));
         
-        // Store token and user data
-        localStorage.setItem('token', token);
-        localStorage.setItem('user', JSON.stringify(user));
+        // Store token, user data, and token expiry
+        authService.setSession(token, user, tokenExpiresAt);
         
         // Update auth context
         setUserFromSocial(user);

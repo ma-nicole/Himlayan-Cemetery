@@ -2,8 +2,23 @@
 
 namespace App\Services;
 
+use Illuminate\Validation\Rules\Password;
+
 class ValidationRules
 {
+    /**
+     * Shared strong password policy for all user-managed passwords.
+     */
+    public static function strongPasswordRule(): Password
+    {
+        return Password::min(12)
+            ->letters()
+            ->mixedCase()
+            ->numbers()
+            ->symbols()
+            ->uncompromised();
+    }
+
     /**
      * Detect SQL injection attempts
      */

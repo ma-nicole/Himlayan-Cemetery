@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\Payment;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Http;
 
 class PaymentController extends Controller
 {
@@ -76,14 +77,73 @@ class PaymentController extends Controller
             ...$validated,
             'user_id' => auth()->id(),
             'status' => 'pending',
-            'paid_at' => now(),
+            'paid_at' => null,
         ]);
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Payment submitted successfully. Awaiting verification.',
-            'data' => $payment->load(['user:id,name,email', 'plot:id,plot_number,section'])
-        ], 201);
+        $xenditSecret = config('services.xendit.secret_key');
+        if (!$xenditSecret) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Xendit secret key is not configured.',
+            ], 500);
+        }
+
+        $methodMap = [
+            'gcash' => 'GCASH',
+            'maya' => 'PAYMAYA',
+            'bank' => 'BPI',
+            'card' => 'CREDIT_CARD',
+        ];
+
+        $externalId = 'himlayan-payment-' . $payment->id . '-' . time();
+        $frontendUrl = config('app.frontend_url', 'http://localhost:3000');
+
+        $payload = [
+            'external_id' => $externalId,
+            'amount' => (float) $validated['amount'],
+            'payer_email' => auth()->user()->email,
+            'description' => 'Himlayan dues payment (' . $validated['payment_type'] . ')',
+            'currency' => 'PHP',
+            'success_redirect_url' => $frontendUrl . '/pay-dues?status=success',
+            'failure_redirect_url' => $frontendUrl . '/pay-dues?status=failed',
+        ];
+
+        if (isset($methodMap[$validated['payment_method']])) {
+            $payload['payment_methods'] = [$methodMap[$validated['payment_method']]];
+        }
+
+        try {
+            $xenditResponse = Http::withBasicAuth($xenditSecret, '')
+                ->acceptJson()
+                ->post('https://api.xendit.co/v2/invoices', $payload);
+
+            if (!$xenditResponse->successful()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Failed to create payment checkout. Please try again.',
+                    'errors' => $xenditResponse->json(),
+                ], 502);
+            }
+
+            $invoice = $xenditResponse->json();
+            $payment->update([
+                'reference_number' => $invoice['id'] ?? $payment->reference_number,
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Payment initiated successfully. Redirecting to checkout.',
+                'data' => $payment->load(['user:id,name,email', 'plot:id,plot_number,section']),
+                'checkout_url' => $invoice['invoice_url'] ?? null,
+                'invoice_id' => $invoice['id'] ?? null,
+            ], 201);
+        } catch (\Throwable $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to connect to payment gateway.',
+                'error' => $e->getMessage(),
+            ], 500);
+        }
     }
 
     /**

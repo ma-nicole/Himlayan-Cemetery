@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import MemberHeader from '../components/common/MemberHeader';
 import MemberFooter from '../components/common/MemberFooter';
 import { useToast } from '../context/ToastContext';
+import api from '../services/api';
 import './PayDuesPage.css';
 
 const PayDuesPage = () => {
@@ -41,7 +42,7 @@ const PayDuesPage = () => {
     { id: 'card', name: 'Credit/Debit Card', icon: '' },
   ];
 
-  const handlePayment = () => {
+  const handlePayment = async () => {
     if (!selectedPlot) {
       toast?.warning('Please select a plot to pay');
       return;
@@ -52,10 +53,44 @@ const PayDuesPage = () => {
     }
 
     setLoading(true);
-    setTimeout(() => {
-      toast?.success('Payment initiated! Redirecting to payment gateway...');
+    try {
+      const paymentType = selectedPlot.type?.toLowerCase().includes('quarterly')
+        ? 'quarterly_dues'
+        : 'annual_maintenance';
+
+      const response = await api.post('/payments', {
+        amount: selectedPlot.dueAmount,
+        payment_type: paymentType,
+        payment_method: paymentMethod,
+        notes: `${selectedPlot.type} for ${selectedPlot.plotNumber}`,
+      });
+
+      const checkoutUrl =
+        response?.data?.checkout_url ||
+        response?.data?.invoice_url ||
+        response?.data?.data?.invoice_url ||
+        response?.data?.data?.checkout_url;
+
+      if (checkoutUrl) {
+        toast?.success('Redirecting to secure payment checkout...');
+
+        // Prefer same-tab redirect, with fallback to new tab when blocked by browser policies.
+        window.location.assign(checkoutUrl);
+        setTimeout(() => {
+          if (window.location.href.includes('/pay-dues')) {
+            window.open(checkoutUrl, '_blank', 'noopener,noreferrer');
+          }
+        }, 500);
+        return;
+      }
+
+      toast?.warning('Payment created but no checkout URL returned.');
+    } catch (err) {
+      const message = err?.response?.data?.message || 'Payment initiation failed. Please try again.';
+      toast?.error(message);
+    } finally {
       setLoading(false);
-    }, 1500);
+    }
   };
 
   const formatCurrency = (amount) => {

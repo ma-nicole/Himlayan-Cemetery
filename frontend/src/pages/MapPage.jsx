@@ -11,8 +11,10 @@ const MapPage = () => {
   const { user } = useAuth();
   const isAdmin = user?.role === 'admin';
 
+  const DEFAULT_CEMETERY_CENTER = [14.682462, 121.0530409];
+
   const [markers, setMarkers] = useState([]);
-  const [mapCenter, setMapCenter] = useState(null);
+  const [mapCenter, setMapCenter] = useState(DEFAULT_CEMETERY_CENTER);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   
@@ -35,19 +37,14 @@ const MapPage = () => {
     try {
       setLoading(true);
       
-      // Load markers and bounds in parallel
-      const [markersRes, boundsRes] = await Promise.all([
-        mapService.getMarkers(),
-        mapService.getBounds(),
-      ]);
+      // Load markers only and keep fixed default center for this page
+      const markersRes = await mapService.getMarkers();
       
       if (markersRes.success) {
         setMarkers(markersRes.data);
       }
-      
-      if (boundsRes.success && boundsRes.data.center) {
-        setMapCenter([boundsRes.data.center.lat, boundsRes.data.center.lng]);
-      }
+
+      setMapCenter(DEFAULT_CEMETERY_CENTER);
     } catch (err) {
       setError('Failed to load map data');
       console.error(err);

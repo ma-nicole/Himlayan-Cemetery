@@ -29,7 +29,7 @@ const createMarkerIcon = (color) => {
 
 const CemeteryMap = ({ markers, center, zoom, onMarkerClick, onMapClick }) => {
   const [mapCenter, setMapCenter] = useState(
-    center ? { lat: center[0], lng: center[1] } : { lat: 14.5547, lng: 121.0244 }
+    center ? { lat: center[0], lng: center[1] } : { lat: 14.682462, lng: 121.0530409 }
   );
   const [mapZoom] = useState(zoom || 18);
   const [selectedMarkerId, setSelectedMarkerId] = useState(null);
