@@ -140,6 +140,7 @@ jobs:
           passphrase: ${{ secrets.HOSTINGER_SSH_PASSPHRASE }}
           port: ${{ secrets.HOSTINGER_SSH_PORT }}
           source: "frontend/build/*"
+          strip_components: 2
           target: ${{ secrets.HOSTINGER_FRONTEND_PUBLIC_PATH }}
           overwrite: true
 
