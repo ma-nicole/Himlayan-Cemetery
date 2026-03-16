@@ -47,7 +47,7 @@ jobs:
           passphrase: ${{ secrets.HOSTINGER_SSH_PASSPHRASE }}
           port: ${{ secrets.HOSTINGER_SSH_PORT }}
           envs: REPO_URL,BRANCH,DEPLOY_PATH
-          script_stop: true
+          script_stop: false
           script: |
             set -eux
 
@@ -117,7 +117,7 @@ jobs:
           passphrase: ${{ secrets.HOSTINGER_SSH_PASSPHRASE }}
           port: ${{ secrets.HOSTINGER_SSH_PORT }}
           envs: FRONTEND_PUBLIC_PATH
-          script_stop: true
+          script_stop: false
           script: |
             set -eux
 
