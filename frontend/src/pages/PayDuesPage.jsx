@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
 import MemberHeader from '../components/common/MemberHeader';
 import MemberFooter from '../components/common/MemberFooter';
 import { useToast } from '../context/ToastContext';
@@ -7,9 +8,26 @@ import './PayDuesPage.css';
 
 const PayDuesPage = () => {
   const toast = useToast();
+  const location = useLocation();
+  const navigate = useNavigate();
   const [selectedPlot, setSelectedPlot] = useState(null);
   const [paymentMethod, setPaymentMethod] = useState('');
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const status = params.get('status');
+
+    if (status === 'success') {
+      toast?.success('Payment completed successfully. Thank you!');
+    } else if (status === 'failed') {
+      toast?.error('Payment failed or was cancelled. You can try again.');
+    }
+
+    if (status === 'success' || status === 'failed') {
+      navigate('/pay-dues', { replace: true });
+    }
+  }, [location.search, navigate, toast]);
 
   // Demo plot dues data
   const plotDues = [

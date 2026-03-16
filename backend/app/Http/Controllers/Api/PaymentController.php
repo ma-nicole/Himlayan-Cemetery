@@ -10,6 +10,37 @@ use Illuminate\Support\Facades\Http;
 class PaymentController extends Controller
 {
     /**
+     * Resolve a safe absolute frontend base URL for payment redirects.
+     */
+    private function resolveFrontendBaseUrl(): string
+    {
+        $frontend = trim((string) config('app.frontend_url', ''));
+        $appUrl = trim((string) config('app.url', ''));
+
+        $base = $frontend !== '' ? $frontend : ($appUrl !== '' ? $appUrl : 'https://himlayangpilipino.com');
+
+        if (!preg_match('/^https?:\/\//i', $base)) {
+            $base = 'https://' . ltrim($base, '/');
+        }
+
+        return rtrim($base, '/');
+    }
+
+    /**
+     * Build return URL with status and optional payment tracking info.
+     */
+    private function buildPaymentReturnUrl(string $status, Payment $payment): string
+    {
+        $query = http_build_query([
+            'status' => $status,
+            'payment_id' => $payment->id,
+            'ref' => $payment->reference_number,
+        ]);
+
+        return $this->resolveFrontendBaseUrl() . '/pay-dues?' . $query;
+    }
+
+    /**
      * Display a listing of payments
      */
     public function index(Request $request)
@@ -96,7 +127,6 @@ class PaymentController extends Controller
         ];
 
         $externalId = 'himlayan-payment-' . $payment->id . '-' . time();
-        $frontendUrl = config('app.frontend_url', 'https://himlayangpilipino.com');
 
         $payload = [
             'external_id' => $externalId,
@@ -104,8 +134,8 @@ class PaymentController extends Controller
             'payer_email' => auth()->user()->email,
             'description' => 'Himlayan dues payment (' . $validated['payment_type'] . ')',
             'currency' => 'PHP',
-            'success_redirect_url' => $frontendUrl . '/pay-dues?status=success',
-            'failure_redirect_url' => $frontendUrl . '/pay-dues?status=failed',
+            'success_redirect_url' => $this->buildPaymentReturnUrl('success', $payment),
+            'failure_redirect_url' => $this->buildPaymentReturnUrl('failed', $payment),
         ];
 
         if (isset($methodMap[$validated['payment_method']])) {
@@ -183,7 +213,6 @@ class PaymentController extends Controller
         ];
 
         $externalId = 'himlayan-payment-' . $payment->id . '-' . time();
-        $frontendUrl = config('app.frontend_url', 'https://himlayangpilipino.com');
 
         $payload = [
             'external_id' => $externalId,
@@ -191,8 +220,8 @@ class PaymentController extends Controller
             'payer_email' => auth()->user()->email,
             'description' => 'Himlayan dues payment (' . $validated['payment_type'] . ')',
             'currency' => 'PHP',
-            'success_redirect_url' => $frontendUrl . '/pay-dues?status=success',
-            'failure_redirect_url' => $frontendUrl . '/pay-dues?status=failed',
+            'success_redirect_url' => $this->buildPaymentReturnUrl('success', $payment),
+            'failure_redirect_url' => $this->buildPaymentReturnUrl('failed', $payment),
         ];
 
         if (isset($methodMap[$validated['payment_method']])) {
