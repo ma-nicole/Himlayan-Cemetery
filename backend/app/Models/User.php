@@ -25,6 +25,7 @@ class User extends Authenticatable
         'provider',
         'provider_id',
         'avatar',
+        'expo_push_token',
         'invitation_sent_at',
         'invitation_expires_at',
         'invitation_token',

@@ -69,6 +69,15 @@ export const plotService = {
     const response = await api.get('/plots/statistics');
     return response.data;
   },
+
+  /**
+   * Get next plot number for preview
+   * @returns {Promise}
+   */
+  async getNextNumber() {
+    const response = await api.get('/plots/next-number');
+    return response.data;
+  },
 };
 
 export default plotService;

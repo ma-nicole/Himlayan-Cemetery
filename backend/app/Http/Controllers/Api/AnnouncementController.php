@@ -4,8 +4,11 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Announcement;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 
 class AnnouncementController extends Controller
 {
@@ -72,6 +75,32 @@ class AnnouncementController extends Controller
             'published_at' => $validated['published_at'] ?? now(),
             'expires_at' => !empty($validated['expires_at']) ? Carbon::parse($validated['expires_at'])->endOfDay() : null,
         ]);
+
+        // Non-blocking push notifications to Expo recipients.
+        try {
+            $tokens = User::whereNotNull('expo_push_token')
+                ->pluck('expo_push_token')
+                ->filter()
+                ->unique()
+                ->values();
+
+            foreach ($tokens as $token) {
+                Http::timeout(8)->post('https://exp.host/--/api/v2/push/send', [
+                    'to' => $token,
+                    'title' => 'New Announcement',
+                    'body' => $announcement->title,
+                    'sound' => 'default',
+                    'data' => [
+                        'announcement_id' => $announcement->id,
+                    ],
+                ]);
+            }
+        } catch (\Throwable $e) {
+            Log::warning('Expo push notification failed', [
+                'announcement_id' => $announcement->id,
+                'error' => $e->getMessage(),
+            ]);
+        }
 
         return response()->json([
             'success' => true,

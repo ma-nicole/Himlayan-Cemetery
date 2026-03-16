@@ -58,7 +58,10 @@ class QrCodeController extends Controller
      */
     public function show($code)
     {
-        $qrCode = QrCode::with('burialRecord.plot')->where('code', $code)->first();
+        $qrCode = QrCode::with('burialRecord.plot')
+            ->where('code', $code)
+            ->where('is_active', true)
+            ->first();
 
         if (!$qrCode) {
             return $this->errorResponse('QR code not found', 404);

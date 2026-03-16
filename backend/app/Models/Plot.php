@@ -80,4 +80,38 @@ class Plot extends Model
     {
         return $query->where('status', 'occupied');
     }
+
+    /**
+     * Generate the next plot number based on the latest numeric sequence.
+     */
+    public static function generateNextPlotNumber(): string
+    {
+        $plotNumbers = static::withTrashed()->pluck('plot_number');
+
+        $highestNumber = 0;
+        $prefix = 'PLOT-';
+        $padding = 3;
+
+        foreach ($plotNumbers as $plotNumber) {
+            if (!is_string($plotNumber)) {
+                continue;
+            }
+
+            if (preg_match('/^(.*?)(\d+)$/', trim($plotNumber), $matches)) {
+                $currentPrefix = $matches[1] !== '' ? $matches[1] : $prefix;
+                $currentNumber = (int) $matches[2];
+                $currentPadding = strlen($matches[2]);
+
+                if ($currentNumber > $highestNumber) {
+                    $highestNumber = $currentNumber;
+                    $prefix = $currentPrefix;
+                    $padding = max(3, $currentPadding);
+                }
+            }
+        }
+
+        $nextNumber = $highestNumber + 1;
+
+        return $prefix . str_pad((string) $nextNumber, $padding, '0', STR_PAD_LEFT);
+    }
 }

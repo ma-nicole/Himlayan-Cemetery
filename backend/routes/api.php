@@ -73,6 +73,7 @@ Route::middleware(['auth:sanctum', 'sanitize.input'])->group(function () {
     Route::get('/user', [AuthController::class, 'user']);
     Route::post('/auth/change-password', [AuthController::class, 'changePassword'])->middleware('recent_auth');
     Route::post('/profile/update', [UserController::class, 'updateProfile'])->middleware('recent_auth');
+    Route::post('/save-token', [UserController::class, 'saveToken']);
 
     // My Loved Ones (Member access to their linked records)
     Route::get('/my-burial-records', [BurialRecordController::class, 'myRecords']);
@@ -86,6 +87,7 @@ Route::middleware(['auth:sanctum', 'sanitize.input'])->group(function () {
     // ----------------------------------------
     Route::prefix('plots')->group(function () {
         Route::get('/', [PlotController::class, 'index']);
+        Route::get('/next-number', [PlotController::class, 'nextPlotNumber']);
         Route::get('/available', [PlotController::class, 'available']);
         Route::get('/statistics', [PlotController::class, 'statistics']);
         Route::get('/{id}', [PlotController::class, 'show']);
@@ -219,6 +221,7 @@ Route::middleware(['auth:sanctum', 'sanitize.input'])->group(function () {
     Route::prefix('payments')->group(function () {
         Route::get('/', [PaymentController::class, 'index']);
         Route::post('/', [PaymentController::class, 'store']);
+        Route::post('/xendit', [PaymentController::class, 'createXendit']);
         Route::get('/my-dues', [PaymentController::class, 'myDues']);
         Route::get('/statistics', [PaymentController::class, 'statistics'])->middleware('role:admin,staff');
         Route::get('/{id}', [PaymentController::class, 'show']);

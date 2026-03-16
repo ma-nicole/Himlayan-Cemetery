@@ -69,7 +69,6 @@ class PlotController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'plot_number' => 'required|string|unique:plots,plot_number',
             'section' => 'required|string|max:50',
             'row_number' => 'required|integer|min:1',
             'column_number' => 'required|integer|min:1',
@@ -86,6 +85,9 @@ class PlotController extends Controller
             'latitude.between' => 'Latitude must be inside Himlayang Pilipino Memorial Park area.',
             'longitude.between' => 'Longitude must be inside Himlayang Pilipino Memorial Park area.',
         ]);
+
+        // Always generate plot number server-side to enforce sequential numbering.
+        $validated['plot_number'] = Plot::generateNextPlotNumber();
 
         $plot = Plot::create($validated);
 
@@ -203,6 +205,18 @@ class PlotController extends Controller
         ];
 
         return $this->successResponse($stats, 'Plot statistics retrieved successfully');
+    }
+
+    /**
+     * Get the next plot number that will be assigned on create.
+     *
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function nextPlotNumber()
+    {
+        return $this->successResponse([
+            'plot_number' => Plot::generateNextPlotNumber(),
+        ], 'Next plot number retrieved successfully');
     }
 
     /**

@@ -49,10 +49,10 @@ class ValidationRules
      */
     public static function sanitizeHtml($html)
     {
-        $html = preg_replace('/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi', '', $html);
-        $html = preg_replace('/on\w+\s*=\s*["\'&#39;]?[^"\'&#39;]*["\'&#39;]?/gi', '', $html);
-        $html = preg_replace('/<iframe[^>]*>.*?<\/iframe>/gi', '', $html);
-        $html = preg_replace('/javascript:/gi', '', $html);
+        $html = preg_replace('/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/i', '', $html);
+        $html = preg_replace('/on\w+\s*=\s*["\'&#39;]?[^"\'&#39;]*["\'&#39;]?/i', '', $html);
+        $html = preg_replace('/<iframe[^>]*>.*?<\/iframe>/i', '', $html);
+        $html = preg_replace('/javascript:/i', '', $html);
         return $html;
     }
 

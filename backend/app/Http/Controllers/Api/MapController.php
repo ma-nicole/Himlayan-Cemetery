@@ -134,7 +134,6 @@ class MapController extends Controller
     public function createPlot(Request $request)
     {
         $validated = $request->validate([
-            'plot_number' => 'required|string|unique:plots,plot_number',
             'section' => 'required|string|max:50',
             'row_number' => 'required|integer|min:1',
             'column_number' => 'required|integer|min:1',
@@ -151,6 +150,9 @@ class MapController extends Controller
             'latitude.between' => 'Latitude must be inside Himlayang Pilipino Memorial Park area.',
             'longitude.between' => 'Longitude must be inside Himlayang Pilipino Memorial Park area.',
         ]);
+
+        // Always generate plot number server-side to enforce sequential numbering.
+        $validated['plot_number'] = Plot::generateNextPlotNumber();
 
         try {
             $plot = Plot::create($validated);

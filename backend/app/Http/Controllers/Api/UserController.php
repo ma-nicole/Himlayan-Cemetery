@@ -252,6 +252,25 @@ class UserController extends Controller
     }
 
     /**
+     * Save Expo push token for authenticated user
+     */
+    public function saveToken(Request $request)
+    {
+        $validated = $request->validate([
+            'expo_push_token' => 'required|string|max:255',
+        ]);
+
+        $user = auth()->user();
+        $user->expo_push_token = $validated['expo_push_token'];
+        $user->save();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Push token saved successfully',
+        ]);
+    }
+
+    /**
      * Update the authenticated user's profile
      */
     public function updateProfile(Request $request)
