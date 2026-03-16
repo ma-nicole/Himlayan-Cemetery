@@ -253,11 +253,9 @@ class InvitationController extends Controller
                 'full_trace' => $e->getTraceAsString()
             ]);
             
-            // Return specific error message with actual exception details for debugging
+            // Always include exception details for troubleshooting
             $errorMsg = $this->mapMailErrorToMessage($e);
-            if (config('app.debug')) {
-                $errorMsg .= ' [' . get_class($e) . ': ' . $e->getMessage() . ']';
-            }
+            $errorMsg .= ' [' . get_class($e) . ': ' . $e->getMessage() . ']';
             return $this->errorResponse($errorMsg, 500);
         }
 
@@ -369,11 +367,9 @@ class InvitationController extends Controller
                 'full_trace' => $e->getTraceAsString()
             ]);
             
-            // Return specific error message with actual exception details for debugging
+            // Always include exception details for troubleshooting
             $errorMsg = $this->mapMailErrorToMessage($e);
-            if (config('app.debug')) {
-                $errorMsg .= ' [' . get_class($e) . ': ' . $e->getMessage() . ']';
-            }
+            $errorMsg .= ' [' . get_class($e) . ': ' . $e->getMessage() . ']';
             return $this->errorResponse($errorMsg, 500);
         }
 
