@@ -71,6 +71,14 @@ jobs:
             echo "Deploying backend"
             cd "$DEPLOY_PATH/backend"
 
+            # Ensure Laravel runtime directories exist before composer scripts run.
+            mkdir -p bootstrap/cache
+            mkdir -p storage/framework/cache
+            mkdir -p storage/framework/sessions
+            mkdir -p storage/framework/views
+            mkdir -p storage/logs
+            chmod -R ug+rwX bootstrap/cache storage || true
+
             if [ -f artisan ] && command -v composer >/dev/null 2>&1; then
               composer install --no-interaction --prefer-dist --optimize-autoloader --no-dev
             else
