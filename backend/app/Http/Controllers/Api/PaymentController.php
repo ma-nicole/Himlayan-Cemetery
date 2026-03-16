@@ -143,7 +143,7 @@ class PaymentController extends Controller
         $methodMap = [
             'gcash' => 'GCASH',
             'maya' => 'PAYMAYA',
-            'bank' => 'BPI',
+            'bank' => 'BANK_TRANSFER',
             'card' => 'CREDIT_CARD',
         ];
 
@@ -234,7 +234,7 @@ class PaymentController extends Controller
         $methodMap = [
             'gcash' => 'GCASH',
             'maya' => 'PAYMAYA',
-            'bank' => 'BPI',
+            'bank' => 'BANK_TRANSFER',
             'card' => 'CREDIT_CARD',
         ];
 
