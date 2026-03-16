@@ -4372,54 +4372,6 @@ textarea.form-input {
   position: relative;
 }
 
-/* Demo Box */
-.cyl-demo-box {
-  margin-top: 24px;
-  padding: 16px;
-  background: #f9fafb;
-  border-radius: 12px;
-  border: 1px dashed #d1d5db;
-}
-
-.cyl-demo-title {
-  font-size: 0.85rem;
-  font-weight: 600;
-  color: #1a472a;
-  margin-bottom: 12px;
-  text-align: center;
-}
-
-.cyl-demo-creds {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  margin-bottom: 12px;
-}
-
-.cyl-demo-item {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  font-size: 0.85rem;
-}
-
-.cyl-demo-role {
-  padding: 3px 10px;
-  background: #1a472a;
-  color: white;
-  border-radius: 4px;
-  font-size: 0.7rem;
-  font-weight: 600;
-  text-transform: uppercase;
-}
-
-.cyl-demo-pass {
-  text-align: center;
-  font-size: 0.8rem;
-  color: #6b7280;
-  margin: 0;
-}
-
 /* Responsive */
 @media (max-width: 768px) {
   .cyl-auth-card {

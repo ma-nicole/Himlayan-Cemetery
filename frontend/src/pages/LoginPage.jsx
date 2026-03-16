@@ -217,22 +217,6 @@ const LoginPage = () => {
             <Link to="/" className="cyl-back-home-btn cyl-back-home-below">
               ← Back to Home
             </Link>
-
-            {/* Demo Credentials */}
-            <div className="cyl-demo-box">
-              <p className="cyl-demo-title">Demo Credentials</p>
-              <div className="cyl-demo-creds">
-                <div className="cyl-demo-item">
-                  <span className="cyl-demo-role">Admin</span>
-                  <span>admin@cemetery.com</span>
-                </div>
-                <div className="cyl-demo-item">
-                  <span className="cyl-demo-role">Staff</span>
-                  <span>staff@cemetery.com</span>
-                </div>
-              </div>
-              <p className="cyl-demo-pass">Password: password123</p>
-            </div>
           </div>
         </div>
       </div>
