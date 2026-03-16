@@ -247,10 +247,18 @@ class InvitationController extends Controller
 
             Log::error('Email send failed for ' . $burialRecord->contact_email, [
                 'error' => $e->getMessage(),
+                'exception_class' => get_class($e),
                 'file' => $e->getFile(),
-                'line' => $e->getLine()
+                'line' => $e->getLine(),
+                'full_trace' => $e->getTraceAsString()
             ]);
-            return $this->errorResponse($this->mapMailErrorToMessage($e), 500);
+            
+            // Return specific error message with actual exception details for debugging
+            $errorMsg = $this->mapMailErrorToMessage($e);
+            if (config('app.debug')) {
+                $errorMsg .= ' [' . get_class($e) . ': ' . $e->getMessage() . ']';
+            }
+            return $this->errorResponse($errorMsg, 500);
         }
 
         // Persist invitation only after successful delivery.
@@ -355,10 +363,18 @@ class InvitationController extends Controller
 
             Log::error('Email resend failed for ' . $burialRecord->contact_email, [
                 'error' => $e->getMessage(),
+                'exception_class' => get_class($e),
                 'file' => $e->getFile(),
-                'line' => $e->getLine()
+                'line' => $e->getLine(),
+                'full_trace' => $e->getTraceAsString()
             ]);
-            return $this->errorResponse($this->mapMailErrorToMessage($e), 500);
+            
+            // Return specific error message with actual exception details for debugging
+            $errorMsg = $this->mapMailErrorToMessage($e);
+            if (config('app.debug')) {
+                $errorMsg .= ' [' . get_class($e) . ': ' . $e->getMessage() . ']';
+            }
+            return $this->errorResponse($errorMsg, 500);
         }
 
         cache()->put('invitation_' . $token, $invitationData, $expiresAt);
