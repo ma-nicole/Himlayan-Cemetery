@@ -1,0 +1,100 @@
+name: Deploy to Hostinger
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-hostinger-main
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Deploy via SSH
+        uses: appleboy/ssh-action@v1.2.0
+        env:
+          REPO_URL: ${{ github.server_url }}/${{ github.repository }}.git
+          BRANCH: main
+          DEPLOY_PATH: ${{ secrets.HOSTINGER_DEPLOY_PATH }}
+          FRONTEND_PUBLIC_PATH: ${{ secrets.HOSTINGER_FRONTEND_PUBLIC_PATH }}
+          REACT_APP_API_URL: ${{ secrets.REACT_APP_API_URL }}
+        with:
+          host: ${{ secrets.HOSTINGER_HOST }}
+          username: ${{ secrets.HOSTINGER_USERNAME }}
+          key: ${{ secrets.HOSTINGER_SSH_KEY }}
+          port: ${{ secrets.HOSTINGER_SSH_PORT }}
+          envs: REPO_URL,BRANCH,DEPLOY_PATH,FRONTEND_PUBLIC_PATH,REACT_APP_API_URL
+          script_stop: true
+          script: |
+            set -e
+
+            if [ -z "$DEPLOY_PATH" ]; then
+              echo "HOSTINGER_DEPLOY_PATH is required"
+              exit 1
+            fi
+
+            mkdir -p "$DEPLOY_PATH"
+
+            if [ ! -d "$DEPLOY_PATH/.git" ]; then
+              echo "First deploy: cloning repository"
+              git clone --branch "$BRANCH" "$REPO_URL" "$DEPLOY_PATH"
+            else
+              echo "Updating existing repository"
+              cd "$DEPLOY_PATH"
+              git fetch origin "$BRANCH"
+              git checkout "$BRANCH"
+              git pull --ff-only origin "$BRANCH"
+            fi
+
+            echo "Deploying backend"
+            cd "$DEPLOY_PATH/backend"
+
+            if [ -f artisan ] && command -v composer >/dev/null 2>&1; then
+              composer install --no-interaction --prefer-dist --optimize-autoloader --no-dev
+            else
+              echo "Skipping composer install (composer/artisan not available)"
+            fi
+
+            if [ -f artisan ] && command -v php >/dev/null 2>&1; then
+              if [ -f .env ]; then
+                if ! grep -q "^APP_KEY=base64:" .env; then
+                  php artisan key:generate --force || true
+                fi
+              fi
+
+              php artisan migrate --force || true
+              php artisan optimize || true
+            else
+              echo "Skipping artisan commands (php/artisan not available)"
+            fi
+
+            echo "Deploying frontend"
+            cd "$DEPLOY_PATH/frontend"
+
+            if command -v npm >/dev/null 2>&1; then
+              if [ -n "$REACT_APP_API_URL" ]; then
+                export REACT_APP_API_URL="$REACT_APP_API_URL"
+              fi
+
+              npm ci
+              npm run build
+
+              if [ -n "$FRONTEND_PUBLIC_PATH" ] && [ -d build ]; then
+                mkdir -p "$FRONTEND_PUBLIC_PATH"
+                cp -r build/* "$FRONTEND_PUBLIC_PATH"/
+                echo "Frontend build copied to $FRONTEND_PUBLIC_PATH"
+              else
+                echo "Skipping frontend publish (HOSTINGER_FRONTEND_PUBLIC_PATH not set)"
+              fi
+            else
+              echo "Skipping frontend build (npm not available on host)"
+            fi
+
+            echo "Deployment completed"
