@@ -138,6 +138,14 @@ jobs:
               cd "$DEPLOY_PATH"
               git fetch origin "$BRANCH"
               git checkout "$BRANCH"
+
+              # Hostinger sometimes has local tracked/untracked edits (e.g. manual hotfixes).
+              # Stash them to keep deploy pull fast-forwardable instead of failing.
+              if [ -n "$(git status --porcelain)" ]; then
+                echo "Local changes detected on server; stashing before pull"
+                git stash push --include-untracked --message "deploy-autostash-${BRANCH}-$(date +%s)" || true
+              fi
+
               git pull --ff-only origin "$BRANCH"
             fi
 
