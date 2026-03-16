@@ -28,6 +28,7 @@ jobs:
         working-directory: frontend
         env:
           REACT_APP_API_URL: ${{ secrets.REACT_APP_API_URL }}
+          REACT_APP_GOOGLE_MAPS_API_KEY: ${{ secrets.REACT_APP_GOOGLE_MAPS_API_KEY }}
           CI: false
         run: |
           npm ci
