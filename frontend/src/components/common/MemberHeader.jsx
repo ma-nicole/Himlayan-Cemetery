@@ -1,19 +1,50 @@
-import React from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import React, { useEffect, useState } from 'react';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth';
+import MobileNav, { HamburgerButton } from './MobileNav';
 import './MemberHeader.css';
 
 const MemberHeader = () => {
   const { user, logout } = useAuth();
   const location = useLocation();
+  const navigate = useNavigate();
+  const [isMobileNavOpen, setIsMobileNavOpen] = useState(false);
 
   const handleLogout = async () => {
     await logout();
   };
 
+  useEffect(() => {
+    setIsMobileNavOpen(false);
+  }, [location.pathname]);
+
+  useEffect(() => {
+    if (isMobileNavOpen) {
+      document.body.style.overflow = 'hidden';
+      return;
+    }
+
+    document.body.style.overflow = '';
+
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [isMobileNavOpen]);
+
   const isActive = (path) => {
     return location.pathname === path;
   };
+
+  const mobileNavItems = [
+    { path: '/member/dashboard', label: 'Dashboard', icon: 'Home', onClick: () => navigate('/member/dashboard') },
+    { path: '/member/search', label: 'Find a Grave', icon: 'Search', onClick: () => navigate('/member/search') },
+    { path: '/member/loved-ones', label: 'My Loved Ones', icon: 'Family', onClick: () => navigate('/member/loved-ones') },
+    { path: '/member/map', label: 'Map', icon: 'Map', onClick: () => navigate('/member/map') },
+    { path: '/member/services', label: 'Services', icon: 'Service', onClick: () => navigate('/member/services') },
+    { path: '/pay-dues', label: 'Pay Dues', icon: 'Pay', onClick: () => navigate('/pay-dues') },
+    { path: '/member/contact', label: 'Feedback', icon: 'Feedback', onClick: () => navigate('/member/contact') },
+    { path: '/profile', label: 'Profile', icon: 'User', onClick: () => navigate('/profile') },
+  ];
 
   return (
     <header className="member-header">
@@ -69,6 +100,10 @@ const MemberHeader = () => {
         </nav>
 
         <div className="member-header-actions">
+          <HamburgerButton
+            isOpen={isMobileNavOpen}
+            onClick={() => setIsMobileNavOpen(prev => !prev)}
+          />
           <Link 
             to="/profile" 
             className="member-user-avatar"
@@ -97,6 +132,15 @@ const MemberHeader = () => {
           </button>
         </div>
       </div>
+
+      <MobileNav
+        isOpen={isMobileNavOpen}
+        onClose={() => setIsMobileNavOpen(false)}
+        navItems={mobileNavItems}
+        currentPath={location.pathname}
+        user={user}
+        onLogout={handleLogout}
+      />
     </header>
   );
 };

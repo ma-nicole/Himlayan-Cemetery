@@ -8,6 +8,13 @@
   box-sizing: border-box;
 }
 
+img,
+video,
+canvas,
+svg {
+  max-width: 100%;
+}
+
 html, body {
   height: 100%;
 }
