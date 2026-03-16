@@ -16,6 +16,30 @@ use App\Mail\UserInvitation;
 class InvitationController extends Controller
 {
     /**
+     * Sanitize low-level mail error text for safe API responses.
+     */
+    private function sanitizeMailErrorMessage(string $message): string
+    {
+        $clean = trim(preg_replace('/\s+/', ' ', $message) ?? '');
+
+        if ($clean === '') {
+            return 'No error details were returned by the mail transport.';
+        }
+
+        foreach ([
+            (string) config('mail.mailers.smtp.password'),
+            (string) config('mail.mailers.smtp.username'),
+            (string) config('mail.from.address'),
+        ] as $secret) {
+            if ($secret !== '') {
+                $clean = str_replace($secret, '***', $clean);
+            }
+        }
+
+        return Str::limit($clean, 240, '...');
+    }
+
+    /**
      * Validate active mail configuration before attempting to send.
      */
     private function validateMailConfiguration(): ?string
@@ -78,9 +102,20 @@ class InvitationController extends Controller
             str_contains($error, 'timed out') ||
             str_contains($error, 'php_network_getaddresses') ||
             str_contains($error, 'name or service not known') ||
-            str_contains($error, 'stream_socket_client')
+            str_contains($error, 'stream_socket_client') ||
+            str_contains($error, 'network is unreachable')
         ) {
             return 'Email service is unreachable right now. Please verify MAIL_HOST and MAIL_PORT on the server.';
+        }
+
+        if (
+            str_contains($error, 'starttls') ||
+            str_contains($error, 'encryption') ||
+            str_contains($error, 'ssl') ||
+            str_contains($error, 'tls') ||
+            str_contains($error, 'stream_socket_enable_crypto')
+        ) {
+            return 'Email encryption settings are invalid. Please verify MAIL_ENCRYPTION and MAIL_PORT on the server.';
         }
 
         if (
@@ -95,12 +130,15 @@ class InvitationController extends Controller
         if (
             str_contains($error, 'from address') ||
             str_contains($error, 'sender address rejected') ||
-            str_contains($error, 'mail_from_address')
+            str_contains($error, 'mail_from_address') ||
+            str_contains($error, 'sender verify failed') ||
+            str_contains($error, 'domain does not exist') ||
+            str_contains($error, 'mail from address')
         ) {
-            return 'Sender address is invalid or rejected. Please verify MAIL_FROM_ADDRESS on the server.';
+            return 'Sender address/domain is invalid or rejected. Please verify MAIL_FROM_ADDRESS and sender domain DNS settings.';
         }
 
-        return 'Unable to send invitation email right now. Please try again later or contact support.';
+        return 'Unable to send invitation email right now. Mail transport returned: ' . $this->sanitizeMailErrorMessage($exception->getMessage());
     }
 
     /**
