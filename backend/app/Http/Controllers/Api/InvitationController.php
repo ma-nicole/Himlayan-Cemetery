@@ -17,6 +17,47 @@ use App\Mail\UserInvitation;
 class InvitationController extends Controller
 {
     /**
+     * Validate active mail configuration before attempting to send.
+     */
+    private function validateMailConfiguration(): ?string
+    {
+        $mailer = (string) config('mail.default', 'smtp');
+
+        if ($mailer !== 'smtp') {
+            return null;
+        }
+
+        $requiredKeys = [
+            'mail.mailers.smtp.host' => 'MAIL_HOST',
+            'mail.mailers.smtp.port' => 'MAIL_PORT',
+            'mail.mailers.smtp.username' => 'MAIL_USERNAME',
+            'mail.mailers.smtp.password' => 'MAIL_PASSWORD',
+            'mail.from.address' => 'MAIL_FROM_ADDRESS',
+            'mail.from.name' => 'MAIL_FROM_NAME',
+        ];
+
+        $missing = [];
+        foreach ($requiredKeys as $configKey => $envKey) {
+            $value = config($configKey);
+            if ($value === null || trim((string) $value) === '') {
+                $missing[] = $envKey;
+            }
+        }
+
+        if (in_array('MAIL_FROM_ADDRESS', $missing, true) || config('mail.from.address') === 'hello@example.com') {
+            if (!in_array('MAIL_FROM_ADDRESS', $missing, true)) {
+                $missing[] = 'MAIL_FROM_ADDRESS';
+            }
+        }
+
+        if (empty($missing)) {
+            return null;
+        }
+
+        return 'Email service configuration is incomplete on the server. Missing: ' . implode(', ', $missing) . '.';
+    }
+
+    /**
      * Convert low-level mail exceptions into actionable user-facing messages.
      */
     private function mapMailErrorToMessage(\Throwable $exception): string
@@ -35,9 +76,12 @@ class InvitationController extends Controller
             str_contains($error, 'failed to connect') ||
             str_contains($error, 'connection could not be established') ||
             str_contains($error, 'connection refused') ||
-            str_contains($error, 'timed out')
+            str_contains($error, 'timed out') ||
+            str_contains($error, 'php_network_getaddresses') ||
+            str_contains($error, 'name or service not known') ||
+            str_contains($error, 'stream_socket_client')
         ) {
-            return 'Email service is unreachable right now. Please try again later.';
+            return 'Email service is unreachable right now. Please verify MAIL_HOST and MAIL_PORT on the server.';
         }
 
         if (
@@ -47,6 +91,14 @@ class InvitationController extends Controller
             str_contains($error, '550')
         ) {
             return 'Recipient address was rejected by the mail provider. Please double-check the email address.';
+        }
+
+        if (
+            str_contains($error, 'from address') ||
+            str_contains($error, 'sender address rejected') ||
+            str_contains($error, 'mail_from_address')
+        ) {
+            return 'Sender address is invalid or rejected. Please verify MAIL_FROM_ADDRESS on the server.';
         }
 
         return 'Unable to send invitation email right now. Please try again later or contact support.';
@@ -135,6 +187,17 @@ class InvitationController extends Controller
 
         $expiresAt = now()->addDay();
 
+        $mailConfigError = $this->validateMailConfiguration();
+        if ($mailConfigError) {
+            Log::error('Invitation email blocked: invalid mail configuration', [
+                'burial_record_id' => $burialRecord->id,
+                'recipient' => $burialRecord->contact_email,
+                'message' => $mailConfigError,
+            ]);
+
+            return $this->errorResponse($mailConfigError, 500);
+        }
+
         // Send email with credentials
         try {
             Mail::to($burialRecord->contact_email)->send(new UserInvitation($invitationData, $burialRecord));
@@ -215,6 +278,17 @@ class InvitationController extends Controller
         ];
 
         $expiresAt = now()->addDay();
+
+        $mailConfigError = $this->validateMailConfiguration();
+        if ($mailConfigError) {
+            Log::error('Invitation resend blocked: invalid mail configuration', [
+                'burial_record_id' => $burialRecord->id,
+                'recipient' => $burialRecord->contact_email,
+                'message' => $mailConfigError,
+            ]);
+
+            return $this->errorResponse($mailConfigError, 500);
+        }
 
         // Send email
         try {
