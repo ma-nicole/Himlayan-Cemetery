@@ -10,6 +10,28 @@ use Illuminate\Http\Request;
 class PublicController extends Controller
 {
     /**
+     * Normalize deceased photo path/URL for API responses.
+     */
+    private function buildDeceasedPhotoUrl(?string $photoPath): ?string
+    {
+        if (!$photoPath) {
+            return null;
+        }
+
+        if (filter_var($photoPath, FILTER_VALIDATE_URL)) {
+            return $photoPath;
+        }
+
+        $normalizedPath = ltrim($photoPath, '/');
+
+        if (str_starts_with($normalizedPath, 'storage/')) {
+            return asset($normalizedPath);
+        }
+
+        return asset('storage/' . $normalizedPath);
+    }
+
+    /**
      * Get public grave profile by QR code or plot number
      * 
      * @param string $code
@@ -55,7 +77,7 @@ class PublicController extends Controller
             'burial_date' => $record->burial_date?->format('F d, Y'),
             'obituary' => $record->obituary,
             'photo_url' => $record->photo_url,
-            'deceased_photo_url' => $record->deceased_photo_url ? asset('storage/' . $record->deceased_photo_url) : null,
+            'deceased_photo_url' => $this->buildDeceasedPhotoUrl($record->deceased_photo_url),
             'location' => [
                 'plot_number' => $plot->plot_number,
                 'section' => $plot->section,
@@ -126,7 +148,7 @@ class PublicController extends Controller
                 return [
                     'id' => $record->id,
                     'deceased_name' => $record->deceased_name,
-                    'deceased_photo_url' => $record->deceased_photo_url ? asset('storage/' . $record->deceased_photo_url) : null,
+                    'deceased_photo_url' => $this->buildDeceasedPhotoUrl($record->deceased_photo_url),
                     'birth_date' => $record->birth_date?->format('Y-m-d'),
                     'death_date' => $record->death_date?->format('Y-m-d'),
                     'plot' => $record->plot ? [

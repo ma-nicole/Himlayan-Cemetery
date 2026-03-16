@@ -6,6 +6,28 @@ import MemberFooter from '../components/common/MemberFooter';
 import Layout from '../components/common/Layout';
 import LoadingSpinner from '../components/common/LoadingSpinner';
 
+const rawApiUrl = process.env.REACT_APP_API_URL || 'http://localhost:8000';
+const backendBaseUrl = rawApiUrl
+  .replace(/\/api\/?$/, '')
+  .replace(/\/$/, '');
+
+const resolveDeceasedPhotoUrl = (photoValue) => {
+  if (!photoValue) {
+    return null;
+  }
+
+  if (/^https?:\/\//i.test(photoValue)) {
+    return photoValue;
+  }
+
+  const normalizedPath = String(photoValue).replace(/^\/+/, '');
+  const storagePath = normalizedPath.startsWith('storage/')
+    ? normalizedPath
+    : `storage/${normalizedPath}`;
+
+  return `${backendBaseUrl}/${storagePath}`;
+};
+
 const MyLovedOnesPage = () => {
   const [records, setRecords] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -50,12 +72,7 @@ const MyLovedOnesPage = () => {
       obituary: record.obituary || '',
       deceased_photo: null
     });
-    // Check if photo URL is already a full URL or needs storage path prepended
-    const photoUrl = record.deceased_photo_url 
-      ? (record.deceased_photo_url.startsWith('http') 
-          ? record.deceased_photo_url 
-          : `http://localhost:8000/storage/${record.deceased_photo_url}`)
-      : null;
+    const photoUrl = resolveDeceasedPhotoUrl(record.deceased_photo_url);
     setPhotoPreview(photoUrl);
     setError('');
     setSuccess('');
@@ -163,9 +180,12 @@ const MyLovedOnesPage = () => {
                   <div className="card-header" style={{ position: 'relative', height: '140px', backgroundColor: '#e5e7eb', flexShrink: 0 }}>
                     {record.deceased_photo_url ? (
                       <img 
-                        src={record.deceased_photo_url.startsWith('http') ? record.deceased_photo_url : `http://localhost:8000/storage/${record.deceased_photo_url}`}
+                        src={resolveDeceasedPhotoUrl(record.deceased_photo_url)}
                         alt={record.deceased_name}
                         style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                        onError={(e) => {
+                          e.currentTarget.style.display = 'none';
+                        }}
                       />
                     ) : (
                       <div style={{ 

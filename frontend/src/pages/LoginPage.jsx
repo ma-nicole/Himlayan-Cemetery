@@ -20,7 +20,7 @@ const LoginPage = () => {
   // Image slideshow
   const images = [
     '/himlayangpilipino.webp',
-    '/heritage_HD.png',
+    '/himlayanheritage.jpg',
     '/Florante-at-Laura-1-scaled.jpg',
     '/Florante-at-Laura-2-scaled.jpg',
     '/Gabriela-Silang-scaled.jpg',

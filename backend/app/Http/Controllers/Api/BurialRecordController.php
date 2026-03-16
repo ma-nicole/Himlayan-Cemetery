@@ -11,6 +11,28 @@ use Illuminate\Support\Facades\Storage;
 class BurialRecordController extends Controller
 {
     /**
+     * Normalize deceased photo path/URL for API responses.
+     */
+    private function buildDeceasedPhotoUrl(?string $photoPath): ?string
+    {
+        if (!$photoPath) {
+            return null;
+        }
+
+        if (filter_var($photoPath, FILTER_VALIDATE_URL)) {
+            return $photoPath;
+        }
+
+        $normalizedPath = ltrim($photoPath, '/');
+
+        if (str_starts_with($normalizedPath, 'storage/')) {
+            return asset($normalizedPath);
+        }
+
+        return asset('storage/' . $normalizedPath);
+    }
+
+    /**
      * Display a listing of burial records
      * 
      * @param Request $request
@@ -85,7 +107,7 @@ class BurialRecordController extends Controller
 
         // Transform records to include full photo URLs
         $records->getCollection()->transform(function ($record) {
-            $record->deceased_photo_url = $record->deceased_photo_url ? asset('storage/' . $record->deceased_photo_url) : null;
+            $record->deceased_photo_url = $this->buildDeceasedPhotoUrl($record->deceased_photo_url);
             return $record;
         });
 
@@ -107,7 +129,7 @@ class BurialRecordController extends Controller
             ->orderBy('created_at', 'desc')
             ->get()
             ->map(function ($record) {
-                $record->deceased_photo_url = $record->deceased_photo_url ? asset('storage/' . $record->deceased_photo_url) : null;
+                $record->deceased_photo_url = $this->buildDeceasedPhotoUrl($record->deceased_photo_url);
                 return $record;
             });
 
@@ -164,7 +186,7 @@ class BurialRecordController extends Controller
         $record->load(['plot', 'qrCode']);
         
         // Transform photo URL for response
-        $record->deceased_photo_url = $record->deceased_photo_url ? asset('storage/' . $record->deceased_photo_url) : null;
+        $record->deceased_photo_url = $this->buildDeceasedPhotoUrl($record->deceased_photo_url);
 
         return $this->successResponse($record, 'Record updated successfully');
     }
@@ -250,7 +272,7 @@ class BurialRecordController extends Controller
         $burialRecord->load(['plot', 'qrCode']);
         
         // Transform photo URL for response
-        $burialRecord->deceased_photo_url = $burialRecord->deceased_photo_url ? asset('storage/' . $burialRecord->deceased_photo_url) : null;
+        $burialRecord->deceased_photo_url = $this->buildDeceasedPhotoUrl($burialRecord->deceased_photo_url);
 
         return $this->successResponse($burialRecord, 'Burial record created successfully', 201);
     }
@@ -273,7 +295,7 @@ class BurialRecordController extends Controller
         $record->age_at_death = $record->age_at_death;
         
         // Transform photo URL for response
-        $record->deceased_photo_url = $record->deceased_photo_url ? asset('storage/' . $record->deceased_photo_url) : null;
+        $record->deceased_photo_url = $this->buildDeceasedPhotoUrl($record->deceased_photo_url);
 
         return $this->successResponse($record, 'Burial record retrieved successfully');
     }
@@ -382,7 +404,7 @@ class BurialRecordController extends Controller
         $record->load(['plot', 'qrCode']);
         
         // Transform photo URL for response
-        $record->deceased_photo_url = $record->deceased_photo_url ? asset('storage/' . $record->deceased_photo_url) : null;
+        $record->deceased_photo_url = $this->buildDeceasedPhotoUrl($record->deceased_photo_url);
 
         return $this->successResponse($record, 'Burial record updated successfully');
     }

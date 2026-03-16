@@ -54,7 +54,7 @@ const MemberMapPage = () => {
         </svg>
       ),
       color: '#8b5cf6',
-      image: '/heritage_HD.png'
+      image: '/himlayanheritage.jpg'
     },
     { 
       id: 'mausoleum', 

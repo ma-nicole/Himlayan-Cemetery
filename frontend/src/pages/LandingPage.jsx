@@ -84,7 +84,7 @@ const LandingPage = () => {
       features: ['Custom designs', 'Multiple vault capacity', 'Exclusive area', 'Premium location'],
       price: 'Starting at ₱500,000',
       popular: false,
-      image: '/heritage_HD.png'
+      image: '/himlayanheritage.jpg'
     },
     {
       id: 4,
@@ -147,7 +147,7 @@ const LandingPage = () => {
   // Hero slideshow images
   const heroImages = [
     '/himlayangpilipino.webp',
-    '/heritage_HD.png',
+    '/himlayanheritage.jpg',
     '/Panooran-2.jpg'
   ];
 
@@ -589,7 +589,7 @@ const LandingPage = () => {
         <div className="about-container">
           <div className="about-image-side">
             <div className="about-image-wrapper">
-              <img src="/heritage_HD.png" alt="Himlayan Heritage" />
+              <img src="/himlayanheritage.jpg" alt="Himlayan Heritage" />
               <div className="about-image-badge">
                 <span className="badge-year">Est. 1971</span>
               </div>

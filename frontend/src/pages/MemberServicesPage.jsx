@@ -138,7 +138,7 @@ const MemberServicesPage = () => {
       features: ['Custom designs', 'Multiple vault capacity', 'Exclusive area', 'Premium location'],
       price: 'Starting at ₱500,000',
       popular: false,
-      image: '/heritage_HD.png'
+      image: '/himlayanheritage.jpg'
     },
     {
       id: 4,
