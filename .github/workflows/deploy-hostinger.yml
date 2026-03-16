@@ -39,6 +39,16 @@ jobs:
           REPO_URL: ${{ github.server_url }}/${{ github.repository }}.git
           BRANCH: main
           DEPLOY_PATH: ${{ secrets.HOSTINGER_DEPLOY_PATH }}
+          APP_URL: ${{ secrets.APP_URL }}
+          FRONTEND_URL: ${{ secrets.FRONTEND_URL }}
+          MAIL_MAILER: ${{ secrets.MAIL_MAILER }}
+          MAIL_HOST: ${{ secrets.MAIL_HOST }}
+          MAIL_PORT: ${{ secrets.MAIL_PORT }}
+          MAIL_USERNAME: ${{ secrets.MAIL_USERNAME }}
+          MAIL_PASSWORD: ${{ secrets.MAIL_PASSWORD }}
+          MAIL_ENCRYPTION: ${{ secrets.MAIL_ENCRYPTION }}
+          MAIL_FROM_ADDRESS: ${{ secrets.MAIL_FROM_ADDRESS }}
+          MAIL_FROM_NAME: ${{ secrets.MAIL_FROM_NAME }}
         with:
           debug: true
           host: ${{ secrets.HOSTINGER_HOST }}
@@ -46,10 +56,28 @@ jobs:
           key: ${{ secrets.HOSTINGER_SSH_KEY }}
           passphrase: ${{ secrets.HOSTINGER_SSH_PASSPHRASE }}
           port: ${{ secrets.HOSTINGER_SSH_PORT }}
-          envs: REPO_URL,BRANCH,DEPLOY_PATH
+          envs: REPO_URL,BRANCH,DEPLOY_PATH,APP_URL,FRONTEND_URL,MAIL_MAILER,MAIL_HOST,MAIL_PORT,MAIL_USERNAME,MAIL_PASSWORD,MAIL_ENCRYPTION,MAIL_FROM_ADDRESS,MAIL_FROM_NAME
           script_stop: false
           script: |
             set -eux
+
+            upsert_env() {
+              key="$1"
+              val="$2"
+              file="$3"
+
+              if [ -z "${val}" ]; then
+                return
+              fi
+
+              esc_val=$(printf '%s' "$val" | sed -e 's/[&/]/\\\\&/g')
+
+              if grep -q "^${key}=" "$file"; then
+                sed -i "s/^${key}=.*/${key}=${esc_val}/" "$file"
+              else
+                printf "\n%s=%s\n" "$key" "$val" >> "$file"
+              fi
+            }
 
             echo "Connected as $(whoami)"
             echo "Current dir: $(pwd)"
@@ -76,6 +104,19 @@ jobs:
             echo "Deploying backend"
             cd "$DEPLOY_PATH/backend"
 
+            if [ -f .env ]; then
+              upsert_env "APP_URL" "$APP_URL" ".env"
+              upsert_env "FRONTEND_URL" "$FRONTEND_URL" ".env"
+              upsert_env "MAIL_MAILER" "$MAIL_MAILER" ".env"
+              upsert_env "MAIL_HOST" "$MAIL_HOST" ".env"
+              upsert_env "MAIL_PORT" "$MAIL_PORT" ".env"
+              upsert_env "MAIL_USERNAME" "$MAIL_USERNAME" ".env"
+              upsert_env "MAIL_PASSWORD" "$MAIL_PASSWORD" ".env"
+              upsert_env "MAIL_ENCRYPTION" "$MAIL_ENCRYPTION" ".env"
+              upsert_env "MAIL_FROM_ADDRESS" "$MAIL_FROM_ADDRESS" ".env"
+              upsert_env "MAIL_FROM_NAME" "$MAIL_FROM_NAME" ".env"
+            fi
+
             # Ensure Laravel runtime directories exist before composer scripts run.
             mkdir -p bootstrap/cache
             mkdir -p storage/framework/cache
@@ -97,6 +138,8 @@ jobs:
                 fi
               fi
 
+              php artisan config:clear || true
+              php artisan cache:clear || true
               php artisan migrate --force || true
               php artisan optimize || true
             else
