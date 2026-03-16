@@ -40,19 +40,19 @@ return [
     'google' => [
         'client_id' => env('GOOGLE_CLIENT_ID'),
         'client_secret' => env('GOOGLE_CLIENT_SECRET'),
-        'redirect' => env('GOOGLE_REDIRECT_URI', 'http://127.0.0.1:8000/api/auth/google/callback'),
+        'redirect' => env('GOOGLE_REDIRECT_URI', 'https://himlayangpilipino.com/api/auth/google/callback'),
     ],
 
     'facebook' => [
         'client_id' => env('FACEBOOK_CLIENT_ID'),
         'client_secret' => env('FACEBOOK_CLIENT_SECRET'),
-        'redirect' => env('FACEBOOK_REDIRECT_URI', 'http://127.0.0.1:8000/api/auth/facebook/callback'),
+        'redirect' => env('FACEBOOK_REDIRECT_URI', 'https://himlayangpilipino.com/api/auth/facebook/callback'),
     ],
 
     'apple' => [
         'client_id' => env('APPLE_CLIENT_ID'),
         'client_secret' => env('APPLE_CLIENT_SECRET'),
-        'redirect' => env('APPLE_REDIRECT_URI', 'http://127.0.0.1:8000/api/auth/apple/callback'),
+        'redirect' => env('APPLE_REDIRECT_URI', 'https://himlayangpilipino.com/api/auth/apple/callback'),
     ],
 
     'xendit' => [

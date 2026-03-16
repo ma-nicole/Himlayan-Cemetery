@@ -21,7 +21,7 @@ MAIL_PASSWORD=xxxx xxxx xxxx xxxx     # App password (not your normal password!)
 MAIL_ENCRYPTION=tls              # Security type
 MAIL_FROM_ADDRESS=your-email@gmail.com
 MAIL_FROM_NAME="Himlayang Pilipino"
-FRONTEND_URL=http://localhost:3000    # Where your React app is
+FRONTEND_URL=https://himlayangpilipino.com    # Where your React app is
 ```
 
 ### How This Works
@@ -46,7 +46,7 @@ The staff member views a burial record and clicks the "Send Invitation" button.
 ### Step 2: API Request is Sent to Backend
 **Request:**
 ```
-POST http://localhost:8000/api/burial-records/{burial_record_id}/invitation/send
+POST https://himlayangpilipino.com/api/burial-records/{burial_record_id}/invitation/send
 ```
 
 ### Step 3: Backend Controller Processes It
@@ -85,7 +85,7 @@ $invitationData = [
     'name' => 'John Doe',
     'password' => 'A-123Doe6789',
     'token' => 'a3f9e2b1c8d7f4a5e6c9b2d1e8f7a4c5...',
-    'accept_url' => 'http://localhost:3000/accept-invitation?token=a3f9e2b1c8...'
+    'accept_url' => 'https://himlayangpilipino.com/accept-invitation?token=a3f9e2b1c8...'
 ];
 
 cache()->put('invitation_' . $token, $invitationData, now()->addDay());
@@ -172,7 +172,7 @@ This is an **HTML template** that defines what the email looks like. It uses **B
 - `{{ $name }}` becomes "John Doe"
 - `{{ $email }}` becomes "john@example.com"
 - `{{ $password }}` becomes "A-123Doe6789"
-- `{{ $acceptUrl }}` becomes "http://localhost:3000/accept-invitation?token=a3f9..."
+- `{{ $acceptUrl }}` becomes "https://himlayangpilipino.com/accept-invitation?token=a3f9..."
 
 ---
 
@@ -212,7 +212,7 @@ try {
 
 The email contains a link like:
 ```
-http://localhost:3000/accept-invitation?token=a3f9e2b1c8d7f4a5e6c9b2d1e8f7a4c5...
+https://himlayangpilipino.com/accept-invitation?token=a3f9e2b1c8d7f4a5e6c9b2d1e8f7a4c5...
 ```
 
 ### User clicks the link → Frontend loads
@@ -222,7 +222,7 @@ The page extracts the token from the URL.
 
 ### API Call is Made
 ```
-GET http://localhost:8000/api/invitations/details?token=a3f9e2b1c8d7f4a5e6c9b2d1e8f7a4c5...
+GET https://himlayangpilipino.com/api/invitations/details?token=a3f9e2b1c8d7f4a5e6c9b2d1e8f7a4c5...
 ```
 
 ### Backend Retrieves Invitation Data

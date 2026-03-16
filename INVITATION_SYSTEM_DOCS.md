@@ -108,7 +108,7 @@ Add the following mail configuration to your `.env` file:
 
 ```env
 # Frontend URL (for email links)
-FRONTEND_URL=http://localhost:3000
+FRONTEND_URL=https://himlayangpilipino.com
 
 # Mail Configuration
 MAIL_MAILER=smtp

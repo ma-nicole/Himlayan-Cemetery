@@ -27,7 +27,7 @@ MAIL_ENCRYPTION=tls
 MAIL_FROM_ADDRESS=your-email@gmail.com
 MAIL_FROM_NAME="Himlayang Pilipino"
 
-FRONTEND_URL=http://localhost:3000
+FRONTEND_URL=https://himlayangpilipino.com
 ```
 
 ### Step 4: Test Email Sending
@@ -75,7 +75,7 @@ MAIL_ENCRYPTION=tls
 MAIL_FROM_ADDRESS=noreply@cemetery.com
 MAIL_FROM_NAME="Himlayang Pilipino"
 
-FRONTEND_URL=http://localhost:3000
+FRONTEND_URL=https://himlayangpilipino.com
 ```
 
 ### Step 4: Test

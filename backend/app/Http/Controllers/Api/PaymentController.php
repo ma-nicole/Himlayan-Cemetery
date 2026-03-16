@@ -96,7 +96,7 @@ class PaymentController extends Controller
         ];
 
         $externalId = 'himlayan-payment-' . $payment->id . '-' . time();
-        $frontendUrl = config('app.frontend_url', 'http://localhost:3000');
+        $frontendUrl = config('app.frontend_url', 'https://himlayangpilipino.com');
 
         $payload = [
             'external_id' => $externalId,
@@ -183,7 +183,7 @@ class PaymentController extends Controller
         ];
 
         $externalId = 'himlayan-payment-' . $payment->id . '-' . time();
-        $frontendUrl = config('app.frontend_url', 'http://localhost:3000');
+        $frontendUrl = config('app.frontend_url', 'https://himlayangpilipino.com');
 
         $payload = [
             'external_id' => $externalId,

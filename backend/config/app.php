@@ -4,7 +4,7 @@ return [
     'name' => env('APP_NAME', 'Himlayan'),
     'env' => env('APP_ENV', 'local'),
     'debug' => (bool) env('APP_DEBUG', false),
-    'url' => env('APP_URL', 'http://localhost'),
+    'url' => env('APP_URL', 'https://himlayangpilipino.com'),
     'asset_url' => env('ASSET_URL'),
     'timezone' => 'Asia/Manila',
     'locale' => 'en',
@@ -15,7 +15,7 @@ return [
     'maintenance' => [
         'driver' => 'file',
     ],
-    'frontend_url' => env('FRONTEND_URL', 'http://localhost:3000'),
+    'frontend_url' => env('FRONTEND_URL', 'https://himlayangpilipino.com'),
     'providers' => [
         Illuminate\Auth\AuthServiceProvider::class,
         Illuminate\Broadcasting\BroadcastServiceProvider::class,

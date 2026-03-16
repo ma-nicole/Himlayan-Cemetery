@@ -87,7 +87,7 @@ class SocialAuthController extends Controller
             $token = $user->createToken('auth_token', ['*'], $tokenExpiresAt)->plainTextToken;
 
             // Redirect to frontend with token
-            $frontendUrl = config('app.frontend_url', 'http://localhost:3000');
+            $frontendUrl = config('app.frontend_url', 'https://himlayangpilipino.com');
             
             return redirect($frontendUrl . '/auth/callback?' . http_build_query([
                 'token' => $token,
@@ -102,7 +102,7 @@ class SocialAuthController extends Controller
             ]));
 
         } catch (\Exception $e) {
-            $frontendUrl = config('app.frontend_url', 'http://localhost:3000');
+            $frontendUrl = config('app.frontend_url', 'https://himlayangpilipino.com');
             return redirect($frontendUrl . '/login?error=' . urlencode($e->getMessage()));
         }
     }

@@ -60,7 +60,7 @@ const BurialList = ({ records, onView, onEdit, onDelete, onGenerateQR, onSort, s
                       flexShrink: 0
                     }}>
                       <img 
-                        src={record.deceased_photo_url.startsWith('http') ? record.deceased_photo_url : `${process.env.REACT_APP_API_URL || 'http://localhost:8000'}/storage/${record.deceased_photo_url}`}
+                        src={record.deceased_photo_url.startsWith('http') ? record.deceased_photo_url : `${process.env.REACT_APP_API_URL || 'https://himlayangpilipino.com/api'}/storage/${record.deceased_photo_url}`}
                         alt={record.deceased_name}
                         style={{
                           width: '100%',

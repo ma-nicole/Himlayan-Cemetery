@@ -71,7 +71,7 @@ class SocialAuthController extends Controller
             $token = $user->createToken('auth_token', ['*'], $tokenExpiresAt)->plainTextToken;
 
             // Redirect to frontend with token
-            $frontendUrl = config('app.frontend_url', 'http://localhost:3000');
+            $frontendUrl = config('app.frontend_url', 'https://himlayangpilipino.com');
             
             return redirect()->away($frontendUrl . '/auth/callback?token=' . $token . '&token_expires_at=' . urlencode($tokenExpiresAt->toISOString()) . '&user=' . urlencode(json_encode([
                 'id' => $user->id,
@@ -82,7 +82,7 @@ class SocialAuthController extends Controller
             ])));
 
         } catch (\Exception $e) {
-            $frontendUrl = config('app.frontend_url', 'http://localhost:3000');
+            $frontendUrl = config('app.frontend_url', 'https://himlayangpilipino.com');
             return redirect()->away($frontendUrl . '/login?error=' . urlencode('Social login failed: ' . $e->getMessage()));
         }
     }

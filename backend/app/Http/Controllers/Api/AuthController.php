@@ -323,7 +323,7 @@ class AuthController extends Controller
         ]);
 
         // Build reset URL (pointing to frontend)
-        $frontendUrl = env('FRONTEND_URL', 'http://localhost:3000');
+        $frontendUrl = env('FRONTEND_URL', 'https://himlayangpilipino.com');
         $resetUrl = $frontendUrl . '/reset-password?token=' . $token . '&email=' . urlencode($request->email);
 
         try {

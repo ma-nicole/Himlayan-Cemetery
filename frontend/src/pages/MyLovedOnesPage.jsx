@@ -6,7 +6,7 @@ import MemberFooter from '../components/common/MemberFooter';
 import Layout from '../components/common/Layout';
 import LoadingSpinner from '../components/common/LoadingSpinner';
 
-const rawApiUrl = process.env.REACT_APP_API_URL || 'http://localhost:8000';
+const rawApiUrl = process.env.REACT_APP_API_URL || 'https://himlayangpilipino.com/api';
 const backendBaseUrl = rawApiUrl
   .replace(/\/api\/?$/, '')
   .replace(/\/$/, '');

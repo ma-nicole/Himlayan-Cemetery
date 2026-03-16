@@ -34,7 +34,7 @@ class QrCodeController extends Controller
 
         // Generate unique code
         $code = Str::uuid()->toString();
-        $publicUrl = config('app.frontend_url', 'http://localhost:3000') . '/grave/' . $code;
+        $publicUrl = config('app.frontend_url', 'https://himlayangpilipino.com') . '/grave/' . $code;
 
         // Create QR code record
         $qrCode = QrCode::create([
@@ -113,7 +113,7 @@ class QrCodeController extends Controller
 
         // Generate new code
         $code = Str::uuid()->toString();
-        $publicUrl = config('app.frontend_url', 'http://localhost:3000') . '/grave/' . $code;
+        $publicUrl = config('app.frontend_url', 'https://himlayangpilipino.com') . '/grave/' . $code;
 
         $qrCode = QrCode::create([
             'burial_record_id' => $burialId,
@@ -137,7 +137,7 @@ class QrCodeController extends Controller
      */
     private function generateQrImageUrl($code)
     {
-        $publicUrl = config('app.frontend_url', 'http://localhost:3000') . '/grave/' . $code;
+        $publicUrl = config('app.frontend_url', 'https://himlayangpilipino.com') . '/grave/' . $code;
         
         // Using QR Server API for prototype
         // In production, use simplesoftwareio/simple-qrcode package

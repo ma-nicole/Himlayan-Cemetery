@@ -24,7 +24,7 @@ const isTokenExpired = () => {
   return Date.now() >= expiresAtMs;
 };
 
-const rawApiUrl = process.env.REACT_APP_API_URL || 'http://localhost:8000';
+const rawApiUrl = process.env.REACT_APP_API_URL || 'https://himlayangpilipino.com/api';
 const trimmedApiUrl = rawApiUrl.replace(/\/$/, '');
 const normalizedApiBaseUrl = trimmedApiUrl.endsWith('/api')
   ? trimmedApiUrl

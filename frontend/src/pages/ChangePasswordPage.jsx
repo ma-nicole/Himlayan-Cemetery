@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { validatePassword } from '../utils/formValidator';
-import axios from 'axios';
+import api from '../services/api';
 
 const ChangePasswordPage = () => {
   const navigate = useNavigate();
@@ -113,18 +113,12 @@ const ChangePasswordPage = () => {
     setLoading(true);
 
     try {
-      const token = localStorage.getItem('token');
-      await axios.post(
-        'http://localhost:8000/api/auth/change-password',
+      await api.post(
+        '/auth/change-password',
         {
           current_password: formData.currentPassword,
           new_password: formData.newPassword,
           new_password_confirmation: formData.confirmPassword,
-        },
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
         }
       );
 
