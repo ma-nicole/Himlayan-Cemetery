@@ -9,7 +9,8 @@ This repository is configured with GitHub Actions auto-deploy using SSH.
 - `git`
 - `php`
 - `composer`
-- `npm` (optional but needed if you build frontend on server)
+
+Note: `npm` is not required on Hostinger server because frontend build is done in GitHub Actions.
 
 ## 2. Add GitHub Repository Secrets
 
@@ -68,8 +69,8 @@ On every push to `main`, it will:
 - `composer install --no-dev`
 - `php artisan migrate --force`
 - `php artisan optimize`
-4. Build frontend with `npm run build`.
-5. Copy frontend build output to `HOSTINGER_FRONTEND_PUBLIC_PATH`.
+4. Build frontend in GitHub Actions with `npm run build`.
+5. Upload frontend build output to `HOSTINGER_FRONTEND_PUBLIC_PATH` via SCP.
 
 ## 5. Trigger Manual Deploy
 
@@ -78,5 +79,4 @@ GitHub -> Actions -> "Deploy to Hostinger" -> Run workflow.
 ## 6. Notes
 
 - Keep `.env` only on server, never commit it.
-- If Node.js is not available on Hostinger SSH, frontend build step is skipped.
-- In that case, switch to build-on-GitHub + upload artifact flow.
+- Current workflow already uses build-on-GitHub + upload via SCP, so it works on Premium plans without server Node.js.

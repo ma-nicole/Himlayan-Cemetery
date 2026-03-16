@@ -17,20 +17,33 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Deploy via SSH
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Build frontend on GitHub
+        working-directory: frontend
+        env:
+          REACT_APP_API_URL: ${{ secrets.REACT_APP_API_URL }}
+        run: |
+          npm ci
+          npm run build
+
+      - name: Deploy backend via SSH
         uses: appleboy/ssh-action@v1.2.0
         env:
           REPO_URL: ${{ github.server_url }}/${{ github.repository }}.git
           BRANCH: main
           DEPLOY_PATH: ${{ secrets.HOSTINGER_DEPLOY_PATH }}
-          FRONTEND_PUBLIC_PATH: ${{ secrets.HOSTINGER_FRONTEND_PUBLIC_PATH }}
-          REACT_APP_API_URL: ${{ secrets.REACT_APP_API_URL }}
         with:
           host: ${{ secrets.HOSTINGER_HOST }}
           username: ${{ secrets.HOSTINGER_USERNAME }}
           key: ${{ secrets.HOSTINGER_SSH_KEY }}
           port: ${{ secrets.HOSTINGER_SSH_PORT }}
-          envs: REPO_URL,BRANCH,DEPLOY_PATH,FRONTEND_PUBLIC_PATH,REACT_APP_API_URL
+          envs: REPO_URL,BRANCH,DEPLOY_PATH
           script_stop: true
           script: |
             set -e
@@ -75,26 +88,42 @@ jobs:
               echo "Skipping artisan commands (php/artisan not available)"
             fi
 
-            echo "Deploying frontend"
-            cd "$DEPLOY_PATH/frontend"
+            echo "Backend deployment completed"
 
-            if command -v npm >/dev/null 2>&1; then
-              if [ -n "$REACT_APP_API_URL" ]; then
-                export REACT_APP_API_URL="$REACT_APP_API_URL"
-              fi
+      - name: Prepare frontend target via SSH
+        uses: appleboy/ssh-action@v1.2.0
+        env:
+          FRONTEND_PUBLIC_PATH: ${{ secrets.HOSTINGER_FRONTEND_PUBLIC_PATH }}
+        with:
+          host: ${{ secrets.HOSTINGER_HOST }}
+          username: ${{ secrets.HOSTINGER_USERNAME }}
+          key: ${{ secrets.HOSTINGER_SSH_KEY }}
+          port: ${{ secrets.HOSTINGER_SSH_PORT }}
+          envs: FRONTEND_PUBLIC_PATH
+          script_stop: true
+          script: |
+            set -e
 
-              npm ci
-              npm run build
-
-              if [ -n "$FRONTEND_PUBLIC_PATH" ] && [ -d build ]; then
-                mkdir -p "$FRONTEND_PUBLIC_PATH"
-                cp -r build/* "$FRONTEND_PUBLIC_PATH"/
-                echo "Frontend build copied to $FRONTEND_PUBLIC_PATH"
-              else
-                echo "Skipping frontend publish (HOSTINGER_FRONTEND_PUBLIC_PATH not set)"
-              fi
-            else
-              echo "Skipping frontend build (npm not available on host)"
+            if [ -z "$FRONTEND_PUBLIC_PATH" ]; then
+              echo "HOSTINGER_FRONTEND_PUBLIC_PATH is required"
+              exit 1
             fi
 
-            echo "Deployment completed"
+            mkdir -p "$FRONTEND_PUBLIC_PATH"
+
+            # Keep Let's Encrypt challenge folder if present.
+            find "$FRONTEND_PUBLIC_PATH" -mindepth 1 -maxdepth 1 ! -name '.well-known' -exec rm -rf {} +
+
+      - name: Upload frontend build via SCP
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.HOSTINGER_HOST }}
+          username: ${{ secrets.HOSTINGER_USERNAME }}
+          key: ${{ secrets.HOSTINGER_SSH_KEY }}
+          port: ${{ secrets.HOSTINGER_SSH_PORT }}
+          source: "frontend/build/*"
+          target: ${{ secrets.HOSTINGER_FRONTEND_PUBLIC_PATH }}
+          overwrite: true
+
+      - name: Deployment completed
+        run: echo "Backend and frontend deployment completed"
