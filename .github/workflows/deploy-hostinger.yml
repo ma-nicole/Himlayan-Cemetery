@@ -109,6 +109,7 @@ jobs:
         uses: appleboy/ssh-action@v1.2.0
         env:
           FRONTEND_PUBLIC_PATH: ${{ secrets.HOSTINGER_FRONTEND_PUBLIC_PATH }}
+          DEPLOY_PATH: ${{ secrets.HOSTINGER_DEPLOY_PATH }}
         with:
           debug: true
           host: ${{ secrets.HOSTINGER_HOST }}
@@ -116,7 +117,7 @@ jobs:
           key: ${{ secrets.HOSTINGER_SSH_KEY }}
           passphrase: ${{ secrets.HOSTINGER_SSH_PASSPHRASE }}
           port: ${{ secrets.HOSTINGER_SSH_PORT }}
-          envs: FRONTEND_PUBLIC_PATH
+          envs: FRONTEND_PUBLIC_PATH,DEPLOY_PATH
           script_stop: false
           script: |
             set -eux
@@ -126,10 +127,42 @@ jobs:
               exit 1
             fi
 
+            if [ -z "$DEPLOY_PATH" ]; then
+              echo "HOSTINGER_DEPLOY_PATH is required"
+              exit 1
+            fi
+
             mkdir -p "$FRONTEND_PUBLIC_PATH"
 
             # Keep Let's Encrypt challenge folder if present.
-            find "$FRONTEND_PUBLIC_PATH" -mindepth 1 -maxdepth 1 ! -name '.well-known' -exec rm -rf {} +
+            # Keep API bridge folder so frontend deploy doesn't break backend routes.
+            find "$FRONTEND_PUBLIC_PATH" -mindepth 1 -maxdepth 1 ! -name '.well-known' ! -name 'api' -exec rm -rf {} +
+
+            mkdir -p "$FRONTEND_PUBLIC_PATH/api"
+
+            cat > "$FRONTEND_PUBLIC_PATH/api/.htaccess" <<'EOF'
+            RewriteEngine On
+            RewriteCond %{REQUEST_FILENAME} !-f
+            RewriteCond %{REQUEST_FILENAME} !-d
+            RewriteRule ^ index.php [L]
+            EOF
+
+            cat > "$FRONTEND_PUBLIC_PATH/api/index.php" <<EOF
+            <?php
+            define('LARAVEL_START', microtime(true));
+
+            require '${DEPLOY_PATH}/backend/vendor/autoload.php';
+
+            \$app = require_once '${DEPLOY_PATH}/backend/bootstrap/app.php';
+
+            \$kernel = \$app->make(Illuminate\\Contracts\\Http\\Kernel::class);
+
+            \$response = \$kernel->handle(
+                \$request = Illuminate\\Http\\Request::capture()
+            )->send();
+
+            \$kernel->terminate(\$request, \$response);
+            EOF
 
       - name: Upload frontend build via SCP
         uses: appleboy/scp-action@v0.1.7
