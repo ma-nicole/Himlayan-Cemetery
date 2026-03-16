@@ -9,7 +9,6 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Mail;
-use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Log;
 use Carbon\Carbon;
 use App\Mail\UserInvitation;
@@ -137,6 +136,29 @@ class InvitationController extends Controller
     }
 
     /**
+     * Validate burial/contact data required for invitation generation.
+     */
+    private function validateInvitationPrerequisites(BurialRecord $burialRecord): ?string
+    {
+        if (!$burialRecord->plot || trim((string) $burialRecord->plot->plot_number) === '') {
+            return 'Plot information is missing for this burial record. Please assign a plot with a plot number before sending an invitation.';
+        }
+
+        $phoneDigits = preg_replace('/\D/', '', (string) $burialRecord->contact_phone);
+        if (strlen($phoneDigits) < 4) {
+            return 'Contact phone number must have at least 4 digits to generate initial credentials.';
+        }
+
+        $hasLastName = trim((string) $burialRecord->contact_last_name) !== '';
+        $hasContactName = trim((string) $burialRecord->contact_name) !== '';
+        if (!$hasLastName && !$hasContactName) {
+            return 'Contact name is missing. Please provide contact name details before sending an invitation.';
+        }
+
+        return null;
+    }
+
+    /**
      * Send invitation to create user account
      * Generates credentials but does NOT create user yet
      */
@@ -158,6 +180,11 @@ class InvitationController extends Controller
             return $this->errorResponse('Contact phone number is missing. Please add the phone number to the burial record.', 400);
         }
 
+        $prerequisiteError = $this->validateInvitationPrerequisites($burialRecord);
+        if ($prerequisiteError) {
+            return $this->errorResponse($prerequisiteError, 400);
+        }
+
         // Check if user already exists and accepted
         $existingUser = User::where('email', $burialRecord->contact_email)->first();
         if ($existingUser && $existingUser->invitation_accepted) {
@@ -167,7 +194,19 @@ class InvitationController extends Controller
         }
 
         // Generate password and token (don't create user yet)
-        $password = $this->generatePassword($burialRecord);
+        try {
+            $password = $this->generatePassword($burialRecord);
+        } catch (\Throwable $e) {
+            Log::error('Invitation preparation failed', [
+                'burial_record_id' => $burialRecord->id,
+                'recipient' => $burialRecord->contact_email,
+                'error' => $e->getMessage(),
+                'file' => $e->getFile(),
+                'line' => $e->getLine(),
+            ]);
+
+            return $this->errorResponse('Unable to prepare invitation credentials. Please verify plot and contact details for this burial record.', 500);
+        }
         $token = Str::random(64);
         
         // Get full contact name
@@ -250,6 +289,11 @@ class InvitationController extends Controller
             return $this->errorResponse('Contact phone number is missing. Please add the phone number to the burial record.', 400);
         }
 
+        $prerequisiteError = $this->validateInvitationPrerequisites($burialRecord);
+        if ($prerequisiteError) {
+            return $this->errorResponse($prerequisiteError, 400);
+        }
+
         // Check if user already exists and accepted
         $existingUser = User::where('email', $burialRecord->contact_email)->first();
         if ($existingUser && $existingUser->invitation_accepted) {
@@ -259,7 +303,19 @@ class InvitationController extends Controller
         }
 
         // Regenerate password and token
-        $password = $this->generatePassword($burialRecord);
+        try {
+            $password = $this->generatePassword($burialRecord);
+        } catch (\Throwable $e) {
+            Log::error('Invitation resend preparation failed', [
+                'burial_record_id' => $burialRecord->id,
+                'recipient' => $burialRecord->contact_email,
+                'error' => $e->getMessage(),
+                'file' => $e->getFile(),
+                'line' => $e->getLine(),
+            ]);
+
+            return $this->errorResponse('Unable to prepare invitation credentials. Please verify plot and contact details for this burial record.', 500);
+        }
         $token = Str::random(64);
         
         // Get full contact name
