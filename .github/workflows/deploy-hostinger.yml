@@ -150,8 +150,8 @@ jobs:
             RewriteRule . /index.html [L]
             EOF
 
-            # Keep Let's Encrypt challenge folder, API bridge folder, and root SPA rewrite rules.
-            find "$FRONTEND_PUBLIC_PATH" -mindepth 1 -maxdepth 1 ! -name '.well-known' ! -name 'api' ! -name '.htaccess' -exec rm -rf {} +
+            # Keep Let's Encrypt challenge folder, API bridge folder, storage symlink, and root SPA rewrite rules.
+            find "$FRONTEND_PUBLIC_PATH" -mindepth 1 -maxdepth 1 ! -name '.well-known' ! -name 'api' ! -name 'storage' ! -name '.htaccess' -exec rm -rf {} +
 
             mkdir -p "$FRONTEND_PUBLIC_PATH/api"
 
@@ -187,6 +187,10 @@ jobs:
 
             \$kernel->terminate(\$request, \$response);
             EOF
+
+            # Expose Laravel public storage uploads at /storage for image/files access.
+            rm -rf "$FRONTEND_PUBLIC_PATH/storage"
+            ln -s "$DEPLOY_PATH/backend/storage/app/public" "$FRONTEND_PUBLIC_PATH/storage"
 
       - name: Upload frontend build via SCP
         uses: appleboy/scp-action@v0.1.7
