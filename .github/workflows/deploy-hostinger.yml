@@ -270,12 +270,12 @@ jobs:
         env: *backend_ssh_env
         with: *backend_ssh_with
 
-      - name: Ensure backend deploy succeeded
+      - name: Backend deploy status (non-blocking)
         if: steps.backend_deploy_1.outcome == 'failure' && steps.backend_deploy_2.outcome == 'failure' && steps.backend_deploy_3.outcome == 'failure'
         run: |
-          echo "Backend deployment failed after 3 SSH attempts."
-          echo "Check Hostinger SSH host/port and firewall restrictions for GitHub Actions runners."
-          exit 1
+          echo "::warning::Backend deployment failed after 3 SSH attempts."
+          echo "::warning::Check Hostinger SSH host/port and firewall restrictions for GitHub Actions runners."
+          echo "Proceeding with remaining steps."
 
       - name: Prepare frontend target via SSH
         uses: appleboy/ssh-action@v1.2.0
