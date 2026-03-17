@@ -17,6 +17,19 @@ const resolveDeceasedPhotoUrl = (photoValue) => {
   }
 
   if (/^https?:\/\//i.test(photoValue)) {
+    // Normalize legacy localhost URLs saved from local environments.
+    if (/^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?\//i.test(photoValue)) {
+      try {
+        const url = new URL(photoValue);
+        const normalizedPath = url.pathname.replace(/^\/+/, '');
+        const storagePath = normalizedPath.startsWith('storage/')
+          ? normalizedPath
+          : `storage/${normalizedPath}`;
+        return `${backendBaseUrl}/${storagePath}`;
+      } catch {
+        return null;
+      }
+    }
     return photoValue;
   }
 
@@ -33,6 +46,7 @@ const MyLovedOnesPage = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+  const [brokenImageRecordIds, setBrokenImageRecordIds] = useState(new Set());
   
   // Edit Modal State
   const [editingRecord, setEditingRecord] = useState(null);
@@ -55,6 +69,7 @@ const MyLovedOnesPage = () => {
       const response = await api.get('/my-burial-records');
       if (response.data.success) {
         setRecords(response.data.data);
+        setBrokenImageRecordIds(new Set());
       }
     } catch (err) {
       console.error('Failed to fetch records:', err);
@@ -178,13 +193,17 @@ const MyLovedOnesPage = () => {
               {records.map(record => (
                 <div key={record.id} className="record-card" style={{ backgroundColor: 'white', borderRadius: '12px', overflow: 'hidden', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)', display: 'flex', flexDirection: 'column', height: '100%' }}>
                   <div className="card-header" style={{ position: 'relative', height: '140px', backgroundColor: '#e5e7eb', flexShrink: 0 }}>
-                    {record.deceased_photo_url ? (
+                    {record.deceased_photo_url && !brokenImageRecordIds.has(record.id) ? (
                       <img 
                         src={resolveDeceasedPhotoUrl(record.deceased_photo_url)}
                         alt={record.deceased_name}
                         style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                         onError={(e) => {
-                          e.currentTarget.style.display = 'none';
+                          setBrokenImageRecordIds(prev => {
+                            const updated = new Set(prev);
+                            updated.add(record.id);
+                            return updated;
+                          });
                         }}
                       />
                     ) : (
