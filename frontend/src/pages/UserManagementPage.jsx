@@ -439,7 +439,7 @@ const UserManagementPage = () => {
                       </span>
                     </div>
                     <div className="view-field"><span className="view-label">Date Joined</span><span className="view-value">{formatDate(selectedUser.created_at)}</span></div>
-                    {selectedUser.is_archived && selectedUser.archived_at && (
+                    {!!selectedUser.is_archived && !!selectedUser.archived_at && (
                       <div className="view-field"><span className="view-label">Archived On</span><span className="view-value">{formatDate(selectedUser.archived_at)}</span></div>
                     )}
                   </div>
