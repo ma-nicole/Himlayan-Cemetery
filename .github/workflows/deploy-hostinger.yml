@@ -74,9 +74,11 @@ jobs:
             echo "If SSH deploy still fails, verify Hostinger IP/hostname, SSH port (usually 65002), and firewall/SSH access settings."
           fi
 
-      - name: Deploy backend via SSH
+      - name: Deploy backend via SSH (attempt 1)
+        id: backend_deploy_1
+        continue-on-error: true
         uses: appleboy/ssh-action@v1.2.0
-        env:
+        env: &backend_ssh_env
           REPO_URL: ${{ github.server_url }}/${{ github.repository }}.git
           BRANCH: main
           DEPLOY_PATH: ${{ secrets.HOSTINGER_DEPLOY_PATH }}
@@ -91,7 +93,7 @@ jobs:
           MAIL_FROM_ADDRESS: ${{ secrets.MAIL_FROM_ADDRESS }}
           MAIL_FROM_NAME: ${{ secrets.MAIL_FROM_NAME }}
           MAIL_FEEDBACK_TO: ${{ secrets.MAIL_FEEDBACK_TO }}
-        with:
+        with: &backend_ssh_with
           debug: true
           host: ${{ secrets.HOSTINGER_HOST }}
           username: ${{ secrets.HOSTINGER_USERNAME }}
@@ -251,6 +253,29 @@ jobs:
             fi
 
             echo "Backend deployment completed"
+
+      - name: Deploy backend via SSH (attempt 2)
+        id: backend_deploy_2
+        if: steps.backend_deploy_1.outcome == 'failure'
+        continue-on-error: true
+        uses: appleboy/ssh-action@v1.2.0
+        env: *backend_ssh_env
+        with: *backend_ssh_with
+
+      - name: Deploy backend via SSH (attempt 3)
+        id: backend_deploy_3
+        if: steps.backend_deploy_1.outcome == 'failure' && steps.backend_deploy_2.outcome == 'failure'
+        continue-on-error: true
+        uses: appleboy/ssh-action@v1.2.0
+        env: *backend_ssh_env
+        with: *backend_ssh_with
+
+      - name: Ensure backend deploy succeeded
+        if: steps.backend_deploy_1.outcome == 'failure' && steps.backend_deploy_2.outcome == 'failure' && steps.backend_deploy_3.outcome == 'failure'
+        run: |
+          echo "Backend deployment failed after 3 SSH attempts."
+          echo "Check Hostinger SSH host/port and firewall restrictions for GitHub Actions runners."
+          exit 1
 
       - name: Prepare frontend target via SSH
         uses: appleboy/ssh-action@v1.2.0
