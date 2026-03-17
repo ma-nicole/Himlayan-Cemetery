@@ -13,20 +13,24 @@ class UserSeeder extends Seeder
      */
     public function run(): void
     {
-        // Create Admin User
-        User::create([
-            'name' => 'Administrator',
-            'email' => 'admin@cemetery.com',
-            'password' => Hash::make('password123'),
-            'role' => 'admin',
-        ]);
+        // Create Admin User (skip if already exists)
+        User::firstOrCreate(
+            ['email' => 'admin@cemetery.com'],
+            [
+                'name' => 'Administrator',
+                'password' => Hash::make('password123'),
+                'role' => 'admin',
+            ]
+        );
 
-        // Create Staff User
-        User::create([
-            'name' => 'Staff Member',
-            'email' => 'staff@cemetery.com',
-            'password' => Hash::make('password123'),
-            'role' => 'staff',
-        ]);
+        // Create Staff User (skip if already exists)
+        User::firstOrCreate(
+            ['email' => 'staff@cemetery.com'],
+            [
+                'name' => 'Staff Member',
+                'password' => Hash::make('password123'),
+                'role' => 'staff',
+            ]
+        );
     }
 }
