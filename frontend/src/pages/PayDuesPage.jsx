@@ -239,7 +239,7 @@ const PayDuesPage = () => {
           {isVerifying && (
             <div className="payment-verifying-banner">
               <span className="payment-verifying-spinner" />
-              <span>Verifying your payment&hellip; please wait.</span>
+              <span>Verifying your payment&hellip; please refresh your browser.</span>
             </div>
           )}
 
