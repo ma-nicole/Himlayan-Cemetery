@@ -16,6 +16,19 @@ use App\Mail\UserInvitation;
 class InvitationController extends Controller
 {
     /**
+     * Return the canonical frontend URL: HTTPS, no trailing slash.
+     */
+    private function canonicalFrontendUrl(): string
+    {
+        $url = rtrim((string) config('app.frontend_url', 'https://himlayangpilipino.com'), '/');
+        // Force HTTPS so email links never trigger an HTTP→HTTPS 301.
+        if (str_starts_with($url, 'http://')) {
+            $url = 'https://' . substr($url, 7);
+        }
+        return $url;
+    }
+
+    /**
      * Resolve a usable mailer even when MAIL_MAILER is blank/misconfigured.
      */
     private function resolveMailer(): string
@@ -281,7 +294,7 @@ class InvitationController extends Controller
             'name' => $fullName,
             'password' => $password,
             'token' => $token,
-            'accept_url' => config('app.frontend_url') . '/accept-invitation?token=' . $token
+            'accept_url' => $this->canonicalFrontendUrl() . '/api/invitations/activate?token=' . $token
         ];
 
         $expiresAt = now()->addDay();
@@ -395,7 +408,7 @@ class InvitationController extends Controller
             'name' => $fullName,
             'password' => $password,
             'token' => $token,
-            'accept_url' => config('app.frontend_url') . '/accept-invitation?token=' . $token
+            'accept_url' => $this->canonicalFrontendUrl() . '/api/invitations/activate?token=' . $token
         ];
 
         $expiresAt = now()->addDay();
@@ -569,5 +582,21 @@ class InvitationController extends Controller
             'status' => 'pending',
             'user' => $user
         ], 'Invitation pending');
+    }
+
+    /**
+     * Redirect from API to the frontend accept-invitation page.
+     * Used as the primary email link so there is no cross-protocol / www 301.
+     */
+    public function activateRedirect(Request $request)
+    {
+        $token = $request->query('token', '');
+
+        // Basic sanity: token must be 64 alphanumeric chars.
+        if (!preg_match('/^[A-Za-z0-9]{64}$/', $token)) {
+            return redirect($this->canonicalFrontendUrl() . '/login');
+        }
+
+        return redirect($this->canonicalFrontendUrl() . '/accept-invitation?token=' . $token);
     }
 }

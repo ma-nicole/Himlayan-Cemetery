@@ -61,6 +61,7 @@ Route::get('/system/maintenance-status', [SystemMaintenanceController::class, 's
 Route::post('/feedback', [FeedbackController::class, 'store']);
 
 // Invitation acceptance (public - user accepts invitation from email)
+Route::get('/invitations/activate', [InvitationController::class, 'activateRedirect']);
 Route::get('/invitations/details', [InvitationController::class, 'getInvitationDetails']);
 Route::post('/invitations/accept', [InvitationController::class, 'acceptInvitation']);
 

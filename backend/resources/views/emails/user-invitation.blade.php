@@ -141,7 +141,7 @@
             </div>
 
             <center>
-                <a href="{{ config('app.frontend_url') }}/login" class="btn">Login to Your Account</a>
+                <a href="{{ $loginUrl }}" class="btn">Login to Your Account</a>
             </center>
 
             <h3>What you can do with your account:</h3>

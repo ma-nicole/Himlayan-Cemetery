@@ -46,6 +46,7 @@ class UserInvitation extends Mailable
                 'email' => $this->invitation['email'],
                 'password' => $this->invitation['password'],
                 'acceptUrl' => $this->invitation['accept_url'],
+                'loginUrl' => rtrim(preg_replace('#^http://#', 'https://', (string) config('app.frontend_url', 'https://himlayangpilipino.com')), '/') . '/login',
                 'deceasedName' => $this->burialRecord->deceased_first_name . ' ' . $this->burialRecord->deceased_last_name,
                 'plotNumber' => $this->burialRecord->plot->plot_number,
                 'expiresAt' => now()->addDay()->format('F d, Y g:i A'),
