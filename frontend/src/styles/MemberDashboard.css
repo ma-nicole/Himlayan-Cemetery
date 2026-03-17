@@ -648,6 +648,7 @@
 .stat-info {
   display: flex;
   flex-direction: column;
+  justify-content: center;
 }
 
 .stat-number {
@@ -1347,6 +1348,17 @@
 
   .stat-card {
     padding: 18px 16px;
+    min-height: 96px;
+    align-items: center;
+  }
+
+  .stat-info {
+    min-height: 56px;
+    justify-content: center;
+  }
+
+  .stat-number {
+    line-height: 1.1;
   }
 
   .section-header {
@@ -1392,6 +1404,11 @@
   .plots-section-pro,
   .announcements-section-pro {
     padding: 16px 12px;
+  }
+
+  .stat-card {
+    min-height: 90px;
+    gap: 14px;
   }
 
   .feature-card {

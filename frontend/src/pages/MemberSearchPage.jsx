@@ -36,8 +36,6 @@ const MemberSearchPage = () => {
     await logout();
   };
 
-  const recentSearches = ['Juan Dela Cruz', 'Maria Santos', 'Pedro Garcia'];
-
   return (
     <div className="search-page">
       {/* Header */}
@@ -89,17 +87,6 @@ const MemberSearchPage = () => {
             </button>
           </form>
 
-          {/* Quick Search Suggestions */}
-          {!searched && (
-            <div className="quick-search">
-              <span>Examples:</span>
-              {recentSearches.map((term, idx) => (
-                <button key={idx} onClick={() => setSearchQuery(term)} className="quick-tag">
-                  {term}
-                </button>
-              ))}
-            </div>
-          )}
         </div>
       </section>
 
