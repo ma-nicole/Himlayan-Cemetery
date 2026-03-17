@@ -336,7 +336,7 @@ const PayDuesPage = () => {
                     {isVerifying ? (
                       <>
                         <p style={{ color: '#15803d', fontWeight: 600, marginBottom: 4 }}>⏳ Verifying Payment…</p>
-                        <p style={{ color: '#166534', fontSize: '0.875rem', margin: 0 }}>Please wait while we confirm your payment.</p>
+                        <p style={{ color: '#166534', fontSize: '0.875rem', margin: 0 }}>Please refresh your browser to confirm your payment.</p>
                       </>
                     ) : (
                       <>

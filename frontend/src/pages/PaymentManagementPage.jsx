@@ -253,6 +253,11 @@ const PaymentManagementPage = () => {
               <form onSubmit={handleSubmit}>
                 <div className="form-group">
                   <label>Verification Decision *</label>
+                  {!selectedItem?.payment_method && (
+                    <div style={{ marginBottom: '10px', padding: '8px 12px', background: '#fef9c3', border: '1px solid #fde047', borderRadius: '6px', fontSize: '0.85rem', color: '#854d0e' }}>
+                      ⚠️ This payment has not been paid yet. Verification is not allowed — you may only reject it.
+                    </div>
+                  )}
                   <select 
                     value={formData.status} 
                     onChange={(e) => {
@@ -269,7 +274,9 @@ const PaymentManagementPage = () => {
                     required
                   >
                     <option value="">Select...</option>
-                    <option value="verified">Verify Payment</option>
+                    {selectedItem?.payment_method && (
+                      <option value="verified">Verify Payment</option>
+                    )}
                     <option value="rejected">Reject Payment</option>
                   </select>
                   {validationErrors.status && (

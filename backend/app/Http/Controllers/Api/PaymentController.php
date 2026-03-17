@@ -671,7 +671,7 @@ class PaymentController extends Controller
                     return false;
                 }
 
-                if (!in_array($payment->status, [Payment::STATUS_PENDING, Payment::STATUS_REJECTED], true)) {
+                if ($payment->status !== Payment::STATUS_PENDING) {
                     return false;
                 }
 
