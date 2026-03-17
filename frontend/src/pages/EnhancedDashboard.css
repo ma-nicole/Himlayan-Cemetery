@@ -41,98 +41,6 @@
   letter-spacing: 0.05em;
 }
 
-.maintenance-panel {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 1rem;
-  background: var(--bg-elevated, #ffffff);
-  border: 1px solid var(--border-light, #e5e7eb);
-  border-left: 4px solid var(--color-primary-500, #1a472a);
-  border-radius: var(--radius-xl, 0.75rem);
-  padding: 1rem 1.25rem;
-}
-
-.maintenance-info h3 {
-  margin: 0 0 0.25rem 0;
-  font-size: 1rem;
-  color: var(--text-primary, #111827);
-}
-
-.maintenance-info p {
-  margin: 0;
-  color: var(--text-secondary, #6b7280);
-  font-size: 0.875rem;
-}
-
-.maintenance-status {
-  display: inline-flex;
-  align-items: center;
-  font-weight: 700;
-  font-size: 0.8125rem;
-  letter-spacing: 0.04em;
-}
-
-.maintenance-status.active {
-  color: #b91c1c;
-}
-
-.maintenance-status.inactive {
-  color: #15803d;
-}
-
-.maintenance-toggle-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.6rem;
-  border: 1px solid var(--border-default, #d1d5db);
-  border-radius: 999px;
-  padding: 0.4rem 0.75rem;
-  background: #ffffff;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  color: var(--text-primary, #111827);
-}
-
-.maintenance-toggle-btn:disabled {
-  opacity: 0.7;
-  cursor: not-allowed;
-}
-
-.maintenance-toggle-btn .toggle-track {
-  width: 42px;
-  height: 24px;
-  border-radius: 999px;
-  background: #d1d5db;
-  position: relative;
-  transition: background-color 0.2s ease;
-}
-
-.maintenance-toggle-btn .toggle-thumb {
-  width: 18px;
-  height: 18px;
-  border-radius: 50%;
-  background: #ffffff;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
-  position: absolute;
-  top: 3px;
-  left: 3px;
-  transition: transform 0.2s ease;
-}
-
-.maintenance-toggle-btn.is-on .toggle-track {
-  background: #dc2626;
-}
-
-.maintenance-toggle-btn.is-on .toggle-thumb {
-  transform: translateX(18px);
-}
-
-.maintenance-toggle-btn .toggle-label {
-  font-size: 0.8125rem;
-  font-weight: 600;
-}
-
 /* Stats Grids */
 .stats-grid-4 {
   display: grid;
@@ -456,11 +364,6 @@
 }
 
 @media (max-width: 768px) {
-  .maintenance-panel {
-    flex-direction: column;
-    align-items: flex-start;
-  }
-
   .dashboard-header {
     flex-direction: column;
     align-items: stretch;
