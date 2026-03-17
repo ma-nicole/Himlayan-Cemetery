@@ -180,8 +180,10 @@ class PaymentController extends Controller
     {
         $query = Payment::with(['user:id,name,email', 'plot:id,plot_number,section', 'verifier:id,name']);
 
-        // For members, only show their own payments
-        if (auth()->user()->role === 'member') {
+        // Whitelist approach: only admin and staff may see all payments.
+        // Every other role (member, null, or any future role) is strictly
+        // restricted to their own records, preventing data leakage.
+        if (!in_array(auth()->user()->role, ['admin', 'staff'], true)) {
             $query->where('user_id', auth()->id());
         }
 
@@ -551,7 +553,7 @@ class PaymentController extends Controller
         }
 
         // Members can only view their own
-        if (auth()->user()->role === 'member' && $payment->user_id !== auth()->id()) {
+        if (!in_array(auth()->user()->role, ['admin', 'staff'], true) && $payment->user_id !== auth()->id()) {
             return response()->json([
                 'success' => false,
                 'message' => 'Unauthorized'
