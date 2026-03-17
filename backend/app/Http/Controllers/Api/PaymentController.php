@@ -42,6 +42,14 @@ class PaymentController extends Controller
     }
 
     /**
+     * Accept dues items only when tied to a real plot id or a parseable plot token.
+     */
+    private function hasKnownPlotReference(Payment $payment): bool
+    {
+        return (bool) $payment->plot_id || $this->extractPlotToken($payment->notes) !== 'none';
+    }
+
+    /**
      * Apply an effective status to each payment based on matching verified obligations.
      */
     private function applyEffectiveStatuses($payments)
@@ -213,6 +221,13 @@ class PaymentController extends Controller
             'notes' => 'nullable|string',
         ]);
 
+        if (auth()->user()->role === 'member' && empty($validated['plot_id'])) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Please select a valid plot before making a payment.',
+            ], 422);
+        }
+
         $payment = Payment::create([
             ...$validated,
             'user_id' => auth()->id(),
@@ -301,6 +316,13 @@ class PaymentController extends Controller
             'reference_number' => 'nullable|string|max:100',
             'notes' => 'nullable|string',
         ]);
+
+        if (auth()->user()->role === 'member' && empty($validated['plot_id'])) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Please select a valid plot before making a payment.',
+            ], 422);
+        }
 
         $payment = Payment::create([
             ...$validated,
@@ -508,6 +530,10 @@ class PaymentController extends Controller
 
         $outstanding = $payments
             ->filter(function ($payment) use ($verifiedKeys) {
+                if (!$this->hasKnownPlotReference($payment)) {
+                    return false;
+                }
+
                 if (!in_array($payment->status, [Payment::STATUS_PENDING, Payment::STATUS_REJECTED], true)) {
                     return false;
                 }
