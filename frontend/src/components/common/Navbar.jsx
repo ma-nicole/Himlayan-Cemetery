@@ -2,7 +2,7 @@ import React from 'react';
 import { useAuth } from '../../hooks/useAuth';
 import './Navbar.css';
 
-const Navbar = () => {
+const Navbar = ({ onMenuToggle }) => {
   const { user, logout } = useAuth();
 
   const handleLogout = async () => {
@@ -13,6 +13,16 @@ const Navbar = () => {
   return (
     <nav className="navbar">
       <div className="navbar-brand">
+        {/* Hamburger — only visible on mobile */}
+        <button
+          className="navbar-hamburger"
+          onClick={onMenuToggle}
+          aria-label="Open navigation menu"
+        >
+          <span />
+          <span />
+          <span />
+        </button>
         <h1>Himlayan</h1>
       </div>
       <div className="navbar-actions">

@@ -1247,15 +1247,57 @@ body {
   font-size: 0.95rem;
 }
 
+/* ── Hamburger button (admin/staff navbar) ── */
+.navbar-hamburger {
+  display: none;
+  flex-direction: column;
+  justify-content: space-between;
+  width: 28px;
+  height: 20px;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  flex-shrink: 0;
+}
+
+.navbar-hamburger span {
+  display: block;
+  width: 100%;
+  height: 2px;
+  background: var(--primary-color, #1a472a);
+  border-radius: 2px;
+  transition: background 0.2s ease;
+}
+
+/* Sidebar backdrop overlay (mobile) */
+.sidebar-backdrop {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  z-index: 100;
+}
+
 /* Responsive */
 @media (max-width: 768px) {
+  .navbar-hamburger {
+    display: flex;
+  }
+
+  .sidebar-backdrop {
+    display: block;
+  }
+
   .sidebar {
     transform: translateX(-100%);
-    transition: var(--transition);
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    z-index: 101;
   }
 
   .sidebar.open {
     transform: translateX(0);
+    box-shadow: 4px 0 25px rgba(0, 0, 0, 0.18);
   }
 
   .main-content {
@@ -1264,6 +1306,7 @@ body {
 
   .navbar {
     left: 0;
+    padding: 0.75rem 1rem;
   }
 
   .form-row {
@@ -1277,6 +1320,33 @@ body {
   .auth-card {
     margin: 20px;
     padding: 32px 24px;
+  }
+
+  /* Make page content padding sensible on mobile */
+  .main-content {
+    padding: 12px;
+  }
+
+  .page-content {
+    margin-top: 70px;
+  }
+
+  /* Admin management tables: allow horizontal scroll */
+  .table-container,
+  .data-table-wrapper {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  table {
+    min-width: 600px;
+  }
+
+  /* Stats grid single column on very small screens */
+  @media (max-width: 480px) {
+    .stats-grid {
+      grid-template-columns: 1fr 1fr;
+    }
   }
 }
 

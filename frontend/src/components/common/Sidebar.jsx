@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { NavLink } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth';
 
-const Sidebar = () => {
+const Sidebar = ({ isOpen = false, onClose }) => {
   const { user, logout } = useAuth();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const menuRef = useRef(null);
@@ -23,8 +23,12 @@ const Sidebar = () => {
     await logout();
   };
 
+  const handleNavClick = () => {
+    if (onClose) onClose();
+  };
+
   return (
-    <aside className="sidebar">
+    <aside className={`sidebar${isOpen ? ' open' : ''}`}>
       <div className="sidebar-logo">
         <img src="/himlayan.png" alt="Himlayan" className="sidebar-logo-img" />
         <h2>Himlayan</h2>
@@ -32,22 +36,22 @@ const Sidebar = () => {
       </div>
       <ul className="sidebar-menu">
         <li>
-          <NavLink to="/admin/dashboard" className={({ isActive }) => isActive ? 'active' : ''}>
+          <NavLink to="/admin/dashboard" onClick={handleNavClick} className={({ isActive }) => isActive ? 'active' : ''}>
             Dashboard
           </NavLink>
         </li>
         <li>
-          <NavLink to="/burial-records" className={({ isActive }) => isActive ? 'active' : ''}>
+          <NavLink to="/burial-records" onClick={handleNavClick} className={({ isActive }) => isActive ? 'active' : ''}>
             Burial Records
           </NavLink>
         </li>
         <li>
-          <NavLink to="/plots" className={({ isActive }) => isActive ? 'active' : ''}>
+          <NavLink to="/plots" onClick={handleNavClick} className={({ isActive }) => isActive ? 'active' : ''}>
             Plots
           </NavLink>
         </li>
         <li>
-          <NavLink to="/map" className={({ isActive }) => isActive ? 'active' : ''}>
+          <NavLink to="/map" onClick={handleNavClick} className={({ isActive }) => isActive ? 'active' : ''}>
             Cemetery Map
           </NavLink>
         </li>
@@ -56,33 +60,33 @@ const Sidebar = () => {
         <li className="sidebar-divider">Management</li>
         {user?.role === 'admin' && (
           <li>
-            <NavLink to="/admin/users" className={({ isActive }) => isActive ? 'active' : ''}>
+            <NavLink to="/admin/users" onClick={handleNavClick} className={({ isActive }) => isActive ? 'active' : ''}>
               Users
             </NavLink>
           </li>
         )}
         <li>
-          <NavLink to="/admin/announcements" className={({ isActive }) => isActive ? 'active' : ''}>
+          <NavLink to="/admin/announcements" onClick={handleNavClick} className={({ isActive }) => isActive ? 'active' : ''}>
             Announcements
           </NavLink>
         </li>
         <li>
-          <NavLink to="/admin/service-requests" className={({ isActive }) => isActive ? 'active' : ''}>
+          <NavLink to="/admin/service-requests" onClick={handleNavClick} className={({ isActive }) => isActive ? 'active' : ''}>
             Service Requests
           </NavLink>
         </li>
         <li>
-          <NavLink to="/admin/payments" className={({ isActive }) => isActive ? 'active' : ''}>
+          <NavLink to="/admin/payments" onClick={handleNavClick} className={({ isActive }) => isActive ? 'active' : ''}>
             Payments
           </NavLink>
         </li>
         <li>
-          <NavLink to="/admin/feedback" className={({ isActive }) => isActive ? 'active' : ''}>
+          <NavLink to="/admin/feedback" onClick={handleNavClick} className={({ isActive }) => isActive ? 'active' : ''}>
             Feedback
           </NavLink>
         </li>
         <li>
-          <NavLink to="/admin/reports" className={({ isActive }) => isActive ? 'active' : ''}>
+          <NavLink to="/admin/reports" onClick={handleNavClick} className={({ isActive }) => isActive ? 'active' : ''}>
             Reports
           </NavLink>
         </li>
