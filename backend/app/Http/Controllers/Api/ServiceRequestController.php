@@ -155,6 +155,7 @@ class ServiceRequestController extends Controller
                 'plot_id'        => null,
                 'amount'         => $validated['service_fee_amount'],
                 'payment_type'   => Payment::TYPE_SERVICE_FEE,
+                'payment_method' => null,
                 'status'         => Payment::STATUS_PENDING,
                 'notes'          => 'Service fee for ' . $serviceLabel . ' (Request #' . $serviceRequest->id . ')',
             ]);
