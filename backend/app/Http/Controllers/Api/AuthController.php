@@ -205,7 +205,7 @@ class AuthController extends Controller
             'name' => $request->name,
             'email' => $request->email,
             'password' => Hash::make($request->password),
-            'role' => 'visitor', // Default role for new registrations
+            'role' => 'member', // Default role for new registrations
         ]);
 
         return $this->successResponse([

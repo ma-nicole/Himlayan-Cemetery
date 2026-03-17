@@ -530,7 +530,7 @@ class InvitationController extends Controller
                 'email' => $invitationData['email'],
                 'name' => $invitationData['name'],
                 'password' => Hash::make($invitationData['password']),
-                'role' => 'visitor',
+                'role' => 'member',
                 'invitation_accepted' => true,
                 'must_change_password' => true,
             ]);

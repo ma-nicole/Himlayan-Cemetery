@@ -60,7 +60,7 @@ class SocialAuthController extends Controller
                         'provider_id' => $socialUser->getId(),
                         'avatar' => $socialUser->getAvatar(),
                         'password' => null,
-                        'role' => 'user',
+                        'role' => 'member',
                     ]);
                 }
             }

@@ -63,7 +63,7 @@ class SocialAuthController extends Controller
                     'name' => $socialUser->getName() ?? $socialUser->getNickname() ?? 'User',
                     'email' => $socialUser->getEmail(),
                     'password' => Hash::make(Str::random(24)),
-                    'role' => 'user',
+                    'role' => 'member',
                     'provider' => $provider,
                     'provider_id' => $socialUser->getId(),
                     'avatar' => $socialUser->getAvatar(),
