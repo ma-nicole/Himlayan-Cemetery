@@ -3,6 +3,36 @@
   margin: 0 auto;
 }
 
+/* ── Payment-verifying banner ─────────────────────────────── */
+.payment-verifying-banner {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: #eff6ff;
+  border: 1px solid #bfdbfe;
+  border-radius: 10px;
+  padding: 14px 20px;
+  margin-bottom: 24px;
+  color: #1e40af;
+  font-size: 0.95rem;
+  font-weight: 500;
+}
+
+.payment-verifying-spinner {
+  display: inline-block;
+  width: 18px;
+  height: 18px;
+  border: 2.5px solid #bfdbfe;
+  border-top-color: #2563eb;
+  border-radius: 50%;
+  animation: pv-spin 0.75s linear infinite;
+  flex-shrink: 0;
+}
+
+@keyframes pv-spin {
+  to { transform: rotate(360deg); }
+}
+
 .pay-dues-page .page-header {
   text-align: center;
   margin-bottom: 2rem;

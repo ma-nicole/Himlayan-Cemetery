@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import MemberHeader from '../components/common/MemberHeader';
 import MemberFooter from '../components/common/MemberFooter';
@@ -15,6 +15,8 @@ const PayDuesPage = () => {
   const [paymentMethod, setPaymentMethod] = useState('');
   const [duesLoading, setDuesLoading] = useState(true);
   const [loading, setLoading] = useState(false);
+  const [isVerifying, setIsVerifying] = useState(false);
+  const pollingRef = useRef(null);
 
   const loadOutstandingDues = async () => {
     setDuesLoading(true);
@@ -36,28 +38,118 @@ const PayDuesPage = () => {
     }
   };
 
+  // Clean up any pending poll timer when the component unmounts.
+  useEffect(() => {
+    return () => {
+      if (pollingRef.current) {
+        clearTimeout(pollingRef.current);
+        pollingRef.current = null;
+      }
+    };
+  }, []);
+
+  // Handle Xendit redirect: detect ?status=success|failed, mark payment as paid,
+  // then poll the backend until the status reflects 'awaiting_verification'.
   useEffect(() => {
     const params = new URLSearchParams(location.search);
     const status = params.get('status');
     const paymentId = params.get('payment_id');
 
-    if (status === 'success') {
-      toast?.success('Payment completed successfully. Awaiting admin verification.');
-      if (paymentId) {
-        api.post(`/payments/${paymentId}/mark-paid`).catch(() => {});
-      }
-    } else if (status === 'failed') {
+    if (status === 'failed') {
       toast?.error('Payment failed or was cancelled. You can try again.');
+      navigate('/pay-dues', { replace: true });
+      return;
     }
 
-    if (status === 'success' || status === 'failed') {
-      navigate('/pay-dues', { replace: true });
-    }
-  }, [location.search, navigate, toast]);
+    if (status !== 'success') return;
+
+    // Strip the Xendit params from the URL immediately so this effect
+    // does not re-run when location.search becomes '' after navigate.
+    navigate('/pay-dues', { replace: true });
+
+    let cancelled = false;
+
+    const handleSuccess = async () => {
+      if (!paymentId) {
+        loadOutstandingDues();
+        toast?.success('Payment completed. Awaiting admin verification.');
+        return;
+      }
+
+      setIsVerifying(true);
+
+      // Inform the backend that payment was completed.
+      try {
+        await api.post(`/payments/${paymentId}/mark-paid`);
+      } catch {
+        // Non-fatal: payment may already be marked by webhook.
+      }
+
+      if (cancelled) return;
+
+      // Poll my-dues every 2.5 s until the payment status updates
+      // (up to 10 attempts = ~25 s), then refresh the UI.
+      const MAX_ATTEMPTS = 10;
+      let attempts = 0;
+
+      const poll = async () => {
+        if (cancelled) return;
+        attempts++;
+
+        try {
+          const res = await api.get('/payments/my-dues');
+          if (cancelled) return;
+
+          const dues = Array.isArray(res?.data?.data) ? res.data.data : [];
+          const target = dues.find((d) => String(d.id) === String(paymentId));
+
+          // Confirmed when: the item shows awaiting_verification (paid_at set)
+          // or has disappeared from outstanding list (already verified by admin).
+          const confirmed = !target || target.status === 'awaiting_verification';
+
+          if (confirmed || attempts >= MAX_ATTEMPTS) {
+            setPlotDues(dues);
+            setSelectedPlot((prev) => {
+              if (!dues.length) return null;
+              return dues.find((d) => d.id === prev?.id) || dues[0];
+            });
+            setIsVerifying(false);
+
+            if (confirmed) {
+              toast?.success('Payment completed successfully. Awaiting admin verification.');
+            } else {
+              toast?.warning(
+                'Payment submitted. Status may take a moment to update — refresh if needed.',
+              );
+            }
+          } else {
+            pollingRef.current = setTimeout(poll, 2500);
+          }
+        } catch {
+          if (!cancelled) {
+            setIsVerifying(false);
+            loadOutstandingDues();
+          }
+        }
+      };
+
+      poll();
+    };
+
+    handleSuccess();
+
+    return () => {
+      cancelled = true;
+      if (pollingRef.current) {
+        clearTimeout(pollingRef.current);
+        pollingRef.current = null;
+      }
+    };
+  }, [location.search]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     loadOutstandingDues();
-  }, []);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const paymentMethods = [
     { id: 'gcash', name: 'GCash', icon: '' },
@@ -143,6 +235,13 @@ const PayDuesPage = () => {
             <h1>Pay Dues</h1>
             <p>Manage and pay your memorial park dues online</p>
           </div>
+
+          {isVerifying && (
+            <div className="payment-verifying-banner">
+              <span className="payment-verifying-spinner" />
+              <span>Verifying your payment&hellip; please wait.</span>
+            </div>
+          )}
 
           <div className="dues-container">
           {/* Dues List */}
@@ -232,10 +331,19 @@ const PayDuesPage = () => {
                   </div>
                 </div>
 
-                {selectedPlot.status === 'awaiting_verification' ? (
+                {isVerifying || selectedPlot.status === 'awaiting_verification' ? (
                   <div style={{ textAlign: 'center', padding: '20px', background: '#f0fdf4', borderRadius: '8px', border: '1px solid #bbf7d0' }}>
-                    <p style={{ color: '#15803d', fontWeight: 600, marginBottom: 4 }}>✓ Payment Submitted</p>
-                    <p style={{ color: '#166534', fontSize: '0.875rem', margin: 0 }}>Your payment is awaiting admin verification.</p>
+                    {isVerifying ? (
+                      <>
+                        <p style={{ color: '#15803d', fontWeight: 600, marginBottom: 4 }}>⏳ Verifying Payment…</p>
+                        <p style={{ color: '#166534', fontSize: '0.875rem', margin: 0 }}>Please wait while we confirm your payment.</p>
+                      </>
+                    ) : (
+                      <>
+                        <p style={{ color: '#15803d', fontWeight: 600, marginBottom: 4 }}>✓ Payment Submitted</p>
+                        <p style={{ color: '#166534', fontSize: '0.875rem', margin: 0 }}>Your payment is awaiting admin verification.</p>
+                      </>
+                    )}
                   </div>
                 ) : (
                   <>
