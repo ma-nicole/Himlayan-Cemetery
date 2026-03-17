@@ -25,23 +25,42 @@ const MemberServicesPage = () => {
   const [myRequests, setMyRequests] = useState([]);
   const [requestsLoading, setRequestsLoading] = useState(false);
 
-  // Digit length rules per country code: [min, max]
+  // Digit length rules per country code: [min, max] — local subscriber digits only (no country code prefix)
+  // Sources: ITU-T E.164 national numbering plans
   const phoneRules = {
-    '+63': [10, 10],
-    '+1':  [10, 10],
-    '+44': [10, 11],
-    '+81': [10, 11],
-    '+82': [9,  10],
-    '+86': [11, 11],
-    '+65': [8,   8],
-    '+60': [9,  10],
-    '+61': [9,   9],
-    '+971':[9,   9],
-    '+966':[9,   9],
-    '+39': [9,  11],
-    '+49': [10, 12],
-    '+33': [9,   9],
-    '+34': [9,   9],
+    '+63': [10, 10],  // PH: always 10 (e.g. 9171234567)
+    '+1':  [10, 10],  // US/CA: always 10 (NXX-NXX-XXXX)
+    '+44': [10, 10],  // UK: always 10 after dropping leading 0 (e.g. 7911123456)
+    '+81': [10, 11],  // JP: landline 10, mobile 11 (090/080/070 + 8 = 11)
+    '+82': [9,  10],  // KR: Seoul landline 9, mobile 10 (010-XXXX-XXXX)
+    '+86': [11, 11],  // CN: mobile always 11 (1XX-XXXX-XXXX)
+    '+65': [8,   8],  // SG: always 8
+    '+60': [9,  10],  // MY: landline 9, mobile 10 (01X-XXXXXXXX)
+    '+61': [9,   9],  // AU: always 9 (04XX-XXX-XXX or 02-XXXX-XXXX)
+    '+971':[8,   9],  // UAE: landline 8 (04-XXX-XXXX), mobile 9 (05X-XXX-XXXX)
+    '+966':[8,   9],  // SA: landline 8, mobile 9 (05X-XXX-XXXX)
+    '+39': [9,  10],  // IT: landline ~9, mobile 10 (3XX-XXX-XXXX)
+    '+49': [10, 11],  // DE: mobile 10-11
+    '+33': [9,   9],  // FR: always 9 (6X/7X/1X-XXXXXXXX)
+    '+34': [9,   9],  // ES: always 9
+  };
+
+  const phoneHints = {
+    '+63':  'exactly 10 digits (e.g. 9171234567)',
+    '+1':   'exactly 10 digits (e.g. 2025550199)',
+    '+44':  'exactly 10 digits (e.g. 7911123456)',
+    '+81':  '10–11 digits (landline 10, mobile 11)',
+    '+82':  '9–10 digits (mobile: 10, e.g. 0101234567)',
+    '+86':  'exactly 11 digits (e.g. 13912345678)',
+    '+65':  'exactly 8 digits (e.g. 81234567)',
+    '+60':  '9–10 digits (mobile: 10, e.g. 0112345678)',
+    '+61':  'exactly 9 digits (e.g. 412345678)',
+    '+971': '8–9 digits (landline 8, mobile 9)',
+    '+966': '8–9 digits (landline 8, mobile 9)',
+    '+39':  '9–10 digits (mobile: 10, e.g. 3201234567)',
+    '+49':  '10–11 digits',
+    '+33':  'exactly 9 digits (e.g. 612345678)',
+    '+34':  'exactly 9 digits (e.g. 612345678)',
   };
 
   const handleContactChange = (e) => {
@@ -642,12 +661,16 @@ const MemberServicesPage = () => {
                           className={`form-control${contactError ? ' error' : ''}`}
                           value={requestForm.contact_number}
                           onChange={handleContactChange}
-                          placeholder={requestForm.country_code === '+63' ? '9123456789' : 'digits only'}
+                          placeholder={`digits only`}
                           inputMode="numeric"
                         />
-                        {contactError && (
+                        {contactError ? (
                           <small style={{ color: '#dc2626', fontSize: '0.78rem', marginTop: '4px', display: 'block' }}>
                             {contactError}
+                          </small>
+                        ) : (
+                          <small style={{ color: '#6b7280', fontSize: '0.78rem', marginTop: '4px', display: 'block' }}>
+                            {phoneHints[requestForm.country_code] || '6–15 digits'}
                           </small>
                         )}
                       </div>
