@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import Layout from '../components/common/Layout';
 import LoadingSpinner from '../components/common/LoadingSpinner';
-import CemeteryMap from '../components/map/CemeteryMap';
+import CemeteryMap, { getLandmarkIcon } from '../components/map/CemeteryMap';
 import AddPlotModal from '../components/map/AddPlotModal';
 import AddLandmarkModal from '../components/map/AddLandmarkModal';
 import DeletePlotModal from '../components/map/DeletePlotModal';
@@ -399,7 +399,10 @@ const MapPage = () => {
             {selectedMarker?.type === 'landmark' && (
               <div>
                 <div style={{ marginBottom: '15px' }}>
-                  <h4 style={{ color: '#1a1a2e', marginBottom: '8px' }}>📌 {selectedMarker.name}</h4>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
+                    <span style={{ color: '#1a3a6b', flexShrink: 0 }}>{getLandmarkIcon(selectedMarker.name)}</span>
+                    <h4 style={{ color: '#1a1a2e', margin: 0 }}>{selectedMarker.name}</h4>
+                  </div>
                   <span
                     style={{
                       display: 'inline-block',
@@ -451,7 +454,7 @@ const MapPage = () => {
                           fontWeight: '500',
                         }}
                       >
-                        ✏️ Edit
+                        Edit
                       </button>
                       <button
                         onClick={() => handleDeleteLandmarkClick(selectedMarker)}
@@ -467,7 +470,7 @@ const MapPage = () => {
                           fontWeight: '500',
                         }}
                       >
-                        🗑️ Delete
+                        Delete
                       </button>
                     </div>
                   </div>
