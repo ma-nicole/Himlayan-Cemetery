@@ -59,7 +59,7 @@ jobs:
 
           echo "Checking TCP reachability to ${HOSTINGER_HOST}:${PORT}"
           ok=0
-          for i in 1 2 3 4 5 6; do
+          for i in 1 2 3; do
             if timeout 10 bash -lc "</dev/tcp/${HOSTINGER_HOST}/${PORT}"; then
               echo "SSH port reachable on attempt ${i}."
               ok=1
@@ -100,8 +100,8 @@ jobs:
           key: ${{ secrets.HOSTINGER_SSH_KEY }}
           passphrase: ${{ secrets.HOSTINGER_SSH_PASSPHRASE }}
           port: ${{ secrets.HOSTINGER_SSH_PORT || '65002' }}
-          timeout: 300s
-          command_timeout: 30m
+          timeout: 60s
+          command_timeout: 10m
           envs: REPO_URL,BRANCH,DEPLOY_PATH,APP_URL,FRONTEND_URL,MAIL_MAILER,MAIL_HOST,MAIL_PORT,MAIL_USERNAME,MAIL_PASSWORD,MAIL_ENCRYPTION,MAIL_FROM_ADDRESS,MAIL_FROM_NAME,MAIL_FEEDBACK_TO
           script_stop: false
           script: |
@@ -232,7 +232,18 @@ jobs:
             chmod -R ug+rwX bootstrap/cache storage || true
 
             if [ -f artisan ] && command -v composer >/dev/null 2>&1; then
-              composer install --no-interaction --prefer-dist --optimize-autoloader --no-dev
+              # Only run composer install when dependencies have actually changed.
+              LOCK_HASH_FILE="$DEPLOY_PATH/.composer_lock_hash"
+              CURRENT_HASH=$(md5sum composer.lock 2>/dev/null | awk '{print $1}' || echo "none")
+              PREVIOUS_HASH=$(cat "$LOCK_HASH_FILE" 2>/dev/null || echo "")
+
+              if [ "$CURRENT_HASH" != "$PREVIOUS_HASH" ]; then
+                echo "composer.lock changed — running composer install"
+                composer install --no-interaction --prefer-dist --optimize-autoloader --no-dev
+                echo "$CURRENT_HASH" > "$LOCK_HASH_FILE"
+              else
+                echo "composer.lock unchanged — skipping composer install"
+              fi
             else
               echo "Skipping composer install (composer/artisan not available)"
             fi
@@ -247,7 +258,6 @@ jobs:
               php artisan config:clear || true
               php artisan cache:clear || true
               php artisan migrate --force || true
-              php artisan db:seed --class=UserSeeder --force || true
               php artisan optimize || true
             else
               echo "Skipping artisan commands (php/artisan not available)"
@@ -292,8 +302,8 @@ jobs:
           key: ${{ secrets.HOSTINGER_SSH_KEY }}
           passphrase: ${{ secrets.HOSTINGER_SSH_PASSPHRASE }}
           port: ${{ secrets.HOSTINGER_SSH_PORT || '65002' }}
-          timeout: 300s
-          command_timeout: 30m
+          timeout: 60s
+          command_timeout: 10m
           envs: FRONTEND_PUBLIC_PATH,DEPLOY_PATH
           script_stop: false
           script: |
@@ -401,7 +411,7 @@ jobs:
           key: ${{ secrets.HOSTINGER_SSH_KEY }}
           passphrase: ${{ secrets.HOSTINGER_SSH_PASSPHRASE }}
           port: ${{ secrets.HOSTINGER_SSH_PORT || '65002' }}
-          timeout: 300s
+          timeout: 60s
           source: "frontend/build/*"
           strip_components: 2
           target: ${{ secrets.HOSTINGER_FRONTEND_PUBLIC_PATH }}
@@ -418,7 +428,7 @@ jobs:
           key: ${{ secrets.HOSTINGER_SSH_KEY }}
           passphrase: ${{ secrets.HOSTINGER_SSH_PASSPHRASE }}
           port: ${{ secrets.HOSTINGER_SSH_PORT || '65002' }}
-          timeout: 300s
+          timeout: 60s
           source: "frontend/build/*"
           strip_components: 2
           target: ${{ secrets.HOSTINGER_FRONTEND_PUBLIC_PATH }}
@@ -435,7 +445,7 @@ jobs:
           key: ${{ secrets.HOSTINGER_SSH_KEY }}
           passphrase: ${{ secrets.HOSTINGER_SSH_PASSPHRASE }}
           port: ${{ secrets.HOSTINGER_SSH_PORT || '65002' }}
-          timeout: 300s
+          timeout: 60s
           source: "frontend/build/*"
           strip_components: 2
           target: ${{ secrets.HOSTINGER_FRONTEND_PUBLIC_PATH }}
