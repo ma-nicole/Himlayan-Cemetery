@@ -163,8 +163,9 @@ const MemberMapPage = () => {
           </div>
 
           <div className="lm-layout">
-            {/* Google Map */}
-            <div className="lm-map-wrap">
+            {/* Google Map + Find a Grave button column */}
+            <div className="lm-map-col">
+              <div className="lm-map-wrap">
               {(!isLoaded || loadingLandmarks) ? (
                 <div className="lm-loading">
                   <div className="lm-spinner"></div>
@@ -217,6 +218,13 @@ const MemberMapPage = () => {
                   )}
                 </GoogleMap>
               )}
+            </div>
+              <Link
+                to="/member/search"
+                className="lm-find-grave-btn"
+              >
+                🔎 Find a Grave
+              </Link>
             </div>
 
             {/* Landmark List Panel */}
@@ -275,20 +283,6 @@ const MemberMapPage = () => {
                 </div>
               )}
             </div>
-          </div>
-          <div style={{ marginTop: '1rem' }}>
-            <Link
-              to="/member/search"
-              className="lm-directions-btn"
-              style={{
-                textDecoration: 'none',
-                display: 'inline-flex',
-                padding: '0.75rem 2rem',
-                fontSize: '1rem',
-              }}
-            >
-              🔎 Find a Grave
-            </Link>
           </div>
         </section>
 
