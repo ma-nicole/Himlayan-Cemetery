@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import jsPDF from 'jspdf';
-import 'jspdf-autotable';
+import autoTable from 'jspdf-autotable';
 import api from '../services/api';
 import Sidebar from '../components/common/Sidebar';
 import '../styles/AdminManagement.css';
@@ -99,7 +99,7 @@ const ReportGeneratorPage = () => {
         p.created_at ? new Date(p.created_at).toLocaleDateString('en-PH') : '',
       ]);
 
-      doc.autoTable({
+      autoTable(doc, {
         startY: 45,
         head: [['ID', 'Member', 'Type', 'Amount', 'Method', 'Status', 'Date']],
         body: tableData,
@@ -138,7 +138,7 @@ const ReportGeneratorPage = () => {
         f.created_at ? new Date(f.created_at).toLocaleDateString('en-PH') : '',
       ]);
 
-      doc.autoTable({
+      autoTable(doc, {
         startY: 45,
         head: [['ID', 'Member', 'Subject', 'Message', 'Rating', 'Status', 'Date']],
         body: tableData,
