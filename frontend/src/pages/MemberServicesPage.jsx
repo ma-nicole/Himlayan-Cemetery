@@ -619,12 +619,13 @@ const MemberServicesPage = () => {
                 
                 <form onSubmit={handleSubmitRequest}>
                   <div className="form-group">
-                    <label>Preferred Date (Optional)</label>
+                    <label>Preferred Date <span className="required-star">*</span></label>
                     <input
                       type="date"
                       value={requestForm.preferred_date}
                       onChange={(e) => setRequestForm({...requestForm, preferred_date: e.target.value})}
                       min={new Date().toISOString().split('T')[0]}
+                      required
                     />
                   </div>
                   <div className="form-group">

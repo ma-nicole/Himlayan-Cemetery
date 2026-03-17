@@ -848,6 +848,11 @@
   margin-bottom: 0.5rem;
 }
 
+.required-star {
+  color: #dc2626;
+  margin-left: 2px;
+}
+
 .modal-content .form-group input,
 .modal-content .form-group textarea {
   width: 100%;

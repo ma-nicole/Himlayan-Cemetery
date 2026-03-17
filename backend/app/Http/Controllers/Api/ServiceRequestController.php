@@ -67,7 +67,7 @@ class ServiceRequestController extends Controller
         $validated = $request->validate([
             'service_type' => 'required|string|max:100',
             'description' => 'nullable|string',
-            'preferred_date' => 'nullable|date|after:today',
+            'preferred_date' => 'required|date|after:today',
             'contact_number' => 'nullable|string|max:20',
         ]);
 
