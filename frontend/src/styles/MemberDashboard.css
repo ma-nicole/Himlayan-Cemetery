@@ -1355,15 +1355,27 @@
     padding: 18px 16px;
     min-height: 96px;
     align-items: center;
+    justify-content: flex-start;
   }
 
   .stat-info {
     min-height: 56px;
     justify-content: center;
+    width: 160px;
+    align-items: center;
   }
 
   .stat-number {
     line-height: 1.1;
+    width: 48px;
+    min-width: 48px;
+    margin: 0 auto;
+  }
+
+  .stat-label {
+    width: 100%;
+    text-align: center;
+    margin-top: 6px;
   }
 
   .section-header {
@@ -1414,6 +1426,15 @@
   .stat-card {
     min-height: 90px;
     gap: 14px;
+  }
+
+  .stat-info {
+    width: 150px;
+  }
+
+  .stat-number {
+    width: 44px;
+    min-width: 44px;
   }
 
   .feature-card {
