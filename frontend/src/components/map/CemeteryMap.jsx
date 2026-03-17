@@ -130,7 +130,7 @@ const CemeteryMap = ({ markers, center, zoom, onMarkerClick, onMapClick }) => {
                 position={{ lat: marker.latitude, lng: marker.longitude }}
                 icon={{
                   url: marker.type === 'landmark'
-                    ? createMarkerIcon('#8e44ad')
+                    ? createMarkerIcon('#1a3a6b')
                     : createMarkerIcon(statusColors[marker.status] || '#333'),
                   scaledSize: new window.google.maps.Size(32, 40),
                   anchor: new window.google.maps.Point(16, 40),

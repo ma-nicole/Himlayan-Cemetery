@@ -184,7 +184,7 @@ const MapPage = () => {
     { status: 'occupied', color: '#e94560', label: 'Occupied' },
     { status: 'reserved', color: '#f39c12', label: 'Reserved' },
     { status: 'maintenance', color: '#95a5a6', label: 'Maintenance' },
-    { status: 'landmark', color: '#8e44ad', label: 'Landmark' },
+    { status: 'landmark', color: '#1a3a6b', label: 'Landmark' },
   ];
 
   if (loading) {
@@ -264,7 +264,7 @@ const MapPage = () => {
                 position: 'absolute',
                 top: '10px',
                 left: '10px',
-                backgroundColor: '#8e44ad',
+                backgroundColor: '#1a3a6b',
                 color: 'white',
                 padding: '10px 15px',
                 borderRadius: '6px',
@@ -324,7 +324,7 @@ const MapPage = () => {
                 style={{
                   flex: 1,
                   padding: '10px 16px',
-                  backgroundColor: '#8e44ad',
+                  backgroundColor: '#1a3a6b',
                   color: 'white',
                   border: 'none',
                   borderRadius: '6px',
@@ -332,18 +332,18 @@ const MapPage = () => {
                   fontSize: '0.95rem',
                   fontWeight: '600',
                   whiteSpace: 'nowrap',
-                  boxShadow: '0 2px 8px rgba(142, 68, 173, 0.3)',
+                  boxShadow: '0 2px 8px rgba(26, 58, 107, 0.3)',
                   transition: 'all 0.3s ease',
                 }}
                 onMouseEnter={(e) => {
-                  e.target.style.backgroundColor = '#7d3c98';
+                  e.target.style.backgroundColor = '#0d2358';
                   e.target.style.transform = 'translateY(-2px)';
-                  e.target.style.boxShadow = '0 4px 12px rgba(142, 68, 173, 0.4)';
+                  e.target.style.boxShadow = '0 4px 12px rgba(26, 58, 107, 0.4)';
                 }}
                 onMouseLeave={(e) => {
-                  e.target.style.backgroundColor = '#8e44ad';
+                  e.target.style.backgroundColor = '#1a3a6b';
                   e.target.style.transform = 'translateY(0)';
-                  e.target.style.boxShadow = '0 2px 8px rgba(142, 68, 173, 0.3)';
+                  e.target.style.boxShadow = '0 2px 8px rgba(26, 58, 107, 0.3)';
                 }}
               >
                 📌 Add Landmark
