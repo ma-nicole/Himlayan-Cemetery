@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import api from '../services/api';
-import Sidebar from '../components/common/Sidebar';
+import Layout from '../components/common/Layout';
 import { validateRequired, validateTextArea } from '../utils/formValidator';
 import '../styles/AdminManagement.css';
 
@@ -126,10 +126,8 @@ const PaymentManagementPage = () => {
   };
 
   return (
-    <div className="admin-layout">
-      <Sidebar />
-      <main className="admin-main">
-        <div className="admin-management">
+    <Layout>
+      <div className="admin-management">
           <div className="page-header">
             <div className="header-content">
               <h1>Payments</h1>
@@ -308,8 +306,7 @@ const PaymentManagementPage = () => {
             </div>
           </div>
         )}
-      </main>
-    </div>
+    </Layout>
   );
 };
 

@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import api from '../services/api';
-import Sidebar from '../components/common/Sidebar';
+import Layout from '../components/common/Layout';
 import '../styles/AdminManagement.css';
 import './ReportGeneratorPage.css';
 
@@ -203,10 +203,8 @@ const ReportGeneratorPage = () => {
   const paymentStatuses = ['pending', 'paid', 'failed', 'refunded'];
 
   return (
-    <div className="admin-layout">
-      <Sidebar />
-      <main className="admin-main">
-        <div className="admin-management">
+    <Layout>
+      <div className="admin-management">
           <div className="page-header">
             <div className="header-content">
               <h1>Report Generator</h1>
@@ -407,8 +405,7 @@ const ReportGeneratorPage = () => {
             </div>
           )}
         </div>
-      </main>
-    </div>
+    </Layout>
   );
 };
 

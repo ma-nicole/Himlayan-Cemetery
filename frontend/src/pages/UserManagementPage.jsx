@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../hooks/useAuth';
 import api from '../services/api';
-import Sidebar from '../components/common/Sidebar';
+import Layout from '../components/common/Layout';
 import { validateName, validateEmail, validatePassword } from '../utils/formValidator';
 import '../styles/UserManagement.css';
 
@@ -206,10 +206,8 @@ const UserManagementPage = () => {
   };
 
   return (
-    <div className="admin-layout">
-      <Sidebar />
-      <main className="admin-main">
-        <div className="user-management">
+    <Layout>
+      <div className="user-management">
           {/* Header */}
           <div className="page-header">
             <div className="header-content">
@@ -509,8 +507,7 @@ const UserManagementPage = () => {
             </div>
           </div>
         )}
-      </main>
-    </div>
+    </Layout>
   );
 };
 
