@@ -38,6 +38,9 @@ class PublicController extends Controller
 
         return asset('storage/' . $normalizedPath);
     }
+
+    /**
+     * Get public grave profile by QR code or plot number
      * 
      * @param string $code
      * @return \Illuminate\Http\JsonResponse
