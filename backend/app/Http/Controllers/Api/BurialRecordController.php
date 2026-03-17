@@ -20,6 +20,14 @@ class BurialRecordController extends Controller
         }
 
         if (filter_var($photoPath, FILTER_VALIDATE_URL)) {
+            // Normalize localhost/dev URLs to production storage path.
+            if (preg_match('#^https?://(localhost|127\.0\.0\.1)(:\d+)?(/.*)?$#i', $photoPath, $m)) {
+                $path = ltrim($m[3] ?? '', '/');
+                if (!str_starts_with($path, 'storage/')) {
+                    $path = 'storage/' . $path;
+                }
+                return asset($path);
+            }
             return $photoPath;
         }
 

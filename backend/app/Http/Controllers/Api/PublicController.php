@@ -19,6 +19,14 @@ class PublicController extends Controller
         }
 
         if (filter_var($photoPath, FILTER_VALIDATE_URL)) {
+            // Normalize localhost/dev URLs to production storage path.
+            if (preg_match('#^https?://(localhost|127\.0\.0\.1)(:\d+)?(/.*)?$#i', $photoPath, $m)) {
+                $path = ltrim($m[3] ?? '', '/');
+                if (!str_starts_with($path, 'storage/')) {
+                    $path = 'storage/' . $path;
+                }
+                return asset($path);
+            }
             return $photoPath;
         }
 
@@ -30,9 +38,6 @@ class PublicController extends Controller
 
         return asset('storage/' . $normalizedPath);
     }
-
-    /**
-     * Get public grave profile by QR code or plot number
      * 
      * @param string $code
      * @return \Illuminate\Http\JsonResponse

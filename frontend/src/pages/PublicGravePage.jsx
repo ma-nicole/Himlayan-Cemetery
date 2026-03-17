@@ -96,6 +96,7 @@ const PublicGravePage = () => {
                 border: '4px solid white',
                 marginBottom: '15px',
               }}
+              onError={(e) => { e.target.style.display = 'none'; }}
             />
           )}
           <h1>{profile.deceased_name}</h1>
