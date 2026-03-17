@@ -10,20 +10,6 @@ const clearStoredAuth = () => {
   localStorage.removeItem(TOKEN_EXPIRES_AT_KEY);
 };
 
-const isTokenExpired = () => {
-  const expiresAt = localStorage.getItem(TOKEN_EXPIRES_AT_KEY);
-  if (!expiresAt) {
-    return false;
-  }
-
-  const expiresAtMs = Date.parse(expiresAt);
-  if (Number.isNaN(expiresAtMs)) {
-    return true;
-  }
-
-  return Date.now() >= expiresAtMs;
-};
-
 const rawApiUrl = process.env.REACT_APP_API_URL || 'https://himlayangpilipino.com/api';
 const trimmedApiUrl = rawApiUrl.replace(/\/$/, '');
 const normalizedApiBaseUrl = trimmedApiUrl.endsWith('/api')
@@ -43,14 +29,6 @@ api.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem(TOKEN_KEY);
     if (token) {
-      if (isTokenExpired()) {
-        clearStoredAuth();
-        if (!window.location.pathname.includes('/login')) {
-          window.location.href = '/login?reason=session_expired';
-        }
-        return Promise.reject(new Error('Session expired'));
-      }
-
       config.headers.Authorization = `Bearer ${token}`;
     }
     

@@ -10,7 +10,7 @@ return [
     'guard' => ['web'],
 
     // Token lifetime in minutes for personal access tokens.
-    'expiration' => env('SANCTUM_TOKEN_EXPIRATION', 120),
+    'expiration' => env('SANCTUM_TOKEN_EXPIRATION', 1440),
 
     // Maximum token age (minutes) allowed for sensitive operations.
     'sensitive_operation_expiration' => env('SANCTUM_SENSITIVE_OPERATION_EXPIRATION', 15),

@@ -52,6 +52,25 @@ const PaymentHistoryPage = () => {
 
   const displayStatus = (item) => item.effective_status || item.status || 'pending';
 
+  const formatPaymentType = (type) => {
+    if (!type) return 'Unspecified Payment';
+
+    const labelMap = {
+      annual_maintenance: 'Annual Maintenance Dues',
+      quarterly_dues: 'Quarterly Dues',
+      plot_purchase: 'Plot Purchase',
+      service_fee: 'Service Fee',
+    };
+
+    return labelMap[type] || type.replace(/_/g, ' ').replace(/\b\w/g, (char) => char.toUpperCase());
+  };
+
+  const buildPaymentTitle = (item) => {
+    const typeLabel = formatPaymentType(item.payment_type);
+    const plotNumber = item.plot?.plot_number;
+    return plotNumber ? `${typeLabel} - Plot ${plotNumber}` : typeLabel;
+  };
+
   return (
     <div className="member-dashboard">
       <MemberHeader />
@@ -78,18 +97,22 @@ const PaymentHistoryPage = () => {
               {payments.map((item) => (
                 <article key={item.id} className="payment-history-card">
                   <div className="payment-history-row">
-                    <h3>{item.reference_number || `Payment #${item.id}`}</h3>
+                    <h3>{buildPaymentTitle(item)}</h3>
                     <span className={`payment-status ${displayStatus(item)}`}>
                       {displayStatus(item)}
                     </span>
                   </div>
+
+                  <p style={{ margin: '0 0 10px 0', color: '#64748b', fontSize: '0.9rem' }}>
+                    Ref: {item.reference_number || `Payment #${item.id}`}
+                  </p>
 
                   <div className="payment-history-meta">
                     <p>
                       <strong>Amount:</strong> {formatCurrency(item.amount)}
                     </p>
                     <p>
-                      <strong>Type:</strong> {item.payment_type || 'N/A'}
+                      <strong>Type:</strong> {formatPaymentType(item.payment_type)}
                     </p>
                     <p>
                       <strong>Method:</strong> {item.payment_method || 'N/A'}

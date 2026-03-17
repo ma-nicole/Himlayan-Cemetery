@@ -23,7 +23,7 @@ const isStoredTokenExpired = () => {
 
   const expiresAtMs = Date.parse(expiresAt);
   if (Number.isNaN(expiresAtMs)) {
-    return true;
+    return false;
   }
 
   return Date.now() >= expiresAtMs;
