@@ -294,10 +294,17 @@ class InvitationController extends Controller
             'name' => $fullName,
             'password' => $password,
             'token' => $token,
-            'accept_url' => $this->canonicalFrontendUrl() . '/api/invitations/activate?token=' . $token
+            'accept_url' => $this->canonicalFrontendUrl() . '/accept-invitation?token=' . $token
         ];
 
         $expiresAt = now()->addDay();
+
+        Log::info('Invitation prepared', [
+            'accept_url' => $invitationData['accept_url'],
+            'frontend_url_raw' => config('app.frontend_url'),
+            'frontend_url_canonical' => $this->canonicalFrontendUrl(),
+            'recipient' => $burialRecord->contact_email,
+        ]);
 
         $mailConfigError = $this->validateMailConfiguration();
         if ($mailConfigError) {
@@ -408,7 +415,7 @@ class InvitationController extends Controller
             'name' => $fullName,
             'password' => $password,
             'token' => $token,
-            'accept_url' => $this->canonicalFrontendUrl() . '/api/invitations/activate?token=' . $token
+            'accept_url' => $this->canonicalFrontendUrl() . '/accept-invitation?token=' . $token
         ];
 
         $expiresAt = now()->addDay();
