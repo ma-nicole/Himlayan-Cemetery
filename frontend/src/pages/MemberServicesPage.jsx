@@ -21,8 +21,37 @@ const MemberServicesPage = () => {
   });
   const [submitting, setSubmitting] = useState(false);
   const [submitSuccess, setSubmitSuccess] = useState(false);
+  const [contactError, setContactError] = useState('');
   const [myRequests, setMyRequests] = useState([]);
   const [requestsLoading, setRequestsLoading] = useState(false);
+
+  // Digit length rules per country code: [min, max]
+  const phoneRules = {
+    '+63': [10, 10],
+    '+1':  [10, 10],
+    '+44': [10, 11],
+    '+81': [10, 11],
+    '+82': [9,  10],
+    '+86': [11, 11],
+    '+65': [8,   8],
+    '+60': [9,  10],
+    '+61': [9,   9],
+    '+971':[9,   9],
+    '+966':[9,   9],
+    '+39': [9,  11],
+    '+49': [10, 12],
+    '+33': [9,   9],
+    '+34': [9,   9],
+  };
+
+  const handleContactChange = (e) => {
+    const digitsOnly = e.target.value.replace(/\D/g, '');
+    const rule = phoneRules[requestForm.country_code] || [6, 15];
+    if (digitsOnly.length <= rule[1]) {
+      setRequestForm({ ...requestForm, contact_number: digitsOnly });
+      setContactError('');
+    }
+  };
 
   useEffect(() => {
     // Check URL params to switch to my-requests tab
@@ -61,12 +90,27 @@ const MemberServicesPage = () => {
   const openRequestModal = (service) => {
     setSelectedService(service);
     setRequestForm({ description: '', preferred_date: '', contact_number: '', country_code: '+63' });
+    setContactError('');
     setSubmitSuccess(false);
     setShowRequestModal(true);
   };
 
   const handleSubmitRequest = async (e) => {
     e.preventDefault();
+
+    // Validate contact number digit length
+    if (requestForm.contact_number) {
+      const rule = phoneRules[requestForm.country_code] || [6, 15];
+      const len = requestForm.contact_number.length;
+      if (len < rule[0] || len > rule[1]) {
+        const msg = rule[0] === rule[1]
+          ? `Contact number must be exactly ${rule[0]} digits for ${requestForm.country_code}`
+          : `Contact number must be ${rule[0]}–${rule[1]} digits for ${requestForm.country_code}`;
+        setContactError(msg);
+        return;
+      }
+    }
+
     setSubmitting(true);
     try {
       const fullContactNumber = requestForm.contact_number 
@@ -566,11 +610,14 @@ const MemberServicesPage = () => {
                   </div>
                   <div className="form-group">
                     <label>Contact Number</label>
-                    <div style={{ display: 'flex', gap: '8px' }}>
+                    <div style={{ display: 'flex', gap: '8px', alignItems: 'flex-start' }}>
                       <select 
                         className="form-control"
                         value={requestForm.country_code}
-                        onChange={(e) => setRequestForm({...requestForm, country_code: e.target.value})}
+                        onChange={(e) => {
+                          setRequestForm({...requestForm, country_code: e.target.value, contact_number: ''});
+                          setContactError('');
+                        }}
                         style={{ flex: '0 0 100px' }}
                       >
                         <option value="+63">🇵🇭 +63</option>
@@ -589,14 +636,21 @@ const MemberServicesPage = () => {
                         <option value="+33">🇫🇷 +33</option>
                         <option value="+34">🇪🇸 +34</option>
                       </select>
-                      <input
-                        type="tel"
-                        className="form-control"
-                        value={requestForm.contact_number}
-                        onChange={(e) => setRequestForm({...requestForm, contact_number: e.target.value})}
-                        placeholder="9123456789"
-                        style={{ flex: '1' }}
-                      />
+                      <div style={{ flex: '1' }}>
+                        <input
+                          type="tel"
+                          className={`form-control${contactError ? ' error' : ''}`}
+                          value={requestForm.contact_number}
+                          onChange={handleContactChange}
+                          placeholder={requestForm.country_code === '+63' ? '9123456789' : 'digits only'}
+                          inputMode="numeric"
+                        />
+                        {contactError && (
+                          <small style={{ color: '#dc2626', fontSize: '0.78rem', marginTop: '4px', display: 'block' }}>
+                            {contactError}
+                          </small>
+                        )}
+                      </div>
                     </div>
                   </div>
                   <div className="form-group">
