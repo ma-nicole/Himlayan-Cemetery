@@ -28,31 +28,29 @@ const createMarkerIcon = (color) => {
 };
 
 // Inner symbol paths for each landmark name (fits inside a 24x24 viewport centered at 12,12)
-const LANDMARK_SYMBOL_PATHS = {
-  'Main Gate':        'M4 20V8l8-5 8 5v12h-5v-6H9v6H4z',
-  'Chapel':           'M12 2 L12 7 M10 5 L14 5 M6 22 L6 9 Q12 4 18 9 L18 22 Z M9 22 L9 15 Q12 12 15 15 L15 22',
-  'Admin Office':     'M3 22V9l9-7 9 7v13H3zM9 22v-6h6v6',
-  'Parking Area':     'M6 20V4h6a5 5 0 0 1 0 10H6M6 14h6',
-  'Comfort Room':     'M7 4a2 2 0 1 1 4 0 2 2 0 0 1-4 0zm-1 4h6l-1 6H7L6 8zm7-4a2 2 0 1 1 4 0 2 2 0 0 1-4 0zm-1 4h6l-1 6h-4l-1-6z',
-  'Information Booth':'M12 5v2M12 11v8M6 3h12a1 1 0 0 1 1 1v16a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1z',
-  'Entrance':         'M13 4l7 8-7 8M4 12h16M4 4v16',
-  'Exit':             'M11 4l-7 8 7 8M20 12H4M20 4v16',
-  'Food Stall':       'M4 3h16v5a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V3zM8 10v11M16 10v11M4 21h16',
-  'Cultural Heritage':'M3 21h18M5 21V9M19 21V9M12 3 2 9h20L12 3zM9 21v-5a3 3 0 0 1 6 0v5',
+const LANDMARK_ABBREVIATIONS = {
+  'Main Gate':        'MG',
+  'Chapel':           'CH',
+  'Admin Office':     'AO',
+  'Parking Area':     'P',
+  'Comfort Room':     'CR',
+  'Information Booth':'i',
+  'Entrance':         'EN',
+  'Exit':             'EX',
+  'Food Stall':       'FS',
+  'Cultural Heritage':'CU',
 };
-
-const DEFAULT_LANDMARK_PATH = 'M12 2C8.1 2 5 5.1 5 9c0 5.2 7 13 7 13s7-7.8 7-13c0-3.9-3.1-7-7-7zm0 9.5c-1.4 0-2.5-1.1-2.5-2.5S10.6 6.5 12 6.5s2.5 1.1 2.5 2.5S13.4 11.5 12 11.5z';
 
 const createLandmarkIcon = (landmarkName) => {
   const color = '#1a3a6b';
-  const symbolPath = LANDMARK_SYMBOL_PATHS[landmarkName] || DEFAULT_LANDMARK_PATH;
-  const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 34 44" width="34" height="44">
-    <path d="M17 0C8.2 0 1 7.2 1 16c0 9.8 16 28 16 28S33 25.8 33 16C33 7.2 25.8 0 17 0z" fill="${color}" stroke="white" stroke-width="1.5"/>
-    <g transform="translate(5,4) scale(1)" fill="none" stroke="white" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
-      <path d="${symbolPath}"/>
-    </g>
+  const abbr = LANDMARK_ABBREVIATIONS[landmarkName] || 'LM';
+  const fontSize = abbr.length === 1 ? '13' : '9';
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 36 48" width="36" height="48">
+    <path d="M18 1C9.2 1 2 8.2 2 17c0 9.8 16 30 16 30S34 26.8 34 17C34 8.2 26.8 1 18 1z" fill="${color}" stroke="white" stroke-width="1.5"/>
+    <circle cx="18" cy="17" r="11" fill="white"/>
+    <text x="18" y="21" text-anchor="middle" font-size="${fontSize}" font-family="Arial,sans-serif" font-weight="bold" fill="${color}">${abbr}</text>
   </svg>`;
-  return `data:image/svg+xml;base64,${btoa(svg)}`;
+  return `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`;
 };
 
 // Inline SVG icon component for UI (InfoWindow, detail panel)
@@ -179,10 +177,10 @@ const CemeteryMap = ({ markers, center, zoom, onMarkerClick, onMapClick }) => {
                     ? createLandmarkIcon(marker.name)
                     : createMarkerIcon(statusColors[marker.status] || '#333'),
                   scaledSize: marker.type === 'landmark'
-                    ? new window.google.maps.Size(34, 44)
+                    ? new window.google.maps.Size(36, 48)
                     : new window.google.maps.Size(32, 40),
                   anchor: marker.type === 'landmark'
-                    ? new window.google.maps.Point(17, 44)
+                    ? new window.google.maps.Point(18, 48)
                     : new window.google.maps.Point(16, 40),
                 }}
                 onClick={() => handleMarkerClick(marker)}
