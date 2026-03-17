@@ -57,7 +57,7 @@ const CemeteryMap = ({ markers, center, zoom, onMarkerClick, onMapClick }) => {
 
   useEffect(() => {
     if (markers && markers.length > 0) {
-      console.log(`✓ Markers loaded: ${markers.length} plots on map`);
+      console.log(`✓ Markers loaded: ${markers.length} markers on map`);
     } else {
       console.warn('⚠️ No markers to display');
     }
@@ -129,12 +129,14 @@ const CemeteryMap = ({ markers, center, zoom, onMarkerClick, onMapClick }) => {
               <MarkerF
                 position={{ lat: marker.latitude, lng: marker.longitude }}
                 icon={{
-                  url: createMarkerIcon(statusColors[marker.status] || '#333'),
+                  url: marker.type === 'landmark'
+                    ? createMarkerIcon('#8e44ad')
+                    : createMarkerIcon(statusColors[marker.status] || '#333'),
                   scaledSize: new window.google.maps.Size(32, 40),
                   anchor: new window.google.maps.Point(16, 40),
                 }}
                 onClick={() => handleMarkerClick(marker)}
-                title={marker.plot_number}
+                title={marker.type === 'landmark' ? marker.name : marker.plot_number}
               />
 
               {selectedMarkerId === marker.id && (
@@ -143,49 +145,77 @@ const CemeteryMap = ({ markers, center, zoom, onMarkerClick, onMapClick }) => {
                   onCloseClick={handleInfoWindowClose}
                 >
                   <div style={{ minWidth: '150px', color: '#333' }}>
-                    <strong style={{ fontSize: '14px' }}>{marker.plot_number}</strong>
-                    <br />
-                    <span
-                      style={{
-                        display: 'inline-block',
-                        padding: '2px 8px',
-                        borderRadius: '10px',
-                        fontSize: '11px',
-                        backgroundColor: statusColors[marker.status],
-                        color: 'white',
-                        marginTop: '5px',
-                      }}
-                    >
-                      {marker.status}
-                    </span>
-                    {marker.deceased_name && (
+                    {marker.type === 'landmark' ? (
                       <>
-                        <hr style={{ margin: '8px 0' }} />
-                        <p style={{ margin: 0 }}>
-                          <strong>{marker.deceased_name}</strong>
-                        </p>
-                        {marker.burial_date && (
-                          <small>Buried: {marker.burial_date}</small>
+                        <strong style={{ fontSize: '14px' }}>📌 {marker.name}</strong>
+                        <br />
+                        <span
+                          style={{
+                            display: 'inline-block',
+                            padding: '2px 8px',
+                            borderRadius: '10px',
+                            fontSize: '11px',
+                            backgroundColor: marker.status === 'open' ? '#27ae60' : '#95a5a6',
+                            color: 'white',
+                            marginTop: '5px',
+                          }}
+                        >
+                          {marker.status}
+                        </span>
+                        {marker.notes && (
+                          <>
+                            <hr style={{ margin: '8px 0' }} />
+                            <p style={{ margin: 0, fontSize: '12px' }}>{marker.notes}</p>
+                          </>
                         )}
                       </>
-                    )}
-                    {onMarkerClick && (
-                      <button
-                        style={{
-                          marginTop: '10px',
-                          padding: '5px 10px',
-                          fontSize: '12px',
-                          cursor: 'pointer',
-                          backgroundColor: '#1a1a2e',
-                          color: 'white',
-                          border: 'none',
-                          borderRadius: '4px',
-                          width: '100%',
-                        }}
-                        onClick={() => handleMarkerClick(marker)}
-                      >
-                        View Details
-                      </button>
+                    ) : (
+                      <>
+                        <strong style={{ fontSize: '14px' }}>{marker.plot_number}</strong>
+                        <br />
+                        <span
+                          style={{
+                            display: 'inline-block',
+                            padding: '2px 8px',
+                            borderRadius: '10px',
+                            fontSize: '11px',
+                            backgroundColor: statusColors[marker.status],
+                            color: 'white',
+                            marginTop: '5px',
+                          }}
+                        >
+                          {marker.status}
+                        </span>
+                        {marker.deceased_name && (
+                          <>
+                            <hr style={{ margin: '8px 0' }} />
+                            <p style={{ margin: 0 }}>
+                              <strong>{marker.deceased_name}</strong>
+                            </p>
+                            {marker.burial_date && (
+                              <small>Buried: {marker.burial_date}</small>
+                            )}
+                          </>
+                        )}
+                        {onMarkerClick && (
+                          <button
+                            style={{
+                              marginTop: '10px',
+                              padding: '5px 10px',
+                              fontSize: '12px',
+                              cursor: 'pointer',
+                              backgroundColor: '#1a1a2e',
+                              color: 'white',
+                              border: 'none',
+                              borderRadius: '4px',
+                              width: '100%',
+                            }}
+                            onClick={() => handleMarkerClick(marker)}
+                          >
+                            View Details
+                          </button>
+                        )}
+                      </>
                     )}
                   </div>
                 </InfoWindowF>

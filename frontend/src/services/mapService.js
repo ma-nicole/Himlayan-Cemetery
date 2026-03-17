@@ -48,4 +48,24 @@ export const mapService = {
     const response = await api.delete(`/map/plots/${plotId}`);
     return response.data;
   },
+
+  /**
+   * Create a new landmark (admin/staff)
+   * @param {Object} landmarkData
+   * @returns {Promise}
+   */
+  async createLandmark(landmarkData) {
+    const response = await api.post('/map/landmarks', landmarkData);
+    return response.data;
+  },
+
+  /**
+   * Delete a landmark (admin only)
+   * @param {number} landmarkId
+   * @returns {Promise}
+   */
+  async deleteLandmark(landmarkId) {
+    const response = await api.delete(`/map/landmarks/${landmarkId}`);
+    return response.data;
+  },
 };

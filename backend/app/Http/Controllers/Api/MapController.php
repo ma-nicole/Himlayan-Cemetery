@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\Plot;
 use App\Models\BurialRecord;
+use App\Models\Landmark;
 use Illuminate\Http\Request;
 
 class MapController extends Controller
@@ -21,28 +22,43 @@ class MapController extends Controller
     }
 
     /**
-     * Get all map markers for cemetery view
-     * 
+     * Get all plot markers and landmark markers combined
+     *
      * @return \Illuminate\Http\JsonResponse
      */
     public function markers()
     {
         $plots = $this->cemeteryPlotsQuery()->with('burialRecord')->get();
 
-        $markers = $plots->map(function ($plot) {
+        $plotMarkers = $plots->map(function ($plot) {
             return [
-                'id' => $plot->id,
-                'plot_number' => $plot->plot_number,
-                'section' => $plot->section,
-                'latitude' => (float) $plot->latitude,
-                'longitude' => (float) $plot->longitude,
-                'status' => $plot->status,
+                'id'           => $plot->id,
+                'type'         => 'plot',
+                'plot_number'  => $plot->plot_number,
+                'section'      => $plot->section,
+                'latitude'     => (float) $plot->latitude,
+                'longitude'    => (float) $plot->longitude,
+                'status'       => $plot->status,
                 'deceased_name' => $plot->burialRecord?->deceased_name,
-                'burial_date' => $plot->burialRecord?->burial_date?->format('Y-m-d'),
+                'burial_date'  => $plot->burialRecord?->burial_date?->format('Y-m-d'),
             ];
         });
 
-        return $this->successResponse($markers, 'Map markers retrieved successfully');
+        $landmarkMarkers = Landmark::all()->map(function ($lm) {
+            return [
+                'id'        => 'lm_' . $lm->id,
+                'type'      => 'landmark',
+                'name'      => $lm->name,
+                'latitude'  => (float) $lm->latitude,
+                'longitude' => (float) $lm->longitude,
+                'status'    => $lm->status,
+                'notes'     => $lm->notes,
+            ];
+        });
+
+        $allMarkers = $plotMarkers->merge($landmarkMarkers)->values();
+
+        return $this->successResponse($allMarkers, 'Map markers retrieved successfully');
     }
 
     /**
@@ -196,6 +212,77 @@ class MapController extends Controller
             return $this->successResponse(null, "Plot {$plotNumber} deleted successfully");
         } catch (\Exception $e) {
             return $this->errorResponse('Failed to delete plot: ' . $e->getMessage(), 500);
+        }
+    }
+
+    // -----------------------------------------------------------------------
+    // LANDMARK METHODS
+    // -----------------------------------------------------------------------
+
+    /**
+     * Get all landmarks
+     */
+    public function getLandmarks()
+    {
+        $landmarks = Landmark::orderBy('name')->get();
+        return $this->successResponse($landmarks, 'Landmarks retrieved successfully');
+    }
+
+    /**
+     * Create a new landmark (admin/staff only)
+     */
+    public function createLandmark(Request $request)
+    {
+        $validated = $request->validate([
+            'name'      => 'required|string|max:100',
+            'latitude'  => 'required|numeric|between:' . self::HIMS_LAT_MIN . ',' . self::HIMS_LAT_MAX,
+            'longitude' => 'required|numeric|between:' . self::HIMS_LNG_MIN . ',' . self::HIMS_LNG_MAX,
+            'status'    => 'required|in:open,closed',
+            'notes'     => 'nullable|string',
+        ], [
+            'name.required'      => 'Landmark name is required.',
+            'status.required'    => 'Status is required.',
+            'latitude.between'   => 'Latitude must be inside Himlayang Pilipino Memorial Park area.',
+            'longitude.between'  => 'Longitude must be inside Himlayang Pilipino Memorial Park area.',
+        ]);
+
+        try {
+            $landmark = Landmark::create($validated);
+            return $this->successResponse([
+                'id'        => 'lm_' . $landmark->id,
+                'type'      => 'landmark',
+                'name'      => $landmark->name,
+                'latitude'  => (float) $landmark->latitude,
+                'longitude' => (float) $landmark->longitude,
+                'status'    => $landmark->status,
+                'notes'     => $landmark->notes,
+            ], 'Landmark created successfully', 201);
+        } catch (\Exception $e) {
+            return $this->errorResponse('Failed to create landmark: ' . $e->getMessage(), 500);
+        }
+    }
+
+    /**
+     * Delete a landmark (admin only)
+     */
+    public function deleteLandmark($landmarkId)
+    {
+        if (!auth('sanctum')->check() || !auth('sanctum')->user()->isAdmin()) {
+            return $this->errorResponse('Unauthorized. Only administrators can delete landmarks.', 403);
+        }
+
+        $landmark = Landmark::find($landmarkId);
+
+        if (!$landmark) {
+            return $this->errorResponse('Landmark not found', 404);
+        }
+
+        try {
+            $name = $landmark->name;
+            $landmark->delete();
+            return $this->successResponse(null, "Landmark '{$name}' deleted successfully");
+        } catch (\Exception $e) {
+            return $this->errorResponse('Failed to delete landmark: ' . $e->getMessage(), 500);
         }
     }
 }

@@ -175,6 +175,10 @@ Route::middleware(['auth:sanctum', 'sanitize.input'])->group(function () {
         Route::middleware('auth:sanctum')->group(function () {
             Route::post('/plots', [MapController::class, 'createPlot']);
             Route::delete('/plots/{plotId}', [MapController::class, 'deletePlot']);
+
+            Route::get('/landmarks', [MapController::class, 'getLandmarks']);
+            Route::post('/landmarks', [MapController::class, 'createLandmark']);
+            Route::delete('/landmarks/{landmarkId}', [MapController::class, 'deleteLandmark']);
         });
     });
 

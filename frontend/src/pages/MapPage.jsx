@@ -3,6 +3,7 @@ import Layout from '../components/common/Layout';
 import LoadingSpinner from '../components/common/LoadingSpinner';
 import CemeteryMap from '../components/map/CemeteryMap';
 import AddPlotModal from '../components/map/AddPlotModal';
+import AddLandmarkModal from '../components/map/AddLandmarkModal';
 import DeletePlotModal from '../components/map/DeletePlotModal';
 import { mapService } from '../services/mapService';
 import { useAuth } from '../hooks/useAuth';
@@ -33,6 +34,11 @@ const MapPage = () => {
   const [addPlotMode, setAddPlotMode] = useState(false);
   const [selectedPlotCoordinates, setSelectedPlotCoordinates] = useState(null);
 
+  // Add landmark mode state
+  const [showAddLandmarkModal, setShowAddLandmarkModal] = useState(false);
+  const [addLandmarkMode, setAddLandmarkMode] = useState(false);
+  const [selectedLandmarkCoordinates, setSelectedLandmarkCoordinates] = useState(null);
+
   const loadMapData = async () => {
     try {
       setLoading(true);
@@ -59,6 +65,14 @@ const MapPage = () => {
 
   const handleMarkerClick = async (marker) => {
     setSelectedMarker(marker);
+
+    // Landmarks don't have plot details — show info from marker data directly
+    if (marker.type === 'landmark') {
+      setMarkerDetails(null);
+      setLoadingDetails(false);
+      return;
+    }
+
     setLoadingDetails(true);
     setMarkerDetails(null);
     
@@ -97,7 +111,10 @@ const MapPage = () => {
   };
 
   const handleMapClick = (coordinates) => {
-    if (addPlotMode) {
+    if (addLandmarkMode) {
+      setSelectedLandmarkCoordinates(coordinates);
+      setShowAddLandmarkModal(true);
+    } else if (addPlotMode) {
       setSelectedPlotCoordinates(coordinates);
       setShowAddPlotModal(true);
     }
@@ -118,19 +135,48 @@ const MapPage = () => {
 
   const toggleMapClickMode = () => {
     if (!addPlotMode) {
-      // Entering map click mode - close modal to allow map interaction
       setShowAddPlotModal(false);
       setAddPlotMode(true);
     } else {
-      // Exiting map click mode - reopen modal
       setShowAddPlotModal(true);
       setAddPlotMode(false);
     }
   };
 
-  const filteredMarkers = filter === 'all' 
-    ? markers 
-    : markers.filter(m => m.status === filter);
+  const handleAddLandmarkClick = () => {
+    setShowAddLandmarkModal(true);
+    setSelectedLandmarkCoordinates(null);
+    setSelectedMarker(null);
+  };
+
+  const handleAddLandmarkModalClose = () => {
+    setShowAddLandmarkModal(false);
+    setAddLandmarkMode(false);
+    setSelectedLandmarkCoordinates(null);
+  };
+
+  const handleLandmarkAdded = () => {
+    loadMapData();
+    setSelectedMarker(null);
+    setMarkerDetails(null);
+  };
+
+  const toggleLandmarkMapClickMode = () => {
+    if (!addLandmarkMode) {
+      setShowAddLandmarkModal(false);
+      setAddLandmarkMode(true);
+    } else {
+      setShowAddLandmarkModal(true);
+      setAddLandmarkMode(false);
+    }
+  };
+
+  const plotMarkers = markers.filter(m => m.type !== 'landmark');
+
+  // When filtering by plot status, always keep landmarks visible
+  const filteredMarkers = filter === 'all'
+    ? markers
+    : markers.filter(m => m.type === 'landmark' || m.status === filter);
 
   // Legend for marker colors
   const legend = [
@@ -138,6 +184,7 @@ const MapPage = () => {
     { status: 'occupied', color: '#e94560', label: 'Occupied' },
     { status: 'reserved', color: '#f39c12', label: 'Reserved' },
     { status: 'maintenance', color: '#95a5a6', label: 'Maintenance' },
+    { status: 'landmark', color: '#8e44ad', label: 'Landmark' },
   ];
 
   if (loading) {
@@ -170,11 +217,11 @@ const MapPage = () => {
                   value={filter}
                   onChange={(e) => setFilter(e.target.value)}
                 >
-                  <option value="all">All ({markers.length})</option>
-                  <option value="available">Available ({markers.filter(m => m.status === 'available').length})</option>
-                  <option value="occupied">Occupied ({markers.filter(m => m.status === 'occupied').length})</option>
-                  <option value="reserved">Reserved ({markers.filter(m => m.status === 'reserved').length})</option>
-                  <option value="maintenance">Maintenance ({markers.filter(m => m.status === 'maintenance').length})</option>
+                  <option value="all">All ({plotMarkers.length} plots)</option>
+                  <option value="available">Available ({plotMarkers.filter(m => m.status === 'available').length})</option>
+                  <option value="occupied">Occupied ({plotMarkers.filter(m => m.status === 'occupied').length})</option>
+                  <option value="reserved">Reserved ({plotMarkers.filter(m => m.status === 'reserved').length})</option>
+                  <option value="maintenance">Maintenance ({plotMarkers.filter(m => m.status === 'maintenance').length})</option>
                 </select>
               </div>
               <div style={{ display: 'flex', gap: '15px' }}>
@@ -212,6 +259,23 @@ const MapPage = () => {
                 📍 Click on the map to select plot location
               </div>
             )}
+            {addLandmarkMode && (
+              <div style={{
+                position: 'absolute',
+                top: '10px',
+                left: '10px',
+                backgroundColor: '#8e44ad',
+                color: 'white',
+                padding: '10px 15px',
+                borderRadius: '6px',
+                fontSize: '0.9rem',
+                fontWeight: '600',
+                zIndex: 100,
+                boxShadow: '0 2px 8px rgba(0,0,0,0.2)',
+              }}>
+                📌 Click on the map to set landmark location
+              </div>
+            )}
             <CemeteryMap
               markers={filteredMarkers}
               center={mapCenter}
@@ -225,54 +289,120 @@ const MapPage = () => {
         {/* Details Panel */}
         <div style={{ width: '350px' }}>
           {isAdmin && (
-            <button
-              onClick={handleAddPlotClick}
-              style={{
-                width: '100%',
-                padding: '10px 16px',
-                marginBottom: '15px',
-                backgroundColor: '#27ae60',
-                color: 'white',
-                border: 'none',
-                borderRadius: '6px',
-                cursor: 'pointer',
-                fontSize: '0.95rem',
-                fontWeight: '600',
-                whiteSpace: 'nowrap',
-                boxShadow: '0 2px 8px rgba(39, 174, 96, 0.3)',
-                transition: 'all 0.3s ease',
-              }}
-              onMouseEnter={(e) => {
-                e.target.style.backgroundColor = '#229954';
-                e.target.style.transform = 'translateY(-2px)';
-                e.target.style.boxShadow = '0 4px 12px rgba(39, 174, 96, 0.4)';
-              }}
-              onMouseLeave={(e) => {
-                e.target.style.backgroundColor = '#27ae60';
-                e.target.style.transform = 'translateY(0)';
-                e.target.style.boxShadow = '0 2px 8px rgba(39, 174, 96, 0.3)';
-              }}
-            >
-              + Add Plot
-            </button>
+            <div style={{ display: 'flex', gap: '10px', marginBottom: '15px' }}>
+              <button
+                onClick={handleAddPlotClick}
+                style={{
+                  flex: 1,
+                  padding: '10px 16px',
+                  backgroundColor: '#27ae60',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '6px',
+                  cursor: 'pointer',
+                  fontSize: '0.95rem',
+                  fontWeight: '600',
+                  whiteSpace: 'nowrap',
+                  boxShadow: '0 2px 8px rgba(39, 174, 96, 0.3)',
+                  transition: 'all 0.3s ease',
+                }}
+                onMouseEnter={(e) => {
+                  e.target.style.backgroundColor = '#229954';
+                  e.target.style.transform = 'translateY(-2px)';
+                  e.target.style.boxShadow = '0 4px 12px rgba(39, 174, 96, 0.4)';
+                }}
+                onMouseLeave={(e) => {
+                  e.target.style.backgroundColor = '#27ae60';
+                  e.target.style.transform = 'translateY(0)';
+                  e.target.style.boxShadow = '0 2px 8px rgba(39, 174, 96, 0.3)';
+                }}
+              >
+                + Add Plot
+              </button>
+              <button
+                onClick={handleAddLandmarkClick}
+                style={{
+                  flex: 1,
+                  padding: '10px 16px',
+                  backgroundColor: '#8e44ad',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '6px',
+                  cursor: 'pointer',
+                  fontSize: '0.95rem',
+                  fontWeight: '600',
+                  whiteSpace: 'nowrap',
+                  boxShadow: '0 2px 8px rgba(142, 68, 173, 0.3)',
+                  transition: 'all 0.3s ease',
+                }}
+                onMouseEnter={(e) => {
+                  e.target.style.backgroundColor = '#7d3c98';
+                  e.target.style.transform = 'translateY(-2px)';
+                  e.target.style.boxShadow = '0 4px 12px rgba(142, 68, 173, 0.4)';
+                }}
+                onMouseLeave={(e) => {
+                  e.target.style.backgroundColor = '#8e44ad';
+                  e.target.style.transform = 'translateY(0)';
+                  e.target.style.boxShadow = '0 2px 8px rgba(142, 68, 173, 0.3)';
+                }}
+              >
+                📌 Add Landmark
+              </button>
+            </div>
           )}
           
           <div className="card">
             <div style={{ marginBottom: '15px' }}>
-              <h3 style={{ margin: 0 }}>Plot Details</h3>
+              <h3 style={{ margin: 0 }}>
+                {selectedMarker?.type === 'landmark' ? 'Landmark Details' : 'Plot Details'}
+              </h3>
             </div>
-            
+
             {!selectedMarker && (
               <p style={{ color: '#666', textAlign: 'center' }}>
                 Click on a marker to view details
               </p>
             )}
-            
+
+            {/* Landmark details panel */}
+            {selectedMarker?.type === 'landmark' && (
+              <div>
+                <div style={{ marginBottom: '15px' }}>
+                  <h4 style={{ color: '#1a1a2e', marginBottom: '8px' }}>📌 {selectedMarker.name}</h4>
+                  <span
+                    style={{
+                      display: 'inline-block',
+                      padding: '3px 10px',
+                      borderRadius: '10px',
+                      fontSize: '12px',
+                      backgroundColor: selectedMarker.status === 'open' ? '#27ae60' : '#95a5a6',
+                      color: 'white',
+                    }}
+                  >
+                    {selectedMarker.status}
+                  </span>
+                </div>
+                {selectedMarker.notes && (
+                  <div className="grave-info-row">
+                    <label>Notes</label>
+                    <span>{selectedMarker.notes}</span>
+                  </div>
+                )}
+                <div className="grave-info-row">
+                  <label>Coordinates</label>
+                  <span style={{ fontSize: '0.85rem' }}>
+                    {Number(selectedMarker.latitude).toFixed(6)},
+                    {Number(selectedMarker.longitude).toFixed(6)}
+                  </span>
+                </div>
+              </div>
+            )}
+
             {loadingDetails && (
               <LoadingSpinner text="Loading..." />
             )}
-            
-            {markerDetails && !loadingDetails && (
+
+            {markerDetails && !loadingDetails && selectedMarker?.type !== 'landmark' && (
               <div>
                 <div style={{ marginBottom: '15px' }}>
                   <h4 style={{ color: '#1a1a2e' }}>{markerDetails.plot.plot_number}</h4>
@@ -368,6 +498,16 @@ const MapPage = () => {
         addPlotMode={addPlotMode}
         toggleMapClickMode={toggleMapClickMode}
         onMapClick={handleMapClick}
+      />
+
+      <AddLandmarkModal
+        isOpen={showAddLandmarkModal}
+        onClose={handleAddLandmarkModalClose}
+        onLandmarkAdded={handleLandmarkAdded}
+        center={mapCenter}
+        selectedCoordinates={selectedLandmarkCoordinates}
+        addLandmarkMode={addLandmarkMode}
+        toggleMapClickMode={toggleLandmarkMapClickMode}
       />
 
       <DeletePlotModal
