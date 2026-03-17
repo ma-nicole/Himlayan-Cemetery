@@ -114,7 +114,12 @@ const ReportGeneratorPage = () => {
       });
 
       // Summary
-      const summaryY = doc.lastAutoTable.finalY + 10;
+      let summaryY = doc.lastAutoTable.finalY + 10;
+      const pageHeight = doc.internal.pageSize.getHeight();
+      if (summaryY + 25 > pageHeight - 15) {
+        doc.addPage();
+        summaryY = 20;
+      }
       const summary = reportData.summary || {};
       doc.setFontSize(10);
       doc.setFont('helvetica', 'bold');
@@ -152,7 +157,12 @@ const ReportGeneratorPage = () => {
         margin: { left: 14, right: 14 },
       });
 
-      const summaryY = doc.lastAutoTable.finalY + 10;
+      let summaryY = doc.lastAutoTable.finalY + 10;
+      const pageHeight = doc.internal.pageSize.getHeight();
+      if (summaryY + 25 > pageHeight - 15) {
+        doc.addPage();
+        summaryY = 20;
+      }
       const summary = reportData.summary || {};
       doc.setFontSize(10);
       doc.setFont('helvetica', 'bold');
