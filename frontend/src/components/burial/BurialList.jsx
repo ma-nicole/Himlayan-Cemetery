@@ -53,6 +53,7 @@ const BurialList = ({ records, onView, onEdit, onDelete, onGenerateQR, onSort, s
 
   return (
     <div className="card">
+      <div className="table-responsive">
       <table className="data-table">
         <thead>
           <tr>
@@ -144,6 +145,7 @@ const BurialList = ({ records, onView, onEdit, onDelete, onGenerateQR, onSort, s
           ))}
         </tbody>
       </table>
+      </div>
     </div>
   );
 };

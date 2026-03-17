@@ -33,6 +33,7 @@ const PlotList = ({ plots, onEdit, onDelete, onSort, sortField, sortOrder }) => 
 
   return (
     <div className="card">
+      <div className="table-responsive">
       <table className="data-table">
         <thead>
           <tr>
@@ -109,6 +110,7 @@ const PlotList = ({ plots, onEdit, onDelete, onSort, sortField, sortOrder }) => 
           ))}
         </tbody>
       </table>
+      </div>
     </div>
   );
 };

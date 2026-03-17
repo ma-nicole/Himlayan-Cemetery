@@ -251,12 +251,12 @@ const MapPage = () => {
 
       {error && <div className="alert alert-error">{error}</div>}
 
-      <div style={{ display: 'flex', gap: '20px' }}>
+      <div className="map-page-layout">
         {/* Map Section */}
-        <div style={{ flex: 1 }}>
+        <div className="map-page-main">
           {/* Filter and Legend */}
           <div className="card" style={{ marginBottom: '15px' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <div className="map-filter-row">
               <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
                 <label><strong>Filter:</strong></label>
                 <select
@@ -272,9 +272,9 @@ const MapPage = () => {
                   <option value="maintenance">Maintenance ({plotMarkers.filter(m => m.status === 'maintenance').length})</option>
                 </select>
               </div>
-              <div style={{ display: 'flex', gap: '15px' }}>
+              <div className="map-legend">
                 {legend.map(item => (
-                  <div key={item.status} style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+                  <div key={item.status} className="map-legend-item">
                     <div style={{
                       width: '12px',
                       height: '12px',
@@ -335,7 +335,7 @@ const MapPage = () => {
         </div>
 
         {/* Details Panel */}
-        <div style={{ width: '350px' }}>
+        <div className="map-page-panel">
           {isAdmin && (
             <div style={{ display: 'flex', gap: '10px', marginBottom: '15px' }}>
               <button

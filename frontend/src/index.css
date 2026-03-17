@@ -358,7 +358,6 @@ body {
 /* Page Content */
 .page-content {
   margin-top: 90px;
-  overflow-x: hidden;
   word-wrap: break-word;
 }
 
@@ -1277,6 +1276,50 @@ body {
   transition: background 0.2s ease;
 }
 
+/* ── Table responsive wrapper ───────────────────────────────── */
+.table-responsive {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  width: 100%;
+}
+
+/* ── Cemetery Map page layout ───────────────────────────────── */
+.map-page-layout {
+  display: flex;
+  gap: 20px;
+}
+
+.map-page-main {
+  flex: 1;
+  min-width: 0;
+}
+
+.map-page-panel {
+  width: 350px;
+  flex-shrink: 0;
+}
+
+.map-filter-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.map-legend {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.map-legend-item {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
 /* Sidebar backdrop overlay (mobile) */
 .sidebar-backdrop {
   display: none;
@@ -1338,15 +1381,36 @@ body {
     margin-top: 70px;
   }
 
-  /* Admin management tables: allow horizontal scroll */
-  .table-container,
-  .data-table-wrapper {
+  /* Tables: scrollable wrapper */
+  .table-responsive {
     overflow-x: auto;
     -webkit-overflow-scrolling: touch;
+    width: 100%;
   }
 
-  table {
+  .table-responsive .data-table {
     min-width: 600px;
+  }
+
+  /* Cemetery map page: stack map + panel vertically */
+  .map-page-layout {
+    flex-direction: column;
+  }
+
+  .map-page-panel {
+    width: 100%;
+  }
+
+  .map-filter-row {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  /* Page header: stack on mobile */
+  .page-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
   }
 
   /* Stats grid single column on very small screens */
