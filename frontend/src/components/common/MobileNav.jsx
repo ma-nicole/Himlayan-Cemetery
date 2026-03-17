@@ -7,11 +7,19 @@ const MobileNav = ({
   navItems = [],
   currentPath,
   user,
-  onLogout
+  onLogout,
+  onSettings
 }) => {
   const handleNavClick = (item) => {
     if (item.onClick) {
       item.onClick();
+    }
+    onClose();
+  };
+
+  const handleSettingsClick = () => {
+    if (onSettings) {
+      onSettings();
     }
     onClose();
   };
@@ -80,7 +88,7 @@ const MobileNav = ({
 
         {/* Footer Actions */}
         <div className="mobile-nav-footer">
-          <button className="mobile-nav-item" onClick={() => {}}>
+          <button className="mobile-nav-item" onClick={handleSettingsClick}>
             <span className="nav-label">Settings</span>
           </button>
           {onLogout && (

@@ -44,6 +44,7 @@ const MemberHeader = () => {
     { path: '/pay-dues', label: 'Pay Dues', icon: '💳', onClick: () => navigate('/pay-dues') },
     { path: '/member/contact', label: 'Feedback', icon: '💬', onClick: () => navigate('/member/contact') },
     { path: '/profile', label: 'Profile', icon: '👤', onClick: () => navigate('/profile') },
+    { path: '/change-password', label: 'Credentials', icon: '🔐', onClick: () => navigate('/change-password') },
   ];
 
   return (
@@ -140,6 +141,7 @@ const MemberHeader = () => {
         currentPath={location.pathname}
         user={user}
         onLogout={handleLogout}
+        onSettings={() => navigate('/profile')}
       />
     </header>
   );
