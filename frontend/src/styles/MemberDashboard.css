@@ -656,6 +656,11 @@
   font-weight: 700;
   color: #111827;
   line-height: 1;
+  display: inline-block;
+  min-width: 2ch;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: 'tnum' 1, 'lnum' 1;
 }
 
 .stat-label {

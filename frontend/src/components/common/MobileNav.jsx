@@ -48,7 +48,24 @@ const MobileNav = ({
         {user && (
           <div className="mobile-nav-user">
             <div className="user-avatar">
-              {user.name?.charAt(0).toUpperCase() || user.email?.charAt(0).toUpperCase()}
+              {user.avatar ? (
+                <img
+                  src={user.avatar}
+                  alt="Profile"
+                  className="user-avatar-image"
+                  onError={(e) => {
+                    e.target.style.display = 'none';
+                    const fallback = e.target.parentElement?.querySelector('.user-avatar-fallback');
+                    if (fallback) fallback.style.display = 'flex';
+                  }}
+                />
+              ) : null}
+              <span
+                className="user-avatar-fallback"
+                style={{ display: user.avatar ? 'none' : 'flex' }}
+              >
+                {user.name?.charAt(0).toUpperCase() || user.email?.charAt(0).toUpperCase()}
+              </span>
             </div>
             <div className="user-info">
               <span className="user-name">{user.name || 'User'}</span>
