@@ -16,6 +16,7 @@
   align-items: center;
   justify-content: space-between;
   gap: 0.75rem;
+  min-width: 0;
 }
 
 /* Logo */
@@ -28,6 +29,7 @@
   font-weight: 700;
   font-size: 1.25rem;
   font-family: 'Inter', sans-serif;
+  min-width: 0;
 }
 
 .member-logo-img {
@@ -148,6 +150,7 @@
 
   .member-header-actions {
     margin-left: auto;
+    flex-shrink: 0;
   }
   
   .member-header-logo span {
@@ -160,6 +163,15 @@
 }
 
 @media (max-width: 480px) {
+  .member-header-container {
+    padding: 0.625rem 0.75rem;
+  }
+
+  .member-logo-img {
+    width: 34px;
+    height: 34px;
+  }
+
   .member-header-actions {
     gap: 0.5rem;
   }
