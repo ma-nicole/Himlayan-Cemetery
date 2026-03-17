@@ -57,6 +57,16 @@ Route::get('/announcements', [AnnouncementController::class, 'index']);
 // System maintenance status (public so frontend can show maintenance screen)
 Route::get('/system/maintenance-status', [SystemMaintenanceController::class, 'status']);
 
+// Temporary diagnostic endpoint – remove after debugging invitation URLs
+Route::get('/debug/urls', function () {
+    return response()->json([
+        'FRONTEND_URL_env' => env('FRONTEND_URL'),
+        'FRONTEND_URL_config' => config('app.frontend_url'),
+        'APP_URL_env' => env('APP_URL'),
+        'APP_URL_config' => config('app.url'),
+    ]);
+});
+
 // Public feedback submission
 Route::post('/feedback', [FeedbackController::class, 'store']);
 
