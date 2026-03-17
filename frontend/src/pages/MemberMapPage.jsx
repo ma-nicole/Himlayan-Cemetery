@@ -158,7 +158,7 @@ const MemberMapPage = () => {
         {/* ── Landmark Map Section (live from DB) ── */}
         <section className="lm-section">
           <div className="section-header">
-            <h2>Landmark Navigation</h2>
+            <h2>Navigation</h2>
             <p>Click a landmark to see details and get directions</p>
           </div>
 
@@ -276,60 +276,11 @@ const MemberMapPage = () => {
               )}
             </div>
           </div>
-        </section>
-
-        {/* Sections Grid */}
-        <section className="sections-grid">
-          <div className="section-header">
-            <h2>Cemetery Sections</h2>
-            <p>Click on a section to learn more</p>
+          <div style={{ textAlign: 'center', marginTop: '1.5rem' }}>
+            <Link to="/member/search" className="lm-directions-btn" style={{ textDecoration: 'none', display: 'inline-flex' }}>
+              🔎 Find a Grave
+            </Link>
           </div>
-          <div className="sections-cards">
-            {sections.map((section) => (
-              <div 
-                key={section.id} 
-                className={`section-card ${selectedSection === section.id ? 'active' : ''}`}
-                onClick={() => setSelectedSection(section.id)}
-              >
-                <div className="card-image" style={{ backgroundImage: `url(${section.image})` }}>
-                  <div className="card-overlay"></div>
-                  <div className="card-icon" style={{ background: section.color }}>{section.icon}</div>
-                </div>
-                <div className="card-content">
-                  <h3>{section.name}</h3>
-                  <p>{section.desc}</p>
-                  <span className={`availability-tag ${section.availability.toLowerCase().replace(' ', '-')}`}>
-                    {section.availability}
-                  </span>
-                </div>
-              </div>
-            ))}
-          </div>
-          {selectedSection && (
-            <div className="section-detail" style={{ marginTop: '1.5rem' }}>
-              {sections.filter(s => s.id === selectedSection).map(section => (
-                <div key={section.id} className="detail-content">
-                  <div className="detail-image" style={{ backgroundImage: `url(${section.image})` }}></div>
-                  <div className="detail-info">
-                    <div className="detail-header">
-                      <div className="detail-icon" style={{ background: section.color }}>{section.icon}</div>
-                      <div>
-                        <h3>{section.name}</h3>
-                        <span className={`availability ${section.availability.toLowerCase().replace(' ', '-')}`}>
-                          {section.availability}
-                        </span>
-                      </div>
-                    </div>
-                    <p>{section.desc}</p>
-                    <div className="detail-actions">
-                      <Link to="/member/services" className="detail-btn primary">View Services</Link>
-                      <button className="detail-btn secondary" onClick={() => setSelectedSection(null)}>Close</button>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
         </section>
 
         {/* Directions */}
@@ -372,22 +323,11 @@ const MemberMapPage = () => {
           </div>
         </section>
 
-        {/* Google Maps Embed */}
+        {/* Location */}
         <section className="google-map-section">
           <div className="section-header">
             <h2>Location</h2>
-            <p>240 Tandang Sora Ave, Quezon City, Metro Manila</p>
-          </div>
-          <div className="google-map-container">
-            <iframe 
-              title="Himlayang Pilipino Location"
-              src={`https://maps.google.com/maps?q=${HIMLAYAN_COORDS.lat},${HIMLAYAN_COORDS.lng}&z=17&output=embed`}
-              width="100%" 
-              height="400" 
-              style={{ border: 0, borderRadius: '16px' }}
-              allowFullScreen="" 
-              loading="lazy"
-            ></iframe>
+            <p>Himlayang Pilipino Memorial Park - Pantranco, Quezon City, 1107 Metro Manila</p>
           </div>
         </section>
       </main>
