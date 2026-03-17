@@ -9,6 +9,11 @@ const MemberMapPage = () => {
   const { user, logout } = useAuth();
   const [selectedSection, setSelectedSection] = useState(null);
 
+  const HIMLAYAN_COORDS = {
+    lat: 14.682462,
+    lng: 121.0530409,
+  };
+
   const handleLogout = async () => {
     await logout();
   };
@@ -263,7 +268,7 @@ const MemberMapPage = () => {
           <div className="google-map-container">
             <iframe 
               title="Himlayang Pilipino Location"
-              src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3859.0267894526584!2d121.04000861483937!3d14.684749789748!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3397b7a3c48db5d7%3A0x3e2e8b9d7e8b8e8b!2sHimlayang%20Pilipino%2C%20Quezon%20City%2C%20Metro%20Manila!5e0!3m2!1sen!2sph!4v1640000000000!5m2!1sen!2sph"
+              src={`https://maps.google.com/maps?q=${HIMLAYAN_COORDS.lat},${HIMLAYAN_COORDS.lng}&z=17&output=embed`}
               width="100%" 
               height="400" 
               style={{ border: 0, borderRadius: '16px' }}
