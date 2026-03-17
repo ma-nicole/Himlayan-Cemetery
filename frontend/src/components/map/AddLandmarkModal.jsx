@@ -73,8 +73,15 @@ const AddLandmarkModal = ({
   useEffect(() => {
     if (!isOpen) return;
 
-    if (initialData) {
-      // Edit mode
+    if (selectedCoordinates) {
+      // Map-click picked coordinates — update lat/lng only, preserve other fields
+      setFormData(prev => ({
+        ...prev,
+        latitude: selectedCoordinates.latitude,
+        longitude: selectedCoordinates.longitude,
+      }));
+    } else if (initialData) {
+      // Edit mode opening fresh (no map-click coords)
       setFormData({
         name: initialData.name || 'Main Gate',
         latitude: initialData.latitude,
@@ -82,15 +89,6 @@ const AddLandmarkModal = ({
         status: initialData.status || 'open',
         notes: initialData.notes || '',
       });
-    } else if (selectedCoordinates) {
-      // Add mode with map-click coordinates
-      setFormData(prev => ({
-        name: prev.name || 'Main Gate',
-        status: prev.status || 'open',
-        notes: prev.notes || '',
-        latitude: selectedCoordinates.latitude,
-        longitude: selectedCoordinates.longitude,
-      }));
     } else {
       // Add mode without coordinates
       const coords = getDefaultCoordinates();

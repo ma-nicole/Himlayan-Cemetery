@@ -40,6 +40,8 @@ const MapPage = () => {
   const [selectedLandmarkCoordinates, setSelectedLandmarkCoordinates] = useState(null);
   const [landmarkToEdit, setLandmarkToEdit] = useState(null);
   const [showEditLandmarkModal, setShowEditLandmarkModal] = useState(false);
+  const [editLandmarkMode, setEditLandmarkMode] = useState(false);
+  const [editLandmarkCoordinates, setEditLandmarkCoordinates] = useState(null);
 
   const loadMapData = async () => {
     try {
@@ -115,7 +117,12 @@ const MapPage = () => {
   const handleMapClick = (coordinates) => {
     if (addLandmarkMode) {
       setSelectedLandmarkCoordinates(coordinates);
+      setAddLandmarkMode(false);
       setShowAddLandmarkModal(true);
+    } else if (editLandmarkMode) {
+      setEditLandmarkCoordinates(coordinates);
+      setEditLandmarkMode(false);
+      setShowEditLandmarkModal(true);
     } else if (addPlotMode) {
       setSelectedPlotCoordinates(coordinates);
       setShowAddPlotModal(true);
@@ -199,6 +206,16 @@ const MapPage = () => {
     } else {
       setShowAddLandmarkModal(true);
       setAddLandmarkMode(false);
+    }
+  };
+
+  const toggleEditLandmarkMapClickMode = () => {
+    if (!editLandmarkMode) {
+      setShowEditLandmarkModal(false);
+      setEditLandmarkMode(true);
+    } else {
+      setShowEditLandmarkModal(true);
+      setEditLandmarkMode(false);
     }
   };
 
@@ -290,7 +307,7 @@ const MapPage = () => {
                 📍 Click on the map to select plot location
               </div>
             )}
-            {addLandmarkMode && (
+            {(addLandmarkMode || editLandmarkMode) && (
               <div style={{
                 position: 'absolute',
                 top: '10px',
@@ -592,12 +609,13 @@ const MapPage = () => {
 
       <AddLandmarkModal
         isOpen={showEditLandmarkModal}
-        onClose={() => { setShowEditLandmarkModal(false); setLandmarkToEdit(null); }}
+        onClose={() => { setShowEditLandmarkModal(false); setLandmarkToEdit(null); setEditLandmarkMode(false); setEditLandmarkCoordinates(null); }}
         onLandmarkUpdated={handleLandmarkUpdated}
         initialData={landmarkToEdit}
         center={mapCenter}
-        addLandmarkMode={false}
-        toggleMapClickMode={() => {}}
+        selectedCoordinates={editLandmarkCoordinates}
+        addLandmarkMode={editLandmarkMode}
+        toggleMapClickMode={toggleEditLandmarkMapClickMode}
       />
 
       <DeletePlotModal
