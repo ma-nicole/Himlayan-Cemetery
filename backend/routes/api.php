@@ -243,6 +243,7 @@ Route::middleware(['auth:sanctum', 'sanitize.input'])->group(function () {
         Route::get('/my-dues', [PaymentController::class, 'myDues']);
         Route::get('/statistics', [PaymentController::class, 'statistics'])->middleware('role:admin,staff');
         Route::post('/{id}/checkout', [PaymentController::class, 'checkout']);
+        Route::post('/{id}/mark-paid', [PaymentController::class, 'markPaid']);
         Route::get('/{id}', [PaymentController::class, 'show']);
         
         Route::middleware('role:admin,staff')->group(function () {

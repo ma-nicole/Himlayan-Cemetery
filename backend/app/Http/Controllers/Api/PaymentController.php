@@ -509,6 +509,34 @@ class PaymentController extends Controller
     }
 
     /**
+     * Mark a payment as paid by the user (sets paid_at, awaiting admin verification).
+     */
+    public function markPaid(Request $request, $id)
+    {
+        $payment = Payment::where('id', $id)
+            ->where('user_id', auth()->id())
+            ->where('status', Payment::STATUS_PENDING)
+            ->first();
+
+        if (!$payment) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Payment not found or already processed.',
+            ], 404);
+        }
+
+        if (!$payment->paid_at) {
+            $payment->update(['paid_at' => now()]);
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Payment marked as paid. Awaiting admin verification.',
+            'data' => $payment,
+        ]);
+    }
+
+    /**
      * Display the specified payment
      */
     public function show($id)
@@ -657,6 +685,14 @@ class PaymentController extends Controller
                     && $latest->created_at
                     && $latest->created_at->lt(now()->subDays(14));
 
+                // Derive a display status:
+                // - 'awaiting_verification' when user already paid (paid_at set) but admin hasn't verified yet
+                // - 'overdue' when past 14 days and still pending
+                // - otherwise use the raw status
+                $displayStatus = $latest->paid_at
+                    ? 'awaiting_verification'
+                    : ($isOverdue ? 'overdue' : $latest->status);
+
                 return [
                     'id' => $latest->id,
                     'plot_id' => $latest->plot_id,
@@ -666,7 +702,8 @@ class PaymentController extends Controller
                     'section' => $latest->plot->section ?? 'N/A',
                     'due_amount' => (float) $latest->amount,
                     'due_date' => optional($latest->created_at)->toDateString(),
-                    'status' => $isOverdue ? 'overdue' : $latest->status,
+                    'status' => $displayStatus,
+                    'paid_at' => $latest->paid_at,
                     'payment_type' => $latest->payment_type,
                     'notes' => $latest->notes,
                     'description' => $latest->payment_type === Payment::TYPE_SERVICE_FEE

@@ -39,9 +39,13 @@ const PayDuesPage = () => {
   useEffect(() => {
     const params = new URLSearchParams(location.search);
     const status = params.get('status');
+    const paymentId = params.get('payment_id');
 
     if (status === 'success') {
-      toast?.success('Payment completed successfully. Thank you!');
+      toast?.success('Payment completed successfully. Awaiting admin verification.');
+      if (paymentId) {
+        api.post(`/payments/${paymentId}/mark-paid`).catch(() => {});
+      }
     } else if (status === 'failed') {
       toast?.error('Payment failed or was cancelled. You can try again.');
     }
@@ -158,7 +162,9 @@ const PayDuesPage = () => {
                 >
                   <div className="due-status">
                     <span className={`status-badge ${plot.status}`}>
-                      {plot.status === 'overdue' ? 'Overdue' : 'Pending'}
+                      {plot.status === 'overdue' ? 'Overdue'
+                        : plot.status === 'awaiting_verification' ? 'Paid - Waiting for Verification'
+                        : 'Pending'}
                     </span>
                   </div>
                   
@@ -226,33 +232,42 @@ const PayDuesPage = () => {
                   </div>
                 </div>
 
-                <div className="payment-methods">
-                  <label className="method-label">Select Payment Method</label>
-                  <div className="methods-grid">
-                    {paymentMethods.map(method => (
-                      <button
-                        key={method.id}
-                        className={`method-btn ${paymentMethod === method.id ? 'selected' : ''}`}
-                        onClick={() => setPaymentMethod(method.id)}
-                      >
-                        <span className="method-icon">{method.icon}</span>
-                        <span className="method-name">{method.name}</span>
-                      </button>
-                    ))}
+                {selectedPlot.status === 'awaiting_verification' ? (
+                  <div style={{ textAlign: 'center', padding: '20px', background: '#f0fdf4', borderRadius: '8px', border: '1px solid #bbf7d0' }}>
+                    <p style={{ color: '#15803d', fontWeight: 600, marginBottom: 4 }}>✓ Payment Submitted</p>
+                    <p style={{ color: '#166534', fontSize: '0.875rem', margin: 0 }}>Your payment is awaiting admin verification.</p>
                   </div>
-                </div>
+                ) : (
+                  <>
+                    <div className="payment-methods">
+                      <label className="method-label">Select Payment Method</label>
+                      <div className="methods-grid">
+                        {paymentMethods.map(method => (
+                          <button
+                            key={method.id}
+                            className={`method-btn ${paymentMethod === method.id ? 'selected' : ''}`}
+                            onClick={() => setPaymentMethod(method.id)}
+                          >
+                            <span className="method-icon">{method.icon}</span>
+                            <span className="method-name">{method.name}</span>
+                          </button>
+                        ))}
+                      </div>
+                    </div>
 
-                <button 
-                  className="btn-pay"
-                  onClick={handlePayment}
-                  disabled={loading || !paymentMethod}
-                >
-                  {loading ? 'Processing...' : `Pay ${formatCurrency(selectedPlot.due_amount)}`}
-                </button>
+                    <button
+                      className="btn-pay"
+                      onClick={handlePayment}
+                      disabled={loading || !paymentMethod}
+                    >
+                      {loading ? 'Processing...' : `Pay ${formatCurrency(selectedPlot.due_amount)}`}
+                    </button>
 
-                <p className="payment-note">
-                  Secured by SSL encryption. Your payment information is safe.
-                </p>
+                    <p className="payment-note">
+                      Secured by SSL encryption. Your payment information is safe.
+                    </p>
+                  </>
+                )}
               </div>
             ) : (
               <div className="no-selection">
