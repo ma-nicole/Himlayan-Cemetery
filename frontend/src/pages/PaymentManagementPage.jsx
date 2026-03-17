@@ -202,7 +202,7 @@ const PaymentManagementPage = () => {
                         </td>
                         <td>{formatPaymentType(item.payment_type)}</td>
                         <td><strong>{formatCurrency(item.amount)}</strong></td>
-                        <td>{item.payment_method.toUpperCase()}</td>
+                        <td>{item.payment_method ? item.payment_method.toUpperCase() : 'Unpaid'}</td>
                         <td><code>{item.reference_number || '-'}</code></td>
                         <td><span className={`status-badge ${getStatusBadgeClass(item.status)}`}>{item.status}</span></td>
                         <td>{new Date(item.created_at).toLocaleDateString()}</td>
@@ -247,7 +247,7 @@ const PaymentManagementPage = () => {
                 <p><strong>Payer:</strong> {selectedItem?.user?.name}</p>
                 <p><strong>Amount:</strong> {formatCurrency(selectedItem?.amount || 0)}</p>
                 <p><strong>Type:</strong> {formatPaymentType(selectedItem?.payment_type || '')}</p>
-                <p><strong>Method:</strong> {selectedItem?.payment_method?.toUpperCase()}</p>
+                <p><strong>Method:</strong> {selectedItem?.payment_method?.toUpperCase() || 'Unpaid'}</p>
                 <p><strong>Reference:</strong> {selectedItem?.reference_number || 'N/A'}</p>
                 <p><strong>Paid At:</strong> {selectedItem?.paid_at ? new Date(selectedItem.paid_at).toLocaleString() : 'N/A'}</p>
               </div>
