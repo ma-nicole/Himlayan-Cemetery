@@ -64,9 +64,8 @@ jobs:
           done
 
           if [ "${ok}" -ne 1 ]; then
-            echo "Cannot reach ${HOSTINGER_HOST}:${PORT} from GitHub Actions (network timeout)."
-            echo "Verify Hostinger IP/hostname, SSH port (usually 65002), and firewall/SSH access settings."
-            exit 1
+            echo "::warning::Cannot pre-verify ${HOSTINGER_HOST}:${PORT} from GitHub Actions. Continuing and letting SSH deploy step attempt connection."
+            echo "If SSH deploy still fails, verify Hostinger IP/hostname, SSH port (usually 65002), and firewall/SSH access settings."
           fi
 
       - name: Deploy backend via SSH
