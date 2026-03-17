@@ -278,12 +278,14 @@ jobs:
           echo "::warning::Check Hostinger SSH host/port and firewall restrictions for GitHub Actions runners."
           echo "Proceeding with remaining steps."
 
-      - name: Prepare frontend target via SSH
+      - name: Prepare frontend target via SSH (attempt 1)
+        id: frontend_ssh_1
+        continue-on-error: true
         uses: appleboy/ssh-action@v1.2.0
-        env:
+        env: &frontend_ssh_env
           FRONTEND_PUBLIC_PATH: ${{ secrets.HOSTINGER_FRONTEND_PUBLIC_PATH }}
           DEPLOY_PATH: ${{ secrets.HOSTINGER_DEPLOY_PATH }}
-        with:
+        with: &frontend_ssh_with
           debug: true
           host: ${{ secrets.HOSTINGER_HOST }}
           username: ${{ secrets.HOSTINGER_USERNAME }}
@@ -367,7 +369,65 @@ jobs:
             rm -rf "$FRONTEND_PUBLIC_PATH/storage"
             ln -s "$DEPLOY_PATH/backend/storage/app/public" "$FRONTEND_PUBLIC_PATH/storage"
 
-      - name: Upload frontend build via SCP
+      - name: Prepare frontend target via SSH (attempt 2)
+        id: frontend_ssh_2
+        if: steps.frontend_ssh_1.outcome == 'failure'
+        continue-on-error: true
+        uses: appleboy/ssh-action@v1.2.0
+        env: *frontend_ssh_env
+        with: *frontend_ssh_with
+
+      - name: Prepare frontend target via SSH (attempt 3)
+        id: frontend_ssh_3
+        if: steps.frontend_ssh_1.outcome == 'failure' && steps.frontend_ssh_2.outcome == 'failure'
+        continue-on-error: true
+        uses: appleboy/ssh-action@v1.2.0
+        env: *frontend_ssh_env
+        with: *frontend_ssh_with
+
+      - name: Frontend SSH status (non-blocking)
+        if: steps.frontend_ssh_1.outcome == 'failure' && steps.frontend_ssh_2.outcome == 'failure' && steps.frontend_ssh_3.outcome == 'failure'
+        run: |
+          echo "::warning::Frontend SSH prep failed after 3 attempts."
+          echo "::warning::SCP upload will still be attempted."
+
+      - name: Upload frontend build via SCP (attempt 1)
+        id: frontend_scp_1
+        continue-on-error: true
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.HOSTINGER_HOST }}
+          username: ${{ secrets.HOSTINGER_USERNAME }}
+          key: ${{ secrets.HOSTINGER_SSH_KEY }}
+          passphrase: ${{ secrets.HOSTINGER_SSH_PASSPHRASE }}
+          port: ${{ secrets.HOSTINGER_SSH_PORT || '65002' }}
+          timeout: 300s
+          source: "frontend/build/*"
+          strip_components: 2
+          target: ${{ secrets.HOSTINGER_FRONTEND_PUBLIC_PATH }}
+          overwrite: true
+
+      - name: Upload frontend build via SCP (attempt 2)
+        id: frontend_scp_2
+        if: steps.frontend_scp_1.outcome == 'failure'
+        continue-on-error: true
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.HOSTINGER_HOST }}
+          username: ${{ secrets.HOSTINGER_USERNAME }}
+          key: ${{ secrets.HOSTINGER_SSH_KEY }}
+          passphrase: ${{ secrets.HOSTINGER_SSH_PASSPHRASE }}
+          port: ${{ secrets.HOSTINGER_SSH_PORT || '65002' }}
+          timeout: 300s
+          source: "frontend/build/*"
+          strip_components: 2
+          target: ${{ secrets.HOSTINGER_FRONTEND_PUBLIC_PATH }}
+          overwrite: true
+
+      - name: Upload frontend build via SCP (attempt 3)
+        id: frontend_scp_3
+        if: steps.frontend_scp_1.outcome == 'failure' && steps.frontend_scp_2.outcome == 'failure'
+        continue-on-error: true
         uses: appleboy/scp-action@v0.1.7
         with:
           host: ${{ secrets.HOSTINGER_HOST }}
