@@ -38,11 +38,17 @@ jobs:
         env:
           HOSTINGER_HOST: ${{ secrets.HOSTINGER_HOST }}
           HOSTINGER_SSH_PORT: ${{ secrets.HOSTINGER_SSH_PORT }}
+          HOSTINGER_DEPLOY_PATH: ${{ secrets.HOSTINGER_DEPLOY_PATH }}
         run: |
           set -eux
 
           if [ -z "${HOSTINGER_HOST}" ]; then
             echo "Missing required secret: HOSTINGER_HOST"
+            exit 1
+          fi
+
+          if [ -z "${HOSTINGER_DEPLOY_PATH}" ]; then
+            echo "Missing required secret: HOSTINGER_DEPLOY_PATH"
             exit 1
           fi
 
@@ -101,6 +107,51 @@ jobs:
 
             MAIL_MAILER="${MAIL_MAILER:-smtp}"
 
+            quote_env_value_if_needed() {
+              raw="$1"
+              raw="$(printf '%s' "$raw" | tr -d '\r')"
+
+              case "$raw" in
+                *$'\n'*)
+                  raw="$(printf '%s' "$raw" | tr '\n' ' ')"
+                  ;;
+              esac
+
+              if [[ "$raw" =~ [[:space:]#] ]]; then
+                escaped="$(printf '%s' "$raw" | sed -e 's/\\/\\\\/g' -e 's/"/\\"/g')"
+                printf '"%s"' "$escaped"
+              else
+                printf '%s' "$raw"
+              fi
+            }
+
+            sanitize_env_file() {
+              file="$1"
+
+              [ -f "$file" ] || return 0
+
+              # Normalize line endings and strip UTF-8 BOM.
+              sed -i 's/\r$//' "$file"
+              sed -i '1s/^\xEF\xBB\xBF//' "$file"
+
+              # Normalize KEY = value to KEY=value for valid dotenv parsing.
+              awk '
+                /^[[:space:]]*#/ || /^[[:space:]]*$/ { print; next }
+                /^[[:space:]]*[A-Za-z_][A-Za-z0-9_]*[[:space:]]*=/ {
+                  line = $0
+                  sub(/^[[:space:]]+/, "", line)
+                  eq = index(line, "=")
+                  key = substr(line, 1, eq - 1)
+                  val = substr(line, eq + 1)
+                  sub(/[[:space:]]+$/, "", key)
+                  sub(/^[[:space:]]+/, "", val)
+                  print key "=" val
+                  next
+                }
+                { print }
+              ' "$file" > "$file.tmp" && mv "$file.tmp" "$file"
+            }
+
             upsert_env() {
               key="$1"
               val="$2"
@@ -109,6 +160,8 @@ jobs:
               if [ -z "${val}" ]; then
                 return
               fi
+
+              val="$(quote_env_value_if_needed "$val")"
 
               esc_val=$(printf '%s' "$val" | sed -e 's/[&/]/\\\\&/g')
 
@@ -153,6 +206,7 @@ jobs:
             cd "$DEPLOY_PATH/backend"
 
             if [ -f .env ]; then
+              sanitize_env_file ".env"
               upsert_env "APP_URL" "$APP_URL" ".env"
               upsert_env "FRONTEND_URL" "$FRONTEND_URL" ".env"
               upsert_env "MAIL_MAILER" "$MAIL_MAILER" ".env"
@@ -164,6 +218,7 @@ jobs:
               upsert_env "MAIL_FROM_ADDRESS" "$MAIL_FROM_ADDRESS" ".env"
               upsert_env "MAIL_FROM_NAME" "$MAIL_FROM_NAME" ".env"
               upsert_env "MAIL_FEEDBACK_TO" "$MAIL_FEEDBACK_TO" ".env"
+              sanitize_env_file ".env"
             fi
 
             # Ensure Laravel runtime directories exist before composer scripts run.
