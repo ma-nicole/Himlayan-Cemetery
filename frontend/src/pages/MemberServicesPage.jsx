@@ -117,17 +117,19 @@ const MemberServicesPage = () => {
   const handleSubmitRequest = async (e) => {
     e.preventDefault();
 
-    // Validate contact number digit length
-    if (requestForm.contact_number) {
-      const rule = phoneRules[requestForm.country_code] || [6, 15];
-      const len = requestForm.contact_number.length;
-      if (len < rule[0] || len > rule[1]) {
-        const msg = rule[0] === rule[1]
-          ? `Contact number must be exactly ${rule[0]} digits for ${requestForm.country_code}`
-          : `Contact number must be ${rule[0]}–${rule[1]} digits for ${requestForm.country_code}`;
-        setContactError(msg);
-        return;
-      }
+    // Validate contact number digit length (required)
+    const rule = phoneRules[requestForm.country_code] || [6, 15];
+    const len = requestForm.contact_number.length;
+    if (len === 0) {
+      setContactError('Contact number is required.');
+      return;
+    }
+    if (len < rule[0] || len > rule[1]) {
+      const msg = rule[0] === rule[1]
+        ? `Contact number must be exactly ${rule[0]} digits for ${requestForm.country_code}`
+        : `Contact number must be ${rule[0]}–${rule[1]} digits for ${requestForm.country_code}`;
+      setContactError(msg);
+      return;
     }
 
     setSubmitting(true);
@@ -629,7 +631,7 @@ const MemberServicesPage = () => {
                     />
                   </div>
                   <div className="form-group">
-                    <label>Contact Number</label>
+                    <label>Contact Number <span className="required-star">*</span></label>
                     <div style={{ display: 'flex', gap: '8px', alignItems: 'flex-start' }}>
                       <select 
                         className="form-control"

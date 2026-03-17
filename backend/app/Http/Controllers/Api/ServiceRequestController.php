@@ -68,7 +68,7 @@ class ServiceRequestController extends Controller
             'service_type' => 'required|string|max:100',
             'description' => 'nullable|string',
             'preferred_date' => 'required|date|after:today',
-            'contact_number' => 'nullable|string|max:20',
+            'contact_number' => 'required|string|max:20',
         ]);
 
         $serviceRequest = ServiceRequest::create([
