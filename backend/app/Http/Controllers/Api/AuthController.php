@@ -18,6 +18,35 @@ use Illuminate\Validation\ValidationException;
 class AuthController extends Controller
 {
     /**
+     * Resolve avatar URL for both local storage paths and external social URLs.
+     */
+    private function buildAvatarUrl(?string $avatarPath): ?string
+    {
+        if (!$avatarPath) {
+            return null;
+        }
+
+        $avatarPath = trim($avatarPath);
+
+        if ($avatarPath === '') {
+            return null;
+        }
+
+        // Preserve external URLs but force https to avoid mixed-content blocking on mobile.
+        if (preg_match('/^https?:\/\//i', $avatarPath)) {
+            return preg_replace('/^http:\/\//i', 'https://', $avatarPath);
+        }
+
+        $normalized = ltrim(str_replace('\\', '/', $avatarPath), '/');
+
+        if (str_starts_with($normalized, 'storage/')) {
+            $normalized = substr($normalized, strlen('storage/'));
+        }
+
+        return asset('storage/' . $normalized);
+    }
+
+    /**
      * Login user and create token
      * 
      * @param Request $request
@@ -145,12 +174,6 @@ class AuthController extends Controller
     public function user(Request $request)
     {
         $user = $request->user();
-        
-        $avatarUrl = null;
-        if ($user->avatar) {
-            // Build the full URL for the avatar
-            $avatarUrl = url('storage/' . $user->avatar);
-        }
 
         return $this->successResponse([
             'id' => $user->id,
@@ -158,7 +181,7 @@ class AuthController extends Controller
             'email' => $user->email,
             'phone' => $user->phone,
             'address' => $user->address,
-            'avatar' => $avatarUrl,
+            'avatar' => $this->buildAvatarUrl($user->avatar),
             'role' => $user->role,
             'must_change_password' => $user->must_change_password,
         ], 'User retrieved successfully');
