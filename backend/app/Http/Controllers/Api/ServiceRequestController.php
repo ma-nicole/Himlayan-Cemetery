@@ -132,8 +132,6 @@ class ServiceRequestController extends Controller
             'service_fee_amount' => 'nullable|numeric|min:0',
         ]);
 
-        $wasNotApproved = $serviceRequest->status !== 'approved';
-
         if (isset($validated['status']) && $validated['status'] !== $serviceRequest->status) {
             $serviceRequest->processed_by = auth()->id();
             $serviceRequest->processed_at = now();
@@ -142,23 +140,30 @@ class ServiceRequestController extends Controller
         $serviceRequest->update($validated);
 
         // Auto-create a payment due when an admin approves the request with a service fee.
-        if (
-            isset($validated['status']) &&
-            $validated['status'] === 'approved' &&
-            $wasNotApproved &&
-            !empty($validated['service_fee_amount']) &&
-            $validated['service_fee_amount'] > 0
-        ) {
-            $serviceLabel = ucwords(str_replace('_', ' ', $serviceRequest->service_type));
-            Payment::create([
-                'user_id'        => $serviceRequest->user_id,
-                'plot_id'        => null,
-                'amount'         => $validated['service_fee_amount'],
-                'payment_type'   => Payment::TYPE_SERVICE_FEE,
-                'payment_method' => null,
-                'status'         => Payment::STATUS_PENDING,
-                'notes'          => 'Service fee for ' . $serviceLabel . ' (Request #' . $serviceRequest->id . ')',
-            ]);
+        // Also handles the case where the request was already approved but payment creation
+        // previously failed (e.g. DB constraint error) — create it if none exists yet.
+        $feeAmount = $validated['service_fee_amount'] ?? $serviceRequest->service_fee_amount;
+        $isApproved = ($validated['status'] ?? $serviceRequest->status) === 'approved';
+
+        if ($isApproved && !empty($feeAmount) && $feeAmount > 0) {
+            $notePattern = 'Service fee for%Request #' . $serviceRequest->id . ')';
+            $alreadyExists = Payment::where('user_id', $serviceRequest->user_id)
+                ->where('payment_type', Payment::TYPE_SERVICE_FEE)
+                ->where('notes', 'like', $notePattern)
+                ->exists();
+
+            if (!$alreadyExists) {
+                $serviceLabel = ucwords(str_replace('_', ' ', $serviceRequest->service_type));
+                Payment::create([
+                    'user_id'        => $serviceRequest->user_id,
+                    'plot_id'        => null,
+                    'amount'         => $feeAmount,
+                    'payment_type'   => Payment::TYPE_SERVICE_FEE,
+                    'payment_method' => null,
+                    'status'         => Payment::STATUS_PENDING,
+                    'notes'          => 'Service fee for ' . $serviceLabel . ' (Request #' . $serviceRequest->id . ')',
+                ]);
+            }
         }
 
         return response()->json([
