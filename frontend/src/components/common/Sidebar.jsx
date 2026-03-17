@@ -101,9 +101,6 @@ const Sidebar = () => {
 
         {isMenuOpen && (
           <div className="sidebar-user-menu">
-            <NavLink to="/profile" className="sidebar-user-menu-item" onClick={() => setIsMenuOpen(false)}>
-              Settings
-            </NavLink>
             <button type="button" className="sidebar-user-menu-item logout" onClick={handleLogout}>
               Logout
             </button>
