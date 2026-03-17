@@ -98,12 +98,13 @@ class DashboardController extends Controller
             $query->where('contact_email', $user->email);
         })->count();
 
-        // Count pending payments using effective-status logic:
-        // A pending record is only truly outstanding if no verified record covers
-        // the same user+plot+type+amount obligation.
+        // Count outstanding dues using the same logic as the Pay Dues page (myDues):
+        // 1. Build the set of verified obligation keys to exclude already-paid obligations.
+        // 2. Keep only pending payments that have a known plot/service reference.
+        // 3. Group by obligation key (deduplication) — the unique group count is what
+        //    the Pay Dues page shows, so these two numbers are always in sync.
         $allUserPayments = Payment::where('user_id', $userId)->get();
 
-        // Build set of verified obligation keys.
         $verifiedKeys = [];
         foreach ($allUserPayments as $pmt) {
             if ($pmt->status === Payment::STATUS_VERIFIED) {
@@ -111,11 +112,18 @@ class DashboardController extends Controller
             }
         }
 
-        // Count pending items whose obligation is not already covered by a verified record.
-        $pendingPaymentsCount = $allUserPayments->filter(function ($pmt) use ($verifiedKeys) {
-            return $pmt->status === Payment::STATUS_PENDING
-                && !isset($verifiedKeys[$this->buildObligationKey($pmt)]);
-        })->count();
+        $pendingPaymentsCount = $allUserPayments
+            ->filter(function ($pmt) use ($verifiedKeys) {
+                // Mirror hasKnownPlotReference: service fees are always valid;
+                // other types require a plot_id.
+                $hasRef = $pmt->payment_type === Payment::TYPE_SERVICE_FEE
+                    || !empty($pmt->plot_id);
+                return $hasRef
+                    && $pmt->status === Payment::STATUS_PENDING
+                    && !isset($verifiedKeys[$this->buildObligationKey($pmt)]);
+            })
+            ->groupBy(fn ($pmt) => $this->buildObligationKey($pmt))
+            ->count();
 
         // Count only pending service requests for the user
         $serviceRequestsCount = ServiceRequest::where('user_id', $userId)
