@@ -1,21 +1,51 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { useAuth } from '../hooks/useAuth';
+import { GoogleMap, MarkerF, InfoWindowF, useJsApiLoader } from '@react-google-maps/api';
 import MemberHeader from '../components/common/MemberHeader';
 import MemberFooter from '../components/common/MemberFooter';
+import { mapService } from '../services/mapService';
+import { getLandmarkIcon, createLandmarkIcon } from '../components/map/CemeteryMap';
 import '../styles/MemberMap.css';
 
-const MemberMapPage = () => {
-  const { user, logout } = useAuth();
-  const [selectedSection, setSelectedSection] = useState(null);
+const CEMETERY_CENTER = { lat: 14.682462, lng: 121.0530409 };
 
-  const HIMLAYAN_COORDS = {
-    lat: 14.682462,
-    lng: 121.0530409,
+const STATUS_COLORS = {
+  open: '#27ae60',
+  available: '#2ecc71',
+  closed: '#e74c3c',
+  unavailable: '#e74c3c',
+  'under maintenance': '#f39c12',
+  'n/a': '#95a5a6',
+};
+
+const MemberMapPage = () => {
+  const [selectedSection, setSelectedSection] = useState(null);
+  const [landmarks, setLandmarks] = useState([]);
+  const [selectedLandmark, setSelectedLandmark] = useState(null);
+  const [infoWindowOpen, setInfoWindowOpen] = useState(false);
+  const [loadingLandmarks, setLoadingLandmarks] = useState(true);
+
+  const { isLoaded } = useJsApiLoader({
+    googleMapsApiKey: process.env.REACT_APP_GOOGLE_MAPS_API_KEY || '',
+  });
+
+  const HIMLAYAN_COORDS = { lat: 14.682462, lng: 121.0530409 };
+
+  useEffect(() => {
+    mapService.getLandmarks()
+      .then(res => { if (res.success) setLandmarks(res.data); })
+      .catch(err => console.error('Failed to load landmarks:', err))
+      .finally(() => setLoadingLandmarks(false));
+  }, []);
+
+  const handleSelectLandmark = (landmark) => {
+    setSelectedLandmark(landmark);
+    setInfoWindowOpen(true);
   };
 
-  const handleLogout = async () => {
-    await logout();
+  const handleGetDirections = (landmark) => {
+    const url = `https://www.google.com/maps/dir/?api=1&destination=${landmark.latitude},${landmark.longitude}`;
+    window.open(url, '_blank', 'noopener,noreferrer');
   };
 
   const sections = [
@@ -107,14 +137,9 @@ const MemberMapPage = () => {
     }
   ];
 
-  const landmarks = [
+  const landmarks_static = [
     { name: 'Main Gate', icon: '' },
-    { name: 'Chapel', icon: '' },
-    { name: 'Admin Office', icon: '' },
-    { name: 'Parking Area', icon: '' },
-    { name: 'Comfort Room', icon: '' },
-    { name: 'Waiting Shed', icon: '' }
-  ];
+  ]; // kept for reference only — landmark list is now fetched from API
 
   return (
     <div className="map-page">
@@ -130,63 +155,126 @@ const MemberMapPage = () => {
       </section>
 
       <main className="map-main">
-        {/* Interactive Map Placeholder */}
-        <section className="map-container">
-          <div className="map-wrapper">
-            <div className="map-placeholder">
-              <div className="map-grid">
-                {sections.map((section) => (
-                  <button
-                    key={section.id}
-                    className={`map-section-btn ${selectedSection === section.id ? 'active' : ''}`}
-                    style={{ '--section-color': section.color }}
-                    onClick={() => setSelectedSection(selectedSection === section.id ? null : section.id)}
-                  >
-                    <div className="section-icon">{section.icon}</div>
-                    <span>{section.name}</span>
-                  </button>
-                ))}
-              </div>
-              
-              <div className="map-legend">
-                <h4>Landmarks</h4>
-                <div className="legend-items">
-                  {landmarks.map((landmark, idx) => (
-                    <div key={idx} className="legend-item">
-                      <span className="legend-icon">{landmark.icon}</span>
-                      <span>{landmark.name}</span>
-                    </div>
-                  ))}
+        {/* ── Landmark Map Section (live from DB) ── */}
+        <section className="lm-section">
+          <div className="section-header">
+            <h2>Landmark Navigation</h2>
+            <p>Click a landmark to see details and get directions</p>
+          </div>
+
+          <div className="lm-layout">
+            {/* Google Map */}
+            <div className="lm-map-wrap">
+              {(!isLoaded || loadingLandmarks) ? (
+                <div className="lm-loading">
+                  <div className="lm-spinner"></div>
+                  <p>Loading map…</p>
                 </div>
-              </div>
+              ) : (
+                <GoogleMap
+                  mapContainerStyle={{ width: '100%', height: '100%' }}
+                  center={CEMETERY_CENTER}
+                  zoom={18}
+                  options={{
+                    zoomControl: true,
+                    mapTypeControl: false,
+                    streetViewControl: false,
+                    fullscreenControl: true,
+                    clickableIcons: false,
+                  }}
+                  onClick={() => setInfoWindowOpen(false)}
+                >
+                  {landmarks.map((lm) => (
+                    <MarkerF
+                      key={lm.id}
+                      position={{ lat: parseFloat(lm.latitude), lng: parseFloat(lm.longitude) }}
+                      icon={createLandmarkIcon(lm.name)}
+                      onClick={() => handleSelectLandmark(lm)}
+                    />
+                  ))}
+                  {selectedLandmark && infoWindowOpen && (
+                    <InfoWindowF
+                      position={{
+                        lat: parseFloat(selectedLandmark.latitude),
+                        lng: parseFloat(selectedLandmark.longitude),
+                      }}
+                      onCloseClick={() => setInfoWindowOpen(false)}
+                    >
+                      <div className="lm-infowindow">
+                        <strong>{selectedLandmark.name}</strong>
+                        <span style={{ color: STATUS_COLORS[selectedLandmark.status] || '#666' }}>
+                          {selectedLandmark.status}
+                        </span>
+                        {selectedLandmark.notes && <p>{selectedLandmark.notes}</p>}
+                        <button
+                          className="lm-infowindow-btn"
+                          onClick={() => handleGetDirections(selectedLandmark)}
+                        >
+                          🗺️ Get Directions
+                        </button>
+                      </div>
+                    </InfoWindowF>
+                  )}
+                </GoogleMap>
+              )}
             </div>
 
-            {/* Section Detail Panel */}
-            {selectedSection && (
-              <div className="section-detail">
-                {sections.filter(s => s.id === selectedSection).map(section => (
-                  <div key={section.id} className="detail-content">
-                    <div className="detail-image" style={{ backgroundImage: `url(${section.image})` }}></div>
-                    <div className="detail-info">
-                      <div className="detail-header">
-                        <div className="detail-icon" style={{ background: section.color }}>{section.icon}</div>
-                        <div>
-                          <h3>{section.name}</h3>
-                          <span className={`availability ${section.availability.toLowerCase().replace(' ', '-')}`}>
-                            {section.availability}
-                          </span>
-                        </div>
+            {/* Landmark List Panel */}
+            <div className="lm-panel">
+              <h3 className="lm-panel-title">Landmarks</h3>
+
+              {loadingLandmarks ? (
+                <p className="lm-panel-loading">Loading landmarks…</p>
+              ) : landmarks.length === 0 ? (
+                <p className="lm-panel-empty">No landmarks found.</p>
+              ) : (
+                <ul className="lm-list">
+                  {landmarks.map((lm) => (
+                    <li
+                      key={lm.id}
+                      className={`lm-item${selectedLandmark?.id === lm.id ? ' lm-item--active' : ''}`}
+                      onClick={() => handleSelectLandmark(lm)}
+                    >
+                      <span className="lm-item-icon">{getLandmarkIcon(lm.name)}</span>
+                      <div className="lm-item-text">
+                        <span className="lm-item-name">{lm.name}</span>
+                        <span
+                          className="lm-item-status"
+                          style={{ color: STATUS_COLORS[lm.status] || '#95a5a6' }}
+                        >
+                          {lm.status}
+                        </span>
                       </div>
-                      <p>{section.desc}</p>
-                      <div className="detail-actions">
-                        <Link to="/member/services" className="detail-btn primary">View Services</Link>
-                        <button className="detail-btn secondary" onClick={() => setSelectedSection(null)}>Close</button>
-                      </div>
-                    </div>
+                    </li>
+                  ))}
+                </ul>
+              )}
+
+              {/* Selected Landmark Detail Card */}
+              {selectedLandmark && (
+                <div className="lm-detail-card">
+                  <div className="lm-detail-head">
+                    <span className="lm-detail-icon">{getLandmarkIcon(selectedLandmark.name)}</span>
+                    <h4>{selectedLandmark.name}</h4>
                   </div>
-                ))}
-              </div>
-            )}
+                  <span
+                    className="lm-detail-badge"
+                    style={{ backgroundColor: STATUS_COLORS[selectedLandmark.status] || '#95a5a6' }}
+                  >
+                    {selectedLandmark.status}
+                  </span>
+                  {selectedLandmark.notes && (
+                    <p className="lm-detail-notes">{selectedLandmark.notes}</p>
+                  )}
+                  <button
+                    className="lm-directions-btn"
+                    onClick={() => handleGetDirections(selectedLandmark)}
+                  >
+                    🗺️ Get Directions
+                  </button>
+                </div>
+              )}
+            </div>
           </div>
         </section>
 
@@ -217,6 +305,31 @@ const MemberMapPage = () => {
               </div>
             ))}
           </div>
+          {selectedSection && (
+            <div className="section-detail" style={{ marginTop: '1.5rem' }}>
+              {sections.filter(s => s.id === selectedSection).map(section => (
+                <div key={section.id} className="detail-content">
+                  <div className="detail-image" style={{ backgroundImage: `url(${section.image})` }}></div>
+                  <div className="detail-info">
+                    <div className="detail-header">
+                      <div className="detail-icon" style={{ background: section.color }}>{section.icon}</div>
+                      <div>
+                        <h3>{section.name}</h3>
+                        <span className={`availability ${section.availability.toLowerCase().replace(' ', '-')}`}>
+                          {section.availability}
+                        </span>
+                      </div>
+                    </div>
+                    <p>{section.desc}</p>
+                    <div className="detail-actions">
+                      <Link to="/member/services" className="detail-btn primary">View Services</Link>
+                      <button className="detail-btn secondary" onClick={() => setSelectedSection(null)}>Close</button>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
         </section>
 
         {/* Directions */}

@@ -497,6 +497,249 @@
   color: #64748b;
 }
 
+/* ========== Landmark Map Section ========== */
+.lm-section {
+  margin-bottom: 3rem;
+}
+
+.lm-layout {
+  display: flex;
+  gap: 1.5rem;
+  height: 520px;
+}
+
+.lm-map-wrap {
+  flex: 1;
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  min-height: 400px;
+}
+
+.lm-loading {
+  width: 100%;
+  height: 100%;
+  background: #f1f5f9;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  color: #64748b;
+  border-radius: 16px;
+}
+
+.lm-spinner {
+  width: 36px;
+  height: 36px;
+  border: 3px solid #e2e8f0;
+  border-top-color: #1a3a6b;
+  border-radius: 50%;
+  animation: lm-spin 0.8s linear infinite;
+}
+
+@keyframes lm-spin {
+  to { transform: rotate(360deg); }
+}
+
+/* Landmark side panel */
+.lm-panel {
+  width: 280px;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  overflow-y: auto;
+}
+
+.lm-panel-title {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #1e293b;
+  margin: 0;
+  padding-bottom: 0.75rem;
+  border-bottom: 2px solid #e2e8f0;
+}
+
+.lm-panel-loading,
+.lm-panel-empty {
+  color: #64748b;
+  font-size: 0.9rem;
+  text-align: center;
+  padding: 1rem 0;
+}
+
+/* Landmark list */
+.lm-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.lm-item {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.65rem 0.875rem;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.2s;
+  background: #fff;
+  border: 1.5px solid #e2e8f0;
+}
+
+.lm-item:hover {
+  border-color: #1a3a6b;
+  background: #f0f4ff;
+}
+
+.lm-item--active {
+  border-color: #1a3a6b;
+  background: #eef2ff;
+  box-shadow: 0 2px 8px rgba(26, 58, 107, 0.12);
+}
+
+.lm-item-icon {
+  color: #1a3a6b;
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.lm-item-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.lm-item-name {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #1e293b;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.lm-item-status {
+  font-size: 0.75rem;
+  font-weight: 500;
+  text-transform: capitalize;
+}
+
+/* Landmark detail card */
+.lm-detail-card {
+  background: #fff;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  margin-top: 0.25rem;
+}
+
+.lm-detail-head {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.lm-detail-icon {
+  color: #1a3a6b;
+  display: flex;
+  align-items: center;
+}
+
+.lm-detail-head h4 {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 700;
+  color: #1e293b;
+}
+
+.lm-detail-badge {
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: 20px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #fff;
+  text-transform: capitalize;
+  width: fit-content;
+}
+
+.lm-detail-notes {
+  font-size: 0.85rem;
+  color: #64748b;
+  margin: 0;
+  line-height: 1.5;
+}
+
+.lm-directions-btn {
+  width: 100%;
+  padding: 0.65rem;
+  background: #1a3a6b;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.lm-directions-btn:hover {
+  background: #0d2358;
+}
+
+/* InfoWindow styles */
+.lm-infowindow {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 150px;
+  max-width: 200px;
+}
+
+.lm-infowindow strong {
+  font-size: 0.9rem;
+  color: #1e293b;
+}
+
+.lm-infowindow span {
+  font-size: 0.8rem;
+  text-transform: capitalize;
+}
+
+.lm-infowindow p {
+  font-size: 0.8rem;
+  color: #64748b;
+  margin: 2px 0 0;
+  line-height: 1.4;
+}
+
+.lm-infowindow-btn {
+  margin-top: 6px;
+  padding: 6px 10px;
+  background: #1a3a6b;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  width: 100%;
+}
+
+.lm-infowindow-btn:hover {
+  background: #0d2358;
+}
+
 /* ========== Directions ========== */
 .directions-section {
   margin-bottom: 3rem;
@@ -608,6 +851,20 @@
 
 /* ========== Responsive ========== */
 @media (max-width: 1024px) {
+  .lm-layout {
+    flex-direction: column;
+    height: auto;
+  }
+
+  .lm-map-wrap {
+    height: 400px;
+  }
+
+  .lm-panel {
+    width: 100%;
+    max-height: 360px;
+  }
+
   .map-grid {
     grid-template-columns: repeat(2, 1fr);
   }

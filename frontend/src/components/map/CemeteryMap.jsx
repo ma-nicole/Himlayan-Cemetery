@@ -41,7 +41,7 @@ const LANDMARK_ABBREVIATIONS = {
   'Cultural Heritage':'CU',
 };
 
-const createLandmarkIcon = (landmarkName) => {
+export const createLandmarkIcon = (landmarkName) => {
   const color = '#1a3a6b';
   const abbr = LANDMARK_ABBREVIATIONS[landmarkName] || 'LM';
   const fontSize = abbr.length === 1 ? '13' : '9';

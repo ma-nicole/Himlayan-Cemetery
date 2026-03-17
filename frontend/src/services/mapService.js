@@ -50,6 +50,15 @@ export const mapService = {
   },
 
   /**
+   * Get all landmarks (any authenticated user)
+   * @returns {Promise}
+   */
+  async getLandmarks() {
+    const response = await api.get('/map/landmarks');
+    return response.data;
+  },
+
+  /**
    * Create a new landmark (admin/staff)
    * @param {Object} landmarkData
    * @returns {Promise}
