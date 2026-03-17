@@ -56,6 +56,29 @@ const ActivityFeed = ({ activities = [], loading = false, maxItems = 10 }) => {
     return past.toLocaleDateString();
   };
 
+  const getActivityText = (activity) => {
+    if (activity?.message && String(activity.message).trim() !== '') {
+      return String(activity.message).trim();
+    }
+
+    const title = activity?.title ? String(activity.title).trim() : '';
+    const description = activity?.description ? String(activity.description).trim() : '';
+
+    if (title && description) {
+      return `${title}: ${description}`;
+    }
+
+    if (title) {
+      return title;
+    }
+
+    if (description) {
+      return description;
+    }
+
+    return 'New activity update';
+  };
+
   if (loading) {
     return (
       <div className="activity-feed">
@@ -109,7 +132,7 @@ const ActivityFeed = ({ activities = [], loading = false, maxItems = 10 }) => {
               {getActivityIcon(activity.type)}
             </div>
             <div className="activity-content">
-              <p className="activity-message">{activity.message}</p>
+              <p className="activity-message">{getActivityText(activity)}</p>
               <span className="activity-time">{formatTimeAgo(activity.timestamp)}</span>
             </div>
           </div>
