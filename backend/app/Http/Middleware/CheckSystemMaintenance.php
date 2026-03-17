@@ -17,6 +17,7 @@ class CheckSystemMaintenance
         'api/forgot-password',
         'api/reset-password',
         'api/system/maintenance-status',
+        'api/system/maintenance',
     ];
 
     public function handle(Request $request, Closure $next): Response
