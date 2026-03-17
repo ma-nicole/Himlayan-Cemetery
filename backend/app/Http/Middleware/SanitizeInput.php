@@ -103,7 +103,7 @@ class SanitizeInput
         $patterns = [
             '/(<script\b|javascript:|onerror\s*=|onload\s*=|<iframe\b)/i',
             '/(\bunion\b\s+\bselect\b|\bselect\b.+\bfrom\b|\bdrop\b\s+\btable\b|\binsert\b\s+\binto\b|\bdelete\b\s+\bfrom\b|\bupdate\b\s+\w+\s+\bset\b)/i',
-            '/(\bor\b\s+1\s*=\s*1|\band\b\s+1\s*=\s*1|--|\/\*|\*\/|#)/i',
+            '/(\bor\b\s+1\s*=\s*1|\band\b\s+1\s*=\s*1|--|\/\*|\*\/|#[ \t])/i',
         ];
 
         foreach ($patterns as $pattern) {
