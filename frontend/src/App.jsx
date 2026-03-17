@@ -40,6 +40,7 @@ import PayDuesPage from './pages/PayDuesPage';
 import PaymentHistoryPage from './pages/PaymentHistoryPage';
 import AuthCallback from './pages/AuthCallback';
 import AcceptInvitation from './pages/AcceptInvitation';
+import ReportGeneratorPage from './pages/ReportGeneratorPage';
 
 function App() {
   return (
@@ -150,6 +151,14 @@ function App() {
             element={
               <ProtectedRoute roles={['admin', 'staff']}>
                 <FeedbackManagementPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/reports"
+            element={
+              <ProtectedRoute roles={['admin', 'staff']}>
+                <ReportGeneratorPage />
               </ProtectedRoute>
             }
           />

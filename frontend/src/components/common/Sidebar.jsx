@@ -81,6 +81,11 @@ const Sidebar = () => {
             Feedback
           </NavLink>
         </li>
+        <li>
+          <NavLink to="/admin/reports" className={({ isActive }) => isActive ? 'active' : ''}>
+            Reports
+          </NavLink>
+        </li>
       </ul>
       <div className="sidebar-user" ref={menuRef}>
         <button

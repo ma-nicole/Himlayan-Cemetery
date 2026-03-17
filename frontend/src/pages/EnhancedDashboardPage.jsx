@@ -153,9 +153,25 @@ const EnhancedDashboardPage = () => {
       />
 
       {/* Page Header */}
-      <div style={{ marginBottom: '24px' }}>
-        <h1 style={{ fontSize: '28px', fontWeight: '700', color: '#1a472a', marginBottom: '4px' }}>Dashboard</h1>
-        <p style={{ color: '#6b7280', fontSize: '15px' }}>Welcome to Himlayan Cemetery Management System</p>
+      <div style={{ marginBottom: '24px', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+        <div>
+          <h1 style={{ fontSize: '28px', fontWeight: '700', color: '#1a472a', marginBottom: '4px' }}>Dashboard</h1>
+          <p style={{ color: '#6b7280', fontSize: '15px' }}>Welcome to Himlayan Cemetery Management System</p>
+        </div>
+        <button
+          onClick={() => navigate('/admin/reports')}
+          style={{
+            display: 'flex', alignItems: 'center', gap: '8px',
+            background: 'linear-gradient(135deg, #1a472a 0%, #2d5a3d 100%)',
+            color: 'white', border: 'none', padding: '10px 20px',
+            borderRadius: '10px', fontSize: '14px', fontWeight: '600',
+            cursor: 'pointer', boxShadow: '0 4px 15px rgba(26,71,42,0.3)',
+            whiteSpace: 'nowrap'
+          }}
+        >
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+          Generate Report
+        </button>
       </div>
 
       {/* Quick Stats */}

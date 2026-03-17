@@ -13,6 +13,7 @@ use App\Http\Controllers\Api\AnnouncementController;
 use App\Http\Controllers\Api\ServiceRequestController;
 use App\Http\Controllers\Api\PaymentController;
 use App\Http\Controllers\Api\FeedbackController;
+use App\Http\Controllers\Api\ReportController;
 use App\Http\Controllers\Api\SecurityAuditLogController;
 use App\Http\Controllers\Api\ProfileController;
 use App\Http\Controllers\Api\SystemMaintenanceController;
@@ -262,5 +263,14 @@ Route::middleware(['auth:sanctum', 'sanitize.input'])->group(function () {
         Route::get('/{id}', [FeedbackController::class, 'show']);
         Route::post('/{id}/respond', [FeedbackController::class, 'respond']);
         Route::delete('/{id}', [FeedbackController::class, 'destroy']);
+    });
+
+    // ----------------------------------------
+    // REPORTS (Admin Only)
+    // ----------------------------------------
+    Route::prefix('reports')->middleware('role:admin,staff')->group(function () {
+        Route::get('/payments', [ReportController::class, 'payments']);
+        Route::get('/feedbacks', [ReportController::class, 'feedbacks']);
+        Route::get('/users', [ReportController::class, 'users']);
     });
 });
