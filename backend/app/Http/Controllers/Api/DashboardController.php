@@ -69,12 +69,26 @@ class DashboardController extends Controller
     }
 
     /**
+     * Build a stable obligation key matching the PaymentController logic.
+     */
+    private function buildObligationKey($payment): string
+    {
+        $plotPart = $payment->plot_id ? 'plot:' . $payment->plot_id : 'plot:none';
+        $amountPart = number_format((float) $payment->amount, 2, '.', '');
+        return implode('|', [
+            'user:' . $payment->user_id,
+            $plotPart,
+            'type:' . strtolower((string) $payment->payment_type),
+            'amount:' . $amountPart,
+        ]);
+    }
+
+    /**
      * Get member-specific dashboard statistics
      * 
      * @return \Illuminate\Http\JsonResponse
      */
-    public function memberStats()
-    {
+    public function memberStats()    {
         $user = auth()->user();
         $userId = $user->id;
         $currentYear = now()->year;
@@ -84,10 +98,24 @@ class DashboardController extends Controller
             $query->where('contact_email', $user->email);
         })->count();
 
-        // Count pending payments for the user
-        $pendingPaymentsCount = Payment::where('user_id', $userId)
-            ->where('status', 'pending')
-            ->count();
+        // Count pending payments using effective-status logic:
+        // A pending record is only truly outstanding if no verified record covers
+        // the same user+plot+type+amount obligation.
+        $allUserPayments = Payment::where('user_id', $userId)->get();
+
+        // Build set of verified obligation keys.
+        $verifiedKeys = [];
+        foreach ($allUserPayments as $pmt) {
+            if ($pmt->status === Payment::STATUS_VERIFIED) {
+                $verifiedKeys[$this->buildObligationKey($pmt)] = true;
+            }
+        }
+
+        // Count pending items whose obligation is not already covered by a verified record.
+        $pendingPaymentsCount = $allUserPayments->filter(function ($pmt) use ($verifiedKeys) {
+            return $pmt->status === Payment::STATUS_PENDING
+                && !isset($verifiedKeys[$this->buildObligationKey($pmt)]);
+        })->count();
 
         // Count only pending service requests for the user
         $serviceRequestsCount = ServiceRequest::where('user_id', $userId)
