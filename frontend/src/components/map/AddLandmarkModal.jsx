@@ -69,33 +69,44 @@ const AddLandmarkModal = ({
   const [success, setSuccess] = useState('');
   const [validationErrors, setValidationErrors] = useState({});
 
-  // Sync coordinates when map click selects a location
+  // Single combined effect: handles modal open, edit mode, and map-click coordinates
   useEffect(() => {
-    if (selectedCoordinates) {
+    if (!isOpen) return;
+
+    if (initialData) {
+      // Edit mode
+      setFormData({
+        name: initialData.name || 'Main Gate',
+        latitude: initialData.latitude,
+        longitude: initialData.longitude,
+        status: initialData.status || 'open',
+        notes: initialData.notes || '',
+      });
+    } else if (selectedCoordinates) {
+      // Add mode with map-click coordinates
       setFormData(prev => ({
-        ...prev,
+        name: prev.name || 'Main Gate',
+        status: prev.status || 'open',
+        notes: prev.notes || '',
         latitude: selectedCoordinates.latitude,
         longitude: selectedCoordinates.longitude,
       }));
+    } else {
+      // Add mode without coordinates
+      const coords = getDefaultCoordinates();
+      setFormData({
+        name: 'Main Gate',
+        latitude: coords.latitude,
+        longitude: coords.longitude,
+        status: 'open',
+        notes: '',
+      });
     }
-  }, [selectedCoordinates]);
-
-  // Reset form when modal opens (handles switching between add/edit)
-  // If selectedCoordinates already exist (map click mode), use them instead of defaults
-  useEffect(() => {
-    if (isOpen) {
-      const base = getInitialFormData();
-      if (!initialData && selectedCoordinates) {
-        base.latitude = selectedCoordinates.latitude;
-        base.longitude = selectedCoordinates.longitude;
-      }
-      setFormData(base);
-      setError('');
-      setSuccess('');
-      setValidationErrors({});
-    }
+    setError('');
+    setSuccess('');
+    setValidationErrors({});
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isOpen, initialData]);
+  }, [isOpen, initialData, selectedCoordinates]);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
