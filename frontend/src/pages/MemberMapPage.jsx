@@ -276,8 +276,17 @@ const MemberMapPage = () => {
               )}
             </div>
           </div>
-          <div style={{ textAlign: 'center', marginTop: '1.5rem' }}>
-            <Link to="/member/search" className="lm-directions-btn" style={{ textDecoration: 'none', display: 'inline-flex' }}>
+          <div style={{ marginTop: '1rem' }}>
+            <Link
+              to="/member/search"
+              className="lm-directions-btn"
+              style={{
+                textDecoration: 'none',
+                display: 'inline-flex',
+                padding: '0.75rem 2rem',
+                fontSize: '1rem',
+              }}
+            >
               🔎 Find a Grave
             </Link>
           </div>
