@@ -237,7 +237,7 @@ class MapController extends Controller
             'name'      => 'required|string|max:100',
             'latitude'  => 'required|numeric|between:' . self::HIMS_LAT_MIN . ',' . self::HIMS_LAT_MAX,
             'longitude' => 'required|numeric|between:' . self::HIMS_LNG_MIN . ',' . self::HIMS_LNG_MAX,
-            'status'    => 'required|in:open,closed',
+            'status'    => 'required|in:open,closed,n/a,under maintenance,available,unavailable',
             'notes'     => 'nullable|string',
         ], [
             'name.required'      => 'Landmark name is required.',
@@ -259,6 +259,44 @@ class MapController extends Controller
             ], 'Landmark created successfully', 201);
         } catch (\Exception $e) {
             return $this->errorResponse('Failed to create landmark: ' . $e->getMessage(), 500);
+        }
+    }
+
+    /**
+     * Update an existing landmark (admin/staff only)
+     */
+    public function updateLandmark(Request $request, $landmarkId)
+    {
+        $landmark = Landmark::find($landmarkId);
+
+        if (!$landmark) {
+            return $this->errorResponse('Landmark not found', 404);
+        }
+
+        $validated = $request->validate([
+            'name'      => 'sometimes|required|string|max:100',
+            'latitude'  => 'sometimes|required|numeric|between:' . self::HIMS_LAT_MIN . ',' . self::HIMS_LAT_MAX,
+            'longitude' => 'sometimes|required|numeric|between:' . self::HIMS_LNG_MIN . ',' . self::HIMS_LNG_MAX,
+            'status'    => 'sometimes|required|in:open,closed,n/a,under maintenance,available,unavailable',
+            'notes'     => 'nullable|string',
+        ], [
+            'latitude.between'  => 'Latitude must be inside Himlayang Pilipino Memorial Park area.',
+            'longitude.between' => 'Longitude must be inside Himlayang Pilipino Memorial Park area.',
+        ]);
+
+        try {
+            $landmark->update($validated);
+            return $this->successResponse([
+                'id'        => 'lm_' . $landmark->id,
+                'type'      => 'landmark',
+                'name'      => $landmark->name,
+                'latitude'  => (float) $landmark->latitude,
+                'longitude' => (float) $landmark->longitude,
+                'status'    => $landmark->status,
+                'notes'     => $landmark->notes,
+            ], 'Landmark updated successfully');
+        } catch (\Exception $e) {
+            return $this->errorResponse('Failed to update landmark: ' . $e->getMessage(), 500);
         }
     }
 

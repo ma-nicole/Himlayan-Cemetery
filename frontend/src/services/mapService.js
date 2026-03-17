@@ -64,6 +64,11 @@ export const mapService = {
    * @param {number} landmarkId
    * @returns {Promise}
    */
+  async updateLandmark(landmarkId, landmarkData) {
+    const response = await api.put(`/map/landmarks/${landmarkId}`, landmarkData);
+    return response.data;
+  },
+
   async deleteLandmark(landmarkId) {
     const response = await api.delete(`/map/landmarks/${landmarkId}`);
     return response.data;

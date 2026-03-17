@@ -155,7 +155,14 @@ const CemeteryMap = ({ markers, center, zoom, onMarkerClick, onMapClick }) => {
                             padding: '2px 8px',
                             borderRadius: '10px',
                             fontSize: '11px',
-                            backgroundColor: marker.status === 'open' ? '#27ae60' : '#95a5a6',
+                            backgroundColor: {
+                              open: '#27ae60',
+                              available: '#2ecc71',
+                              closed: '#e74c3c',
+                              unavailable: '#e74c3c',
+                              'under maintenance': '#f39c12',
+                              'n/a': '#95a5a6',
+                            }[marker.status] || '#95a5a6',
                             color: 'white',
                             marginTop: '5px',
                           }}

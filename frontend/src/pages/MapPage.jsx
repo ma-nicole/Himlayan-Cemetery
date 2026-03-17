@@ -38,6 +38,8 @@ const MapPage = () => {
   const [showAddLandmarkModal, setShowAddLandmarkModal] = useState(false);
   const [addLandmarkMode, setAddLandmarkMode] = useState(false);
   const [selectedLandmarkCoordinates, setSelectedLandmarkCoordinates] = useState(null);
+  const [landmarkToEdit, setLandmarkToEdit] = useState(null);
+  const [showEditLandmarkModal, setShowEditLandmarkModal] = useState(false);
 
   const loadMapData = async () => {
     try {
@@ -159,6 +161,35 @@ const MapPage = () => {
     loadMapData();
     setSelectedMarker(null);
     setMarkerDetails(null);
+  };
+
+  const handleEditLandmarkClick = (marker) => {
+    setLandmarkToEdit(marker);
+    setShowEditLandmarkModal(true);
+  };
+
+  const handleLandmarkUpdated = (updatedLandmark) => {
+    // Update the marker in the list and refresh selected marker
+    setMarkers(prev => prev.map(m =>
+      m.id === updatedLandmark.id ? { ...m, ...updatedLandmark } : m
+    ));
+    setSelectedMarker(prev => prev && prev.id === updatedLandmark.id ? { ...prev, ...updatedLandmark } : prev);
+    setShowEditLandmarkModal(false);
+    setLandmarkToEdit(null);
+  };
+
+  const handleDeleteLandmarkClick = async (marker) => {
+    if (!window.confirm(`Delete landmark "${marker.name}"? This cannot be undone.`)) return;
+    const numericId = String(marker.id).replace('lm_', '');
+    try {
+      const response = await mapService.deleteLandmark(numericId);
+      if (response.success) {
+        setMarkers(prev => prev.filter(m => m.id !== marker.id));
+        setSelectedMarker(null);
+      }
+    } catch (err) {
+      console.error('Failed to delete landmark:', err);
+    }
   };
 
   const toggleLandmarkMapClickMode = () => {
@@ -375,7 +406,14 @@ const MapPage = () => {
                       padding: '3px 10px',
                       borderRadius: '10px',
                       fontSize: '12px',
-                      backgroundColor: selectedMarker.status === 'open' ? '#27ae60' : '#95a5a6',
+                      backgroundColor: {
+                        open: '#27ae60',
+                        available: '#2ecc71',
+                        closed: '#e74c3c',
+                        unavailable: '#e74c3c',
+                        'under maintenance': '#f39c12',
+                        'n/a': '#95a5a6',
+                      }[selectedMarker.status] || '#95a5a6',
                       color: 'white',
                     }}
                   >
@@ -395,6 +433,45 @@ const MapPage = () => {
                     {Number(selectedMarker.longitude).toFixed(6)}
                   </span>
                 </div>
+                {isAdmin && (
+                  <div style={{ marginTop: '20px' }}>
+                    <hr style={{ margin: '15px 0' }} />
+                    <div style={{ display: 'flex', gap: '8px' }}>
+                      <button
+                        onClick={() => handleEditLandmarkClick(selectedMarker)}
+                        style={{
+                          flex: 1,
+                          padding: '10px',
+                          backgroundColor: '#1a3a6b',
+                          color: 'white',
+                          border: 'none',
+                          borderRadius: '4px',
+                          cursor: 'pointer',
+                          fontSize: '0.9rem',
+                          fontWeight: '500',
+                        }}
+                      >
+                        ✏️ Edit
+                      </button>
+                      <button
+                        onClick={() => handleDeleteLandmarkClick(selectedMarker)}
+                        style={{
+                          flex: 1,
+                          padding: '10px',
+                          backgroundColor: '#e74c3c',
+                          color: 'white',
+                          border: 'none',
+                          borderRadius: '4px',
+                          cursor: 'pointer',
+                          fontSize: '0.9rem',
+                          fontWeight: '500',
+                        }}
+                      >
+                        🗑️ Delete
+                      </button>
+                    </div>
+                  </div>
+                )}
               </div>
             )}
 
@@ -508,6 +585,16 @@ const MapPage = () => {
         selectedCoordinates={selectedLandmarkCoordinates}
         addLandmarkMode={addLandmarkMode}
         toggleMapClickMode={toggleLandmarkMapClickMode}
+      />
+
+      <AddLandmarkModal
+        isOpen={showEditLandmarkModal}
+        onClose={() => { setShowEditLandmarkModal(false); setLandmarkToEdit(null); }}
+        onLandmarkUpdated={handleLandmarkUpdated}
+        initialData={landmarkToEdit}
+        center={mapCenter}
+        addLandmarkMode={false}
+        toggleMapClickMode={() => {}}
       />
 
       <DeletePlotModal

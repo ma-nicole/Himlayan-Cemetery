@@ -14,15 +14,27 @@ const LANDMARK_NAMES = [
   'Cultural Heritage',
 ];
 
+const STATUS_OPTIONS = [
+  { value: 'open', label: 'Open' },
+  { value: 'closed', label: 'Closed' },
+  { value: 'available', label: 'Available' },
+  { value: 'unavailable', label: 'Unavailable' },
+  { value: 'under maintenance', label: 'Under Maintenance' },
+  { value: 'n/a', label: 'N/A' },
+];
+
 const AddLandmarkModal = ({
   isOpen,
   onClose,
   onLandmarkAdded,
+  onLandmarkUpdated,
+  initialData,
   center,
   selectedCoordinates,
   addLandmarkMode,
   toggleMapClickMode,
 }) => {
+  const isEditMode = !!initialData;
   const DEFAULT_COORDINATES = { latitude: 14.682462, longitude: 121.0530409 };
 
   const getDefaultCoordinates = () => ({
@@ -30,13 +42,27 @@ const AddLandmarkModal = ({
     longitude: center ? center[1] : DEFAULT_COORDINATES.longitude,
   });
 
-  const [formData, setFormData] = useState({
-    name: 'Main Gate',
-    latitude: getDefaultCoordinates().latitude,
-    longitude: getDefaultCoordinates().longitude,
-    status: 'open',
-    notes: '',
-  });
+  const getInitialFormData = () => {
+    if (initialData) {
+      return {
+        name: initialData.name || 'Main Gate',
+        latitude: initialData.latitude,
+        longitude: initialData.longitude,
+        status: initialData.status || 'open',
+        notes: initialData.notes || '',
+      };
+    }
+    const coords = getDefaultCoordinates();
+    return {
+      name: 'Main Gate',
+      latitude: coords.latitude,
+      longitude: coords.longitude,
+      status: 'open',
+      notes: '',
+    };
+  };
+
+  const [formData, setFormData] = useState(getInitialFormData);
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -54,16 +80,16 @@ const AddLandmarkModal = ({
     }
   }, [selectedCoordinates]);
 
-  // Reset to default coords when modal opens without coordinates
+  // Reset form when modal opens (handles switching between add/edit)
   useEffect(() => {
-    if (!isOpen || selectedCoordinates) return;
-    const defaults = getDefaultCoordinates();
-    setFormData(prev => ({
-      ...prev,
-      latitude: defaults.latitude,
-      longitude: defaults.longitude,
-    }));
-  }, [isOpen, selectedCoordinates, center]);
+    if (isOpen) {
+      setFormData(getInitialFormData());
+      setError('');
+      setSuccess('');
+      setValidationErrors({});
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isOpen, initialData]);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -118,16 +144,26 @@ const AddLandmarkModal = ({
         notes: formData.notes.trim() || null,
       };
 
-      const response = await mapService.createLandmark(landmarkData);
+      let response;
+      if (isEditMode) {
+        const numericId = String(initialData.id).replace('lm_', '');
+        response = await mapService.updateLandmark(numericId, landmarkData);
+      } else {
+        response = await mapService.createLandmark(landmarkData);
+      }
 
       if (response.success) {
-        setSuccess('Landmark created successfully!');
+        setSuccess(isEditMode ? 'Landmark updated successfully!' : 'Landmark created successfully!');
         setTimeout(() => {
-          onLandmarkAdded(response.data);
+          if (isEditMode && onLandmarkUpdated) {
+            onLandmarkUpdated(response.data);
+          } else if (!isEditMode && onLandmarkAdded) {
+            onLandmarkAdded(response.data);
+          }
           handleClose();
         }, 1200);
       } else {
-        setError(response.message || 'Failed to create landmark');
+        setError(response.message || (isEditMode ? 'Failed to update landmark' : 'Failed to create landmark'));
       }
     } catch (err) {
       setError(
@@ -195,7 +231,7 @@ const AddLandmarkModal = ({
         overflowY: 'auto',
         boxShadow: '0 10px 40px rgba(0,0,0,0.2)',
       }}>
-        <h2 style={{ marginTop: 0, color: '#1a1a2e' }}>Add Landmark</h2>
+        <h2 style={{ marginTop: 0, color: '#1a1a2e' }}>{isEditMode ? 'Edit Landmark' : 'Add Landmark'}</h2>
 
         {error && (
           <div style={{ padding: '12px', backgroundColor: '#ffe6e6', color: '#e74c3c', borderRadius: '4px', marginBottom: '15px', fontSize: '0.9rem' }}>
@@ -312,8 +348,9 @@ const AddLandmarkModal = ({
               disabled={loading}
               style={inputStyle(false)}
             >
-              <option value="open">Open</option>
-              <option value="closed">Closed</option>
+              {STATUS_OPTIONS.map(opt => (
+                <option key={opt.value} value={opt.value}>{opt.label}</option>
+              ))}
             </select>
           </div>
 
@@ -348,7 +385,7 @@ const AddLandmarkModal = ({
                 fontWeight: '600',
               }}
             >
-              {loading ? 'Saving...' : 'Save Landmark'}
+              {loading ? 'Saving...' : (isEditMode ? 'Save Changes' : 'Save Landmark')}
             </button>
             <button
               type="button"

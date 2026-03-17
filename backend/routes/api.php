@@ -178,6 +178,7 @@ Route::middleware(['auth:sanctum', 'sanitize.input'])->group(function () {
 
             Route::get('/landmarks', [MapController::class, 'getLandmarks']);
             Route::post('/landmarks', [MapController::class, 'createLandmark']);
+            Route::put('/landmarks/{landmarkId}', [MapController::class, 'updateLandmark']);
             Route::delete('/landmarks/{landmarkId}', [MapController::class, 'deleteLandmark']);
         });
     });
