@@ -80,6 +80,11 @@
   background: #fef3c7;
 }
 
+.payment-status.paid {
+  color: #0369a1;
+  background: #e0f2fe;
+}
+
 .payment-status.verified {
   color: #166534;
   background: #dcfce7;

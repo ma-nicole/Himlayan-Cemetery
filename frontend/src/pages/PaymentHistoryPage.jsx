@@ -50,7 +50,21 @@ const PaymentHistoryPage = () => {
     });
   };
 
-  const displayStatus = (item) => item.effective_status || item.status || 'pending';
+  const getEffectiveStatus = (item) => item.effective_status || item.status || 'pending';
+
+  const displayStatus = (item) => {
+    const raw = getEffectiveStatus(item);
+    if (raw === 'awaiting_verification') return 'Paid';
+    if (raw === 'verified') return 'Verified';
+    if (raw === 'rejected') return 'Rejected';
+    return 'Pending';
+  };
+
+  const statusClass = (item) => {
+    const raw = getEffectiveStatus(item);
+    if (raw === 'awaiting_verification') return 'paid';
+    return raw; // pending | verified | rejected
+  };
 
   const formatPaymentType = (type) => {
     if (!type) return 'Unspecified Payment';
@@ -98,7 +112,7 @@ const PaymentHistoryPage = () => {
                 <article key={item.id} className="payment-history-card">
                   <div className="payment-history-row">
                     <h3>{buildPaymentTitle(item)}</h3>
-                    <span className={`payment-status ${displayStatus(item)}`}>
+                    <span className={`payment-status ${statusClass(item)}`}>
                       {displayStatus(item)}
                     </span>
                   </div>

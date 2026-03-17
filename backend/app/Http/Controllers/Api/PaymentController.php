@@ -81,7 +81,15 @@ class PaymentController extends Controller
 
         foreach ($payments as $payment) {
             $key = $this->buildObligationKey($payment);
-            $payment->setAttribute('effective_status', isset($verifiedKeys[$key]) ? Payment::STATUS_VERIFIED : $payment->status);
+            if (isset($verifiedKeys[$key])) {
+                $effective = Payment::STATUS_VERIFIED;
+            } elseif ($payment->status === Payment::STATUS_PENDING && $payment->paid_at) {
+                // User has submitted payment via Xendit but admin hasn't verified yet
+                $effective = 'awaiting_verification';
+            } else {
+                $effective = $payment->status;
+            }
+            $payment->setAttribute('effective_status', $effective);
         }
 
         return $payments;
