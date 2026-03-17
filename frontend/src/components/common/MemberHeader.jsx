@@ -43,8 +43,6 @@ const MemberHeader = () => {
     { path: '/member/services', label: 'Services', icon: '🛎️', onClick: () => navigate('/member/services') },
     { path: '/pay-dues', label: 'Pay Dues', icon: '💳', onClick: () => navigate('/pay-dues') },
     { path: '/member/contact', label: 'Feedback', icon: '💬', onClick: () => navigate('/member/contact') },
-    { path: '/profile', label: 'Profile', icon: '👤', onClick: () => navigate('/profile') },
-    { path: '/change-password', label: 'Credentials', icon: '🔐', onClick: () => navigate('/change-password') },
   ];
 
   return (
