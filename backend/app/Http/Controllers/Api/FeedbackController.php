@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Feedback;
 use App\Models\User;
 use App\Mail\FeedbackNotification;
+use App\Mail\FeedbackResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Log;
@@ -224,11 +225,12 @@ class FeedbackController extends Controller
     }
 
     /**
-     * Respond to feedback (admin only)
+     * Respond to feedback (admin/staff only)
+     * Saves the response to the database AND emails it to the feedback submitter.
      */
     public function respond(Request $request, $id)
     {
-        $feedback = Feedback::find($id);
+        $feedback = Feedback::with('user:id,name,email')->find($id);
 
         if (!$feedback) {
             return response()->json([
@@ -243,15 +245,58 @@ class FeedbackController extends Controller
 
         $feedback->update([
             'admin_response' => $validated['admin_response'],
-            'status' => 'responded',
-            'responded_by' => auth()->id(),
-            'responded_at' => now(),
+            'status'         => 'responded',
+            'responded_by'   => auth()->id(),
+            'responded_at'   => now(),
         ]);
+
+        // Determine recipient email:
+        // - If the feedback came from a logged-in user, prefer their current account email.
+        // - Otherwise use the email they submitted with the feedback form.
+        $recipientEmail = $feedback->user?->email ?? $feedback->email;
+
+        if (!filter_var($recipientEmail, FILTER_VALIDATE_EMAIL)) {
+            Log::warning('Feedback response email skipped – no valid recipient address', [
+                'feedback_id'     => $feedback->id,
+                'feedback_email'  => $feedback->email,
+                'user_email'      => $feedback->user?->email,
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Response saved, but no valid email address found to notify the submitter.',
+                'data'    => $feedback->load('responder:id,name'),
+            ]);
+        }
+
+        try {
+            Mail::to($recipientEmail)->send(new FeedbackResponse($feedback));
+
+            Log::info('Feedback response email sent', [
+                'feedback_id'  => $feedback->id,
+                'recipient'    => $recipientEmail,
+                'responded_by' => auth()->id(),
+            ]);
+        } catch (\Throwable $e) {
+            Log::error('Failed to send feedback response email', [
+                'feedback_id' => $feedback->id,
+                'recipient'   => $recipientEmail,
+                'error'       => $e->getMessage(),
+            ]);
+
+            // Still return success for the DB save; surface the email error to the client.
+            return response()->json([
+                'success' => true,
+                'message' => 'Response saved, but the notification email could not be sent. Please check server mail configuration.',
+                'email_error' => $e->getMessage(),
+                'data'    => $feedback->load('responder:id,name'),
+            ]);
+        }
 
         return response()->json([
             'success' => true,
-            'message' => 'Response sent successfully',
-            'data' => $feedback->load('responder:id,name')
+            'message' => 'Response saved and email sent to ' . $recipientEmail,
+            'data'    => $feedback->load('responder:id,name'),
         ]);
     }
 
