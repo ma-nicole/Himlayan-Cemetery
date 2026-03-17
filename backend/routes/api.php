@@ -199,8 +199,9 @@ Route::middleware(['auth:sanctum', 'sanitize.input'])->group(function () {
         Route::get('/statistics', [UserController::class, 'statistics']);
         Route::get('/{id}', [UserController::class, 'show']);
         Route::post('/', [UserController::class, 'store']);
-        Route::put('/{id}', [UserController::class, 'update']);
-        Route::delete('/{id}', [UserController::class, 'destroy'])->middleware('recent_auth');
+        // Edit and hard-delete are disabled; use archive/unarchive instead.
+        Route::post('/{id}/archive', [UserController::class, 'archive']);
+        Route::post('/{id}/unarchive', [UserController::class, 'unarchive']);
     });
 
     // ----------------------------------------

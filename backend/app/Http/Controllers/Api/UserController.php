@@ -18,6 +18,14 @@ class UserController extends Controller
     {
         $query = User::query();
 
+        // By default show only active (non-archived) users.
+        // Pass ?archived=1 to list archived users instead.
+        if ($request->boolean('archived')) {
+            $query->where('is_archived', true);
+        } else {
+            $query->where('is_archived', false);
+        }
+
         // Search filter
         if ($request->has('search') && $request->search) {
             $search = $request->search;
@@ -100,100 +108,94 @@ class UserController extends Controller
     }
 
     /**
-     * Update the specified user
+     * Update the specified user — DISABLED for admin panel use.
+     * User records are view-only; only the user themselves may update
+     * their own profile via /profile endpoints.
      */
     public function update(Request $request, $id)
+    {
+        return response()->json([
+            'success' => false,
+            'message' => 'Editing user records is not permitted. Use the archive function to deactivate a user.',
+        ], 403);
+    }
+
+    /**
+     * Hard-delete a user — DISABLED for safety.
+     * Use the archive endpoint instead to deactivate without data loss.
+     */
+    public function destroy($id)
+    {
+        return response()->json([
+            'success' => false,
+            'message' => 'Permanent deletion is not permitted. Use the archive function to deactivate a user.',
+        ], 403);
+    }
+
+    /**
+     * Archive a user (soft-deactivate).
+     * - Sets is_archived = true and records archived_at timestamp.
+     * - Admin cannot archive themselves or another admin.
+     */
+    public function archive($id)
     {
         $user = User::find($id);
 
         if (!$user) {
-            return response()->json([
-                'success' => false,
-                'message' => 'User not found'
-            ], 404);
+            return response()->json(['success' => false, 'message' => 'User not found'], 404);
         }
 
-        $validated = $request->validate([
-            'name' => 'sometimes|required|string|max:255',
-            'email' => [
-                'sometimes',
-                'required',
-                'string',
-                'email',
-                'max:255',
-                Rule::unique('users')->ignore($user->id),
-            ],
-            'password' => ['sometimes', 'nullable', 'string', ValidationRules::strongPasswordRule()],
-            'role' => 'sometimes|required|in:admin,staff,member',
+        if ($user->id === auth()->id()) {
+            return response()->json(['success' => false, 'message' => 'You cannot archive your own account.'], 403);
+        }
+
+        if ($user->role === 'admin') {
+            return response()->json(['success' => false, 'message' => 'Admin accounts cannot be archived.'], 403);
+        }
+
+        if ($user->is_archived) {
+            return response()->json(['success' => false, 'message' => 'User is already archived.'], 422);
+        }
+
+        // Revoke all active tokens so the user is immediately signed out.
+        $user->tokens()->delete();
+
+        $user->update([
+            'is_archived' => true,
+            'archived_at' => now(),
         ]);
-
-        if (isset($validated['name'])) {
-            $user->name = $validated['name'];
-        }
-        if (isset($validated['email'])) {
-            $user->email = $validated['email'];
-        }
-        if (isset($validated['password']) && $validated['password']) {
-            $user->password = Hash::make($validated['password']);
-        }
-        if (isset($validated['role'])) {
-            $user->role = $validated['role'];
-        }
-
-        $user->save();
-
-        // Sync name change to related Burial Records where this user is the contact person
-        if ($user->wasChanged('name')) {
-            $records = \App\Models\BurialRecord::where('contact_email', $user->email)->get();
-            
-            foreach ($records as $record) {
-                $record->contact_name = $user->name;
-                
-                // Simple parsing strategy to keep detailed fields somewhat in sync
-                // We assume the first word is the first name, and the rest is the last name
-                $parts = explode(' ', $user->name, 2);
-                $record->contact_first_name = $parts[0] ?? $user->name;
-                $record->contact_last_name = $parts[1] ?? '';
-                // We don't touch middle initial as it's hard to extract reliably from a full string
-                
-                $record->save();
-            }
-        }
 
         return response()->json([
             'success' => true,
-            'message' => 'User updated successfully',
-            'data' => $user
+            'message' => 'User archived successfully. They can no longer log in.',
+            'data' => $user,
         ]);
     }
 
     /**
-     * Remove the specified user
+     * Unarchive (restore) a previously archived user.
      */
-    public function destroy($id)
+    public function unarchive($id)
     {
         $user = User::find($id);
 
         if (!$user) {
-            return response()->json([
-                'success' => false,
-                'message' => 'User not found'
-            ], 404);
+            return response()->json(['success' => false, 'message' => 'User not found'], 404);
         }
 
-        // Prevent deleting self
-        if ($user->id === auth()->id()) {
-            return response()->json([
-                'success' => false,
-                'message' => 'You cannot delete your own account'
-            ], 403);
+        if (!$user->is_archived) {
+            return response()->json(['success' => false, 'message' => 'User is not archived.'], 422);
         }
 
-        $user->delete();
+        $user->update([
+            'is_archived' => false,
+            'archived_at' => null,
+        ]);
 
         return response()->json([
             'success' => true,
-            'message' => 'User deleted successfully'
+            'message' => 'User restored successfully.',
+            'data' => $user,
         ]);
     }
 
@@ -238,11 +240,12 @@ class UserController extends Controller
     public function statistics()
     {
         $stats = [
-            'total' => User::count(),
-            'admins' => User::where('role', 'admin')->count(),
-            'staff' => User::where('role', 'staff')->count(),
-            'members' => User::where('role', 'member')->count(),
-            'recent' => User::where('created_at', '>=', now()->subDays(30))->count(),
+            'total'    => User::where('is_archived', false)->count(),
+            'admins'   => User::where('role', 'admin')->where('is_archived', false)->count(),
+            'staff'    => User::where('role', 'staff')->where('is_archived', false)->count(),
+            'members'  => User::where('role', 'member')->where('is_archived', false)->count(),
+            'recent'   => User::where('is_archived', false)->where('created_at', '>=', now()->subDays(30))->count(),
+            'archived' => User::where('is_archived', true)->count(),
         ];
 
         return response()->json([

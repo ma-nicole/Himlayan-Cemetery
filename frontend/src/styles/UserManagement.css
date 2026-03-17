@@ -254,8 +254,9 @@
   gap: 0.5rem;
 }
 
-.btn-edit,
-.btn-delete {
+.btn-view,
+.btn-archive,
+.btn-unarchive {
   width: 36px;
   height: 36px;
   border: none;
@@ -267,30 +268,196 @@
   transition: all 0.2s ease;
 }
 
-.btn-edit {
+.btn-view {
   background: #e0f2fe;
   color: #0284c7;
 }
 
-.btn-edit:hover {
+.btn-view:hover {
   background: #0284c7;
   color: white;
 }
 
-.btn-delete {
-  background: #fee2e2;
-  color: #dc2626;
+.btn-archive {
+  background: #fef3c7;
+  color: #d97706;
 }
 
-.btn-delete:hover {
-  background: #dc2626;
+.btn-archive:hover {
+  background: #d97706;
   color: white;
 }
 
-.btn-edit svg,
-.btn-delete svg {
+.btn-unarchive {
+  background: #dcfce7;
+  color: #16a34a;
+}
+
+.btn-unarchive:hover {
+  background: #16a34a;
+  color: white;
+}
+
+.btn-view svg,
+.btn-archive svg,
+.btn-unarchive svg {
   width: 16px;
   height: 16px;
+}
+
+/* Archive toggle */
+.btn-toggle-archived {
+  padding: 0.625rem 1.25rem;
+  border-radius: 10px;
+  border: 1px solid #e2e8f0;
+  background: white;
+  color: #64748b;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.btn-toggle-archived:hover {
+  border-color: #d97706;
+  color: #d97706;
+}
+
+.btn-toggle-archived.active {
+  background: #fef3c7;
+  border-color: #d97706;
+  color: #d97706;
+  font-weight: 600;
+}
+
+/* Status badges */
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.25rem 0.75rem;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.badge-active {
+  background: #dcfce7;
+  color: #16a34a;
+}
+
+.badge-archived {
+  background: #f1f5f9;
+  color: #64748b;
+}
+
+/* Archived row dimming */
+.row-archived {
+  opacity: 0.65;
+}
+
+.row-archived:hover {
+  opacity: 1;
+}
+
+.avatar-archived {
+  filter: grayscale(1);
+  opacity: 0.7;
+}
+
+/* View user panel */
+.view-user-panel {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.5rem;
+}
+
+.view-avatar {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #1a472a, #2d5a3d);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.75rem;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.view-fields {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.view-field {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.625rem 0;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.view-field:last-child {
+  border-bottom: none;
+}
+
+.view-label {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #94a3b8;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.view-value {
+  font-size: 0.9rem;
+  color: #1e293b;
+  font-weight: 500;
+}
+
+/* Confirm dialog body */
+.confirm-body {
+  padding: 0.5rem 0 1rem;
+  color: #475569;
+  font-size: 0.9rem;
+  line-height: 1.6;
+}
+
+.confirm-list {
+  margin: 0.75rem 0 0 1.25rem;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.confirm-list li {
+  color: #64748b;
+  font-size: 0.875rem;
+}
+
+/* Archive confirm button */
+.btn-archive-confirm {
+  flex: 1;
+  padding: 0.75rem;
+  border-radius: 10px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  background: #d97706;
+  border: none;
+  color: white;
+}
+
+.btn-archive-confirm:hover {
+  background: #b45309;
+  transform: translateY(-1px);
 }
 
 .empty-state {

@@ -12,27 +12,22 @@ const UserManagementPage = () => {
   const [stats, setStats] = useState({});
   const [searchQuery, setSearchQuery] = useState('');
   const [roleFilter, setRoleFilter] = useState('');
+  const [showArchived, setShowArchived] = useState(false);
+
+  // modal modes: 'add' | 'view' | 'confirmArchive' | 'confirmUnarchive'
   const [showModal, setShowModal] = useState(false);
-  const [modalMode, setModalMode] = useState('add'); // 'add' or 'edit'
+  const [modalMode, setModalMode] = useState('add');
   const [selectedUser, setSelectedUser] = useState(null);
-  const [formData, setFormData] = useState({
-    name: '',
-    email: '',
-    password: '',
-    role: 'staff'
-  });
+
+  const [formData, setFormData] = useState({ name: '', email: '', password: '', role: 'member' });
   const [validationErrors, setValidationErrors] = useState({});
   const [formError, setFormError] = useState('');
-  const [pagination, setPagination] = useState({
-    currentPage: 1,
-    lastPage: 1,
-    total: 0
-  });
+  const [pagination, setPagination] = useState({ currentPage: 1, lastPage: 1, total: 0 });
 
   useEffect(() => {
     loadUsers();
     loadStats();
-  }, [searchQuery, roleFilter, pagination.currentPage]);
+  }, [searchQuery, roleFilter, showArchived, pagination.currentPage]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const loadUsers = async () => {
     setLoading(true);
@@ -40,6 +35,7 @@ const UserManagementPage = () => {
       const params = new URLSearchParams();
       if (searchQuery) params.append('search', searchQuery);
       if (roleFilter) params.append('role', roleFilter);
+      if (showArchived) params.append('archived', '1');
       params.append('page', pagination.currentPage);
       params.append('per_page', 10);
 
@@ -49,7 +45,7 @@ const UserManagementPage = () => {
         setPagination({
           currentPage: response.data.meta.current_page,
           lastPage: response.data.meta.last_page,
-          total: response.data.meta.total
+          total: response.data.meta.total,
         });
       }
     } catch (err) {
@@ -62,131 +58,87 @@ const UserManagementPage = () => {
   const loadStats = async () => {
     try {
       const response = await api.get('/users/statistics');
-      if (response.data.success) {
-        setStats(response.data.data);
-      }
+      if (response.data.success) setStats(response.data.data);
     } catch (err) {
       console.error('Error loading stats:', err);
     }
-  };
-
-  const handleOpenModal = (mode, user = null) => {
-    setModalMode(mode);
-    setSelectedUser(user);
-    setFormError('');
-    setValidationErrors({});
-    if (mode === 'edit' && user) {
-      setFormData({
-        name: user.name,
-        email: user.email,
-        password: '',
-        role: user.role
-      });
-    } else {
-      setFormData({
-        name: '',
-        email: '',
-        password: '',
-        role: 'member'
-      });
-    }
-    setShowModal(true);
   };
 
   const handleCloseModal = () => {
     setShowModal(false);
     setSelectedUser(null);
     setFormError('');
+    setValidationErrors({});
   };
 
-  const handleSubmit = async (e) => {
+  // ── Add User ────────────────────────────────────────────────
+  const handleOpenAdd = () => {
+    setModalMode('add');
+    setSelectedUser(null);
+    setFormData({ name: '', email: '', password: '', role: 'member' });
+    setFormError('');
+    setValidationErrors({});
+    setShowModal(true);
+  };
+
+  const handleSubmitAdd = async (e) => {
     e.preventDefault();
     setFormError('');
     const newErrors = {};
 
-    // Validate name
-    if (!formData.name.trim()) {
-      newErrors.name = 'Name is required';
-    } else {
-      const nameValidation = validateName(formData.name);
-      if (!nameValidation.valid) {
-        newErrors.name = nameValidation.error;
-      }
-    }
+    const nameVal = validateName(formData.name);
+    if (!nameVal.valid) newErrors.name = nameVal.error;
 
-    // Validate email
-    if (!formData.email.trim()) {
-      newErrors.email = 'Email is required';
-    } else {
-      const emailValidation = validateEmail(formData.email);
-      if (!emailValidation.valid) {
-        newErrors.email = emailValidation.error;
-      }
-    }
+    const emailVal = validateEmail(formData.email);
+    if (!emailVal.valid) newErrors.email = emailVal.error;
 
-    // Validate password
-    if (modalMode === 'add') {
-      if (!formData.password.trim()) {
-        newErrors.password = 'Password is required';
-      } else {
-        const passwordValidation = validatePassword(formData.password);
-        if (!passwordValidation.valid) {
-          newErrors.password = passwordValidation.error;
-        }
-      }
-    } else {
-      // Edit mode - password is optional
-      if (formData.password.trim()) {
-        const passwordValidation = validatePassword(formData.password);
-        if (!passwordValidation.valid) {
-          newErrors.password = passwordValidation.error;
-        }
-      }
-    }
+    const passVal = validatePassword(formData.password);
+    if (!passVal.valid) newErrors.password = passVal.error;
 
-    // If there are validation errors, show them
-    if (Object.keys(newErrors).length > 0) {
-      setValidationErrors(newErrors);
-      return;
-    }
+    if (Object.keys(newErrors).length > 0) { setValidationErrors(newErrors); return; }
 
     try {
-      if (modalMode === 'add') {
-        const response = await api.post('/users', formData);
-        if (response.data.success) {
-          handleCloseModal();
-          loadUsers();
-          loadStats();
-        }
-      } else {
-        const updateData = { ...formData };
-        if (!updateData.password) delete updateData.password;
-        
-        const response = await api.put(`/users/${selectedUser.id}`, updateData);
-        if (response.data.success) {
-          handleCloseModal();
-          loadUsers();
-        }
+      const response = await api.post('/users', formData);
+      if (response.data.success) {
+        handleCloseModal();
+        loadUsers();
+        loadStats();
       }
     } catch (err) {
       setFormError(err.response?.data?.message || 'An error occurred');
     }
   };
 
-  const handleDelete = async (userId) => {
-    if (!window.confirm('Are you sure you want to delete this user?')) return;
+  // ── View User ───────────────────────────────────────────────
+  const handleOpenView = (user) => {
+    setModalMode('view');
+    setSelectedUser(user);
+    setShowModal(true);
+  };
 
+  // ── Archive / Unarchive ─────────────────────────────────────
+  const handleOpenArchive = (user) => {
+    setModalMode(user.is_archived ? 'confirmUnarchive' : 'confirmArchive');
+    setSelectedUser(user);
+    setFormError('');
+    setShowModal(true);
+  };
+
+  const handleConfirmArchive = async () => {
     try {
-      const response = await api.delete(`/users/${userId}`);
-      if (response.data.success) {
-        loadUsers();
-        loadStats();
-      }
+      const endpoint = selectedUser.is_archived
+        ? `/users/${selectedUser.id}/unarchive`
+        : `/users/${selectedUser.id}/archive`;
+      await api.post(endpoint);
+      handleCloseModal();
+      loadUsers();
+      loadStats();
     } catch (err) {
-      alert(err.response?.data?.message || 'Failed to delete user');
+      setFormError(err.response?.data?.message || 'Operation failed.');
     }
   };
 
+  // ── Helpers ─────────────────────────────────────────────────
   const getRoleBadgeClass = (role) => {
     switch (role) {
       case 'admin': return 'badge-admin';
@@ -199,314 +151,346 @@ const UserManagementPage = () => {
     switch (role) {
       case 'admin': return 'Admin';
       case 'staff': return 'Staff';
-      case 'member': return 'Member';
-      case 'visitor': return 'Member';
       default: return 'Member';
     }
   };
 
+  const formatDate = (d) => (d ? new Date(d).toLocaleDateString() : 'N/A');
+
+  // ── Render ───────────────────────────────────────────────────
   return (
     <Layout>
       <div className="user-management">
-          {/* Header */}
-          <div className="page-header">
-            <div className="header-content">
-              <h1>User Management</h1>
-              <p>Manage all system users and their roles</p>
+        {/* Header */}
+        <div className="page-header">
+          <div className="header-content">
+            <h1>User Management</h1>
+            <p>View and manage system users</p>
+          </div>
+          <button className="btn-add-user" onClick={handleOpenAdd}>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+              <circle cx="8.5" cy="7" r="4"/>
+              <line x1="20" y1="8" x2="20" y2="14"/>
+              <line x1="23" y1="11" x2="17" y2="11"/>
+            </svg>
+            Add New User
+          </button>
+        </div>
+
+        {/* Stats Cards */}
+        <div className="stats-grid">
+          <div className="stat-card total">
+            <div className="stat-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+                <circle cx="9" cy="7" r="4"/>
+                <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+                <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+              </svg>
             </div>
-            <button className="btn-add-user" onClick={() => handleOpenModal('add')}>
+            <div className="stat-info">
+              <span className="stat-number">{stats.total || 0}</span>
+              <span className="stat-label">Active Users</span>
+            </div>
+          </div>
+          <div className="stat-card admins">
+            <div className="stat-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z"/>
+                <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1Z"/>
+              </svg>
+            </div>
+            <div className="stat-info">
+              <span className="stat-number">{stats.admins || 0}</span>
+              <span className="stat-label">Administrators</span>
+            </div>
+          </div>
+          <div className="stat-card staff">
+            <div className="stat-icon">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                 <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
                 <circle cx="8.5" cy="7" r="4"/>
-                <line x1="20" y1="8" x2="20" y2="14"/>
-                <line x1="23" y1="11" x2="17" y2="11"/>
+                <polyline points="17 11 19 13 23 9"/>
               </svg>
-              Add New User
-            </button>
-          </div>
-
-          {/* Stats Cards */}
-          <div className="stats-grid">
-            <div className="stat-card total">
-              <div className="stat-icon">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
-                  <circle cx="9" cy="7" r="4"/>
-                  <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
-                  <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
-                </svg>
-              </div>
-              <div className="stat-info">
-                <span className="stat-number">{stats.total || 0}</span>
-                <span className="stat-label">Total Users</span>
-              </div>
             </div>
-            <div className="stat-card admins">
-              <div className="stat-icon">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <path d="M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z"/>
-                  <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1Z"/>
-                </svg>
-              </div>
-              <div className="stat-info">
-                <span className="stat-number">{stats.admins || 0}</span>
-                <span className="stat-label">Administrators</span>
-              </div>
-            </div>
-            <div className="stat-card staff">
-              <div className="stat-icon">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
-                  <circle cx="8.5" cy="7" r="4"/>
-                  <polyline points="17 11 19 13 23 9"/>
-                </svg>
-              </div>
-              <div className="stat-info">
-                <span className="stat-number">{stats.staff || 0}</span>
-                <span className="stat-label">Staff Members</span>
-              </div>
-            </div>
-            <div className="stat-card members">
-              <div className="stat-icon">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
-                  <circle cx="12" cy="7" r="4"/>
-                </svg>
-              </div>
-              <div className="stat-info">
-                <span className="stat-number">{stats.members || 0}</span>
-                <span className="stat-label">Members</span>
-              </div>
+            <div className="stat-info">
+              <span className="stat-number">{stats.staff || 0}</span>
+              <span className="stat-label">Staff Members</span>
             </div>
           </div>
-
-          {/* Filters */}
-          <div className="filters-section">
-            <div className="search-box">
+          <div className="stat-card members">
+            <div className="stat-icon">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <circle cx="11" cy="11" r="8"/>
-                <path d="m21 21-4.35-4.35"/>
+                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+                <circle cx="12" cy="7" r="4"/>
               </svg>
-              <input
-                type="text"
-                placeholder="Search by name or email..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-              />
             </div>
-            <div className="filter-dropdown">
-              <select value={roleFilter} onChange={(e) => setRoleFilter(e.target.value)}>
-                <option value="">All Roles</option>
-                <option value="admin">Admin</option>
-                <option value="staff">Staff</option>
-                <option value="member">Member</option>
-              </select>
+            <div className="stat-info">
+              <span className="stat-number">{stats.members || 0}</span>
+              <span className="stat-label">Members</span>
             </div>
-          </div>
-
-          {/* Users Table */}
-          <div className="users-table-container">
-            {loading ? (
-              <div className="loading-state">
-                <div className="spinner"></div>
-                <p>Loading users...</p>
-              </div>
-            ) : (
-              <table className="users-table">
-                <thead>
-                  <tr>
-                    <th>User</th>
-                    <th>Email</th>
-                    <th>Role</th>
-                    <th>Joined</th>
-                    <th>Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {users.length > 0 ? (
-                    users.map((user) => (
-                      <tr key={user.id}>
-                        <td>
-                          <div className="user-cell">
-                            <div className="user-avatar">
-                              {user.name.charAt(0).toUpperCase()}
-                            </div>
-                            <span className="user-name">{user.name}</span>
-                          </div>
-                        </td>
-                        <td>{user.email}</td>
-                        <td>
-                          <span className={`role-badge ${getRoleBadgeClass(user.role)}`}>
-                            {getRoleLabel(user.role)}
-                          </span>
-                        </td>
-                        <td>{new Date(user.created_at).toLocaleDateString()}</td>
-                        <td>
-                          <div className="action-buttons">
-                            <button 
-                              className="btn-edit" 
-                              onClick={() => handleOpenModal('edit', user)}
-                              title="Edit user"
-                            >
-                              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
-                                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
-                              </svg>
-                            </button>
-                            {user.id !== currentUser?.id && (
-                              <button 
-                                className="btn-delete" 
-                                onClick={() => handleDelete(user.id)}
-                                title="Delete user"
-                              >
-                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                  <polyline points="3 6 5 6 21 6"/>
-                                  <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
-                                  <line x1="10" y1="11" x2="10" y2="17"/>
-                                  <line x1="14" y1="11" x2="14" y2="17"/>
-                                </svg>
-                              </button>
-                            )}
-                          </div>
-                        </td>
-                      </tr>
-                    ))
-                  ) : (
-                    <tr>
-                      <td colSpan="5" className="empty-state">
-                        No users found
-                      </td>
-                    </tr>
-                  )}
-                </tbody>
-              </table>
-            )}
-
-            {/* Pagination */}
-            {pagination.lastPage > 1 && (
-              <div className="pagination">
-                <button 
-                  disabled={pagination.currentPage === 1}
-                  onClick={() => setPagination(p => ({ ...p, currentPage: p.currentPage - 1 }))}
-                >
-                  Previous
-                </button>
-                <span>Page {pagination.currentPage} of {pagination.lastPage}</span>
-                <button 
-                  disabled={pagination.currentPage === pagination.lastPage}
-                  onClick={() => setPagination(p => ({ ...p, currentPage: p.currentPage + 1 }))}
-                >
-                  Next
-                </button>
-              </div>
-            )}
           </div>
         </div>
 
-        {/* Modal */}
-        {showModal && (
-          <div className="modal-overlay" onClick={handleCloseModal}>
-            <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-              <button className="modal-close" onClick={handleCloseModal}>
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <line x1="18" y1="6" x2="6" y2="18"/>
-                  <line x1="6" y1="6" x2="18" y2="18"/>
-                </svg>
-              </button>
-              <h2>{modalMode === 'add' ? 'Add New User' : 'Edit User'}</h2>
-              
-              {formError && <div className="form-error">{formError}</div>}
-              
-              <form onSubmit={handleSubmit}>
-                <div className="form-group">
-                  <label>Name</label>
-                  <input
-                    type="text"
-                    value={formData.name}
-                    onChange={(e) => {
-                      setFormData({ ...formData, name: e.target.value });
-                      if (validationErrors.name) {
-                        setValidationErrors(prev => {
-                          const newErrors = { ...prev };
-                          delete newErrors.name;
-                          return newErrors;
-                        });
-                      }
-                    }}
-                    className={validationErrors.name ? 'error' : ''}
-                    required
-                  />
-                  {validationErrors.name && (
-                    <small className="error-message">{validationErrors.name}</small>
-                  )}
-                </div>
-                <div className="form-group">
-                  <label>Email</label>
-                  <input
-                    type="email"
-                    value={formData.email}
-                    onChange={(e) => {
-                      setFormData({ ...formData, email: e.target.value });
-                      if (validationErrors.email) {
-                        setValidationErrors(prev => {
-                          const newErrors = { ...prev };
-                          delete newErrors.email;
-                          return newErrors;
-                        });
-                      }
-                    }}
-                    className={validationErrors.email ? 'error' : ''}
-                    required
-                  />
-                  {validationErrors.email && (
-                    <small className="error-message">{validationErrors.email}</small>
-                  )}
-                </div>
-                <div className="form-group">
-                  <label>Password {modalMode === 'edit' && '(leave blank to keep current)'}</label>
-                  <input
-                    type="password"
-                    value={formData.password}
-                    onChange={(e) => {
-                      setFormData({ ...formData, password: e.target.value });
-                      if (validationErrors.password) {
-                        setValidationErrors(prev => {
-                          const newErrors = { ...prev };
-                          delete newErrors.password;
-                          return newErrors;
-                        });
-                      }
-                    }}
-                    className={validationErrors.password ? 'error' : ''}
-                    required={modalMode === 'add'}
-                  />
-                  {validationErrors.password && (
-                    <small className="error-message">{validationErrors.password}</small>
-                  )}
-                </div>
-                <div className="form-group">
-                  <label>Role</label>
-                  <select
-                    value={formData.role}
-                    onChange={(e) => setFormData({ ...formData, role: e.target.value })}
-                  >
-                    <option value="member">Member</option>
-                    <option value="staff">Staff</option>
-                    <option value="admin">Admin</option>
-                  </select>
+        {/* Filters */}
+        <div className="filters-section">
+          <div className="search-box">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <circle cx="11" cy="11" r="8"/>
+              <path d="m21 21-4.35-4.35"/>
+            </svg>
+            <input
+              type="text"
+              placeholder="Search by name or email..."
+              value={searchQuery}
+              onChange={(e) => { setSearchQuery(e.target.value); setPagination(p => ({ ...p, currentPage: 1 })); }}
+            />
+          </div>
+          <div className="filter-dropdown">
+            <select value={roleFilter} onChange={(e) => { setRoleFilter(e.target.value); setPagination(p => ({ ...p, currentPage: 1 })); }}>
+              <option value="">All Roles</option>
+              <option value="admin">Admin</option>
+              <option value="staff">Staff</option>
+              <option value="member">Member</option>
+            </select>
+          </div>
+          <button
+            className={`btn-toggle-archived ${showArchived ? 'active' : ''}`}
+            onClick={() => { setShowArchived(!showArchived); setPagination(p => ({ ...p, currentPage: 1 })); }}
+            title={showArchived ? 'Show active users' : 'Show archived users'}
+          >
+            {showArchived ? 'Active Users' : `Archived (${stats.archived || 0})`}
+          </button>
+        </div>
+
+        {/* Users Table */}
+        <div className="users-table-container">
+          {loading ? (
+            <div className="loading-state">
+              <div className="spinner"></div>
+              <p>Loading users...</p>
+            </div>
+          ) : (
+            <table className="users-table">
+              <thead>
+                <tr>
+                  <th>User</th>
+                  <th>Email</th>
+                  <th>Role</th>
+                  <th>Status</th>
+                  <th>Joined</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {users.length > 0 ? users.map((user) => (
+                  <tr key={user.id} className={user.is_archived ? 'row-archived' : ''}>
+                    <td>
+                      <div className="user-cell">
+                        <div className={`user-avatar ${user.is_archived ? 'avatar-archived' : ''}`}>
+                          {user.name.charAt(0).toUpperCase()}
+                        </div>
+                        <span className="user-name">{user.name}</span>
+                      </div>
+                    </td>
+                    <td>{user.email}</td>
+                    <td>
+                      <span className={`role-badge ${getRoleBadgeClass(user.role)}`}>
+                        {getRoleLabel(user.role)}
+                      </span>
+                    </td>
+                    <td>
+                      <span className={`status-badge ${user.is_archived ? 'badge-archived' : 'badge-active'}`}>
+                        {user.is_archived ? 'Archived' : 'Active'}
+                      </span>
+                    </td>
+                    <td>{formatDate(user.created_at)}</td>
+                    <td>
+                      <div className="action-buttons">
+                        {/* View — always visible */}
+                        <button className="btn-view" onClick={() => handleOpenView(user)} title="View details">
+                          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                            <circle cx="12" cy="12" r="3"/>
+                          </svg>
+                        </button>
+                        {/* Archive / Unarchive — not allowed on self or other admins */}
+                        {user.id !== currentUser?.id && user.role !== 'admin' && (
+                          <button
+                            className={user.is_archived ? 'btn-unarchive' : 'btn-archive'}
+                            onClick={() => handleOpenArchive(user)}
+                            title={user.is_archived ? 'Restore user' : 'Archive user'}
+                          >
+                            {user.is_archived ? (
+                              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                <path d="M3 12l9-9 9 9"/><path d="M9 21V12h6v9"/>
+                              </svg>
+                            ) : (
+                              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                <polyline points="21 8 21 21 3 21 3 8"/><rect x="1" y="3" width="22" height="5"/>
+                                <line x1="10" y1="12" x2="14" y2="12"/>
+                              </svg>
+                            )}
+                          </button>
+                        )}
+                      </div>
+                    </td>
+                  </tr>
+                )) : (
+                  <tr><td colSpan="6" className="empty-state">No users found</td></tr>
+                )}
+              </tbody>
+            </table>
+          )}
+
+          {pagination.lastPage > 1 && (
+            <div className="pagination">
+              <button disabled={pagination.currentPage === 1} onClick={() => setPagination(p => ({ ...p, currentPage: p.currentPage - 1 }))}>Previous</button>
+              <span>Page {pagination.currentPage} of {pagination.lastPage}</span>
+              <button disabled={pagination.currentPage === pagination.lastPage} onClick={() => setPagination(p => ({ ...p, currentPage: p.currentPage + 1 }))}>Next</button>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* ── Modal ───────────────────────────────────────────── */}
+      {showModal && (
+        <div className="modal-overlay" onClick={handleCloseModal}>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+            <button className="modal-close" onClick={handleCloseModal}>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+              </svg>
+            </button>
+
+            {/* ── Add User ── */}
+            {modalMode === 'add' && (
+              <>
+                <h2>Add New User</h2>
+                {formError && <div className="form-error">{formError}</div>}
+                <form onSubmit={handleSubmitAdd}>
+                  <div className="form-group">
+                    <label>Name</label>
+                    <input
+                      type="text"
+                      value={formData.name}
+                      onChange={(e) => { setFormData({ ...formData, name: e.target.value }); setValidationErrors(p => { const n = {...p}; delete n.name; return n; }); }}
+                      className={validationErrors.name ? 'error' : ''}
+                      required
+                    />
+                    {validationErrors.name && <small className="error-message">{validationErrors.name}</small>}
+                  </div>
+                  <div className="form-group">
+                    <label>Email</label>
+                    <input
+                      type="email"
+                      value={formData.email}
+                      onChange={(e) => { setFormData({ ...formData, email: e.target.value }); setValidationErrors(p => { const n = {...p}; delete n.email; return n; }); }}
+                      className={validationErrors.email ? 'error' : ''}
+                      required
+                    />
+                    {validationErrors.email && <small className="error-message">{validationErrors.email}</small>}
+                  </div>
+                  <div className="form-group">
+                    <label>Password</label>
+                    <input
+                      type="password"
+                      value={formData.password}
+                      onChange={(e) => { setFormData({ ...formData, password: e.target.value }); setValidationErrors(p => { const n = {...p}; delete n.password; return n; }); }}
+                      className={validationErrors.password ? 'error' : ''}
+                      required
+                    />
+                    {validationErrors.password && <small className="error-message">{validationErrors.password}</small>}
+                  </div>
+                  <div className="form-group">
+                    <label>Role</label>
+                    <select value={formData.role} onChange={(e) => setFormData({ ...formData, role: e.target.value })}>
+                      <option value="member">Member</option>
+                      <option value="staff">Staff</option>
+                      <option value="admin">Admin</option>
+                    </select>
+                  </div>
+                  <div className="form-actions">
+                    <button type="button" className="btn-cancel" onClick={handleCloseModal}>Cancel</button>
+                    <button type="submit" className="btn-submit" disabled={Object.keys(validationErrors).length > 0}>Create User</button>
+                  </div>
+                </form>
+              </>
+            )}
+
+            {/* ── View User ── */}
+            {modalMode === 'view' && selectedUser && (
+              <>
+                <h2>User Details</h2>
+                <div className="view-user-panel">
+                  <div className="view-avatar">{selectedUser.name.charAt(0).toUpperCase()}</div>
+                  <div className="view-fields">
+                    <div className="view-field"><span className="view-label">Name</span><span className="view-value">{selectedUser.name}</span></div>
+                    <div className="view-field"><span className="view-label">Email</span><span className="view-value">{selectedUser.email}</span></div>
+                    <div className="view-field">
+                      <span className="view-label">Role</span>
+                      <span className={`role-badge ${getRoleBadgeClass(selectedUser.role)}`}>{getRoleLabel(selectedUser.role)}</span>
+                    </div>
+                    <div className="view-field">
+                      <span className="view-label">Status</span>
+                      <span className={`status-badge ${selectedUser.is_archived ? 'badge-archived' : 'badge-active'}`}>
+                        {selectedUser.is_archived ? 'Archived' : 'Active'}
+                      </span>
+                    </div>
+                    <div className="view-field"><span className="view-label">Date Joined</span><span className="view-value">{formatDate(selectedUser.created_at)}</span></div>
+                    {selectedUser.is_archived && selectedUser.archived_at && (
+                      <div className="view-field"><span className="view-label">Archived On</span><span className="view-value">{formatDate(selectedUser.archived_at)}</span></div>
+                    )}
+                  </div>
                 </div>
                 <div className="form-actions">
-                  <button type="button" className="btn-cancel" onClick={handleCloseModal}>
-                    Cancel
-                  </button>
-                  <button type="submit" className="btn-submit" disabled={Object.keys(validationErrors).length > 0}>
-                    {modalMode === 'add' ? 'Create User' : 'Save Changes'}
-                  </button>
+                  <button type="button" className="btn-submit" onClick={handleCloseModal}>Close</button>
                 </div>
-              </form>
-            </div>
+              </>
+            )}
+
+            {/* ── Confirm Archive ── */}
+            {modalMode === 'confirmArchive' && selectedUser && (
+              <>
+                <h2>Archive User</h2>
+                {formError && <div className="form-error">{formError}</div>}
+                <div className="confirm-body">
+                  <p>You are about to archive <strong>{selectedUser.name}</strong>.</p>
+                  <ul className="confirm-list">
+                    <li>Their account will be <strong>deactivated</strong> immediately.</li>
+                    <li>They will not be able to log in.</li>
+                    <li>All data is preserved and can be restored at any time.</li>
+                  </ul>
+                </div>
+                <div className="form-actions">
+                  <button type="button" className="btn-cancel" onClick={handleCloseModal}>Cancel</button>
+                  <button type="button" className="btn-archive-confirm" onClick={handleConfirmArchive}>Archive User</button>
+                </div>
+              </>
+            )}
+
+            {/* ── Confirm Unarchive ── */}
+            {modalMode === 'confirmUnarchive' && selectedUser && (
+              <>
+                <h2>Restore User</h2>
+                {formError && <div className="form-error">{formError}</div>}
+                <div className="confirm-body">
+                  <p>You are about to restore <strong>{selectedUser.name}</strong>.</p>
+                  <ul className="confirm-list">
+                    <li>Their account will be <strong>reactivated</strong>.</li>
+                    <li>They will be able to log in again.</li>
+                  </ul>
+                </div>
+                <div className="form-actions">
+                  <button type="button" className="btn-cancel" onClick={handleCloseModal}>Cancel</button>
+                  <button type="button" className="btn-submit" onClick={handleConfirmArchive}>Restore User</button>
+                </div>
+              </>
+            )}
           </div>
-        )}
+        </div>
+      )}
     </Layout>
   );
 };

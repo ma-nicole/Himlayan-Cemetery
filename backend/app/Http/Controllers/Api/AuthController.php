@@ -95,6 +95,23 @@ class AuthController extends Controller
             );
         }
 
+        // Prevent archived (deactivated) users from logging in.
+        if ($user->is_archived) {
+            SecurityAuditService::log(
+                'auth.login',
+                'failed',
+                'Login failed: account is archived',
+                $request,
+                $user->id,
+                ['email' => $request->email]
+            );
+
+            return $this->errorResponse(
+                'Your account has been deactivated. Please contact the administrator for assistance.',
+                403
+            );
+        }
+
         // Prevent session fixation for stateful requests.
         if ($request->hasSession()) {
             $request->session()->regenerate();
