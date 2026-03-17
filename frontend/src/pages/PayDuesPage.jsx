@@ -11,8 +11,30 @@ const PayDuesPage = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const [selectedPlot, setSelectedPlot] = useState(null);
+  const [plotDues, setPlotDues] = useState([]);
   const [paymentMethod, setPaymentMethod] = useState('');
+  const [duesLoading, setDuesLoading] = useState(true);
   const [loading, setLoading] = useState(false);
+
+  const loadOutstandingDues = async () => {
+    setDuesLoading(true);
+    try {
+      const response = await api.get('/payments/my-dues');
+      const dues = Array.isArray(response?.data?.data) ? response.data.data : [];
+      setPlotDues(dues);
+      setSelectedPlot((previous) => {
+        if (!dues.length) return null;
+        if (!previous) return dues[0];
+        return dues.find((item) => item.id === previous.id) || dues[0];
+      });
+    } catch (err) {
+      setPlotDues([]);
+      setSelectedPlot(null);
+      toast?.error(err?.response?.data?.message || 'Failed to load outstanding dues.');
+    } finally {
+      setDuesLoading(false);
+    }
+  };
 
   useEffect(() => {
     const params = new URLSearchParams(location.search);
@@ -29,29 +51,9 @@ const PayDuesPage = () => {
     }
   }, [location.search, navigate, toast]);
 
-  // Demo plot dues data
-  const plotDues = [
-    {
-      id: 1,
-      plotNumber: 'A-15-03',
-      section: 'Garden of Peace',
-      deceasedName: 'Maria Santos',
-      dueAmount: 5000,
-      dueDate: '2026-03-15',
-      status: 'pending',
-      type: 'Annual Maintenance',
-    },
-    {
-      id: 2,
-      plotNumber: 'B-22-08',
-      section: 'Memorial Terrace',
-      deceasedName: 'Jose Reyes',
-      dueAmount: 3500,
-      dueDate: '2026-02-28',
-      status: 'overdue',
-      type: 'Quarterly Dues',
-    },
-  ];
+  useEffect(() => {
+    loadOutstandingDues();
+  }, []);
 
   const paymentMethods = [
     { id: 'gcash', name: 'GCash', icon: '' },
@@ -74,13 +76,14 @@ const PayDuesPage = () => {
     try {
       const paymentType = selectedPlot.type?.toLowerCase().includes('quarterly')
         ? 'quarterly_dues'
-        : 'annual_maintenance';
+        : (selectedPlot.payment_type || 'annual_maintenance');
 
       const response = await api.post('/payments', {
-        amount: selectedPlot.dueAmount,
+        plot_id: selectedPlot.plot_id || null,
+        amount: selectedPlot.due_amount,
         payment_type: paymentType,
         payment_method: paymentMethod,
-        notes: `${selectedPlot.type} for ${selectedPlot.plotNumber}`,
+        notes: selectedPlot.notes || `${selectedPlot.payment_type || 'dues'} for ${selectedPlot.plot_number || 'N/A'}`,
       });
 
       const checkoutUrl =
@@ -108,7 +111,15 @@ const PayDuesPage = () => {
       toast?.error(message);
     } finally {
       setLoading(false);
+      loadOutstandingDues();
     }
+  };
+
+  const formatPaymentType = (type) => {
+    if (!type) return 'Maintenance Dues';
+    return type
+      .replace(/_/g, ' ')
+      .replace(/\b\w/g, (letter) => letter.toUpperCase());
   };
 
   const formatCurrency = (amount) => {
@@ -142,7 +153,11 @@ const PayDuesPage = () => {
             <h2>Outstanding Dues</h2>
             
             <div className="dues-list">
-              {plotDues.map(plot => (
+              {duesLoading ? (
+                <div className="no-selection">
+                  <p>Loading outstanding dues...</p>
+                </div>
+              ) : plotDues.map(plot => (
                 <div 
                   key={plot.id}
                   className={`due-card ${selectedPlot?.id === plot.id ? 'selected' : ''} ${plot.status}`}
@@ -155,18 +170,22 @@ const PayDuesPage = () => {
                   </div>
                   
                   <div className="due-details">
-                    <h3>{plot.deceasedName}</h3>
+                    <h3>{plot.plot_number || 'N/A'}</h3>
                     <p className="plot-info">
-                      <span className="plot-number">{plot.plotNumber}</span>
-                      <span className="separator">•</span>
-                      <span>{plot.section}</span>
+                      <span className="plot-number">{plot.plot_number || 'N/A'}</span>
+                      {plot.section && plot.section !== 'N/A' && (
+                        <>
+                          <span className="separator">•</span>
+                          <span>{plot.section}</span>
+                        </>
+                      )}
                     </p>
-                    <p className="due-type">{plot.type}</p>
+                    <p className="due-type">{formatPaymentType(plot.payment_type)}</p>
                   </div>
                   
                   <div className="due-amount">
-                    <span className="amount">{formatCurrency(plot.dueAmount)}</span>
-                    <span className="due-date">Due: {formatDate(plot.dueDate)}</span>
+                    <span className="amount">{formatCurrency(plot.due_amount)}</span>
+                    <span className="due-date">Due: {formatDate(plot.due_date)}</span>
                   </div>
                   
                   <div className="select-indicator">
@@ -176,7 +195,7 @@ const PayDuesPage = () => {
               ))}
             </div>
 
-            {plotDues.length === 0 && (
+            {!duesLoading && plotDues.length === 0 && (
               <div className="no-dues">
                 <span className="empty-icon"></span>
                 <p>No outstanding dues</p>
@@ -194,15 +213,15 @@ const PayDuesPage = () => {
                 <div className="payment-summary">
                   <div className="summary-row">
                     <span>Plot</span>
-                    <span>{selectedPlot.plotNumber}</span>
+                    <span>{selectedPlot.plot_number || 'N/A'}</span>
                   </div>
                   <div className="summary-row">
                     <span>Description</span>
-                    <span>{selectedPlot.type}</span>
+                    <span>{formatPaymentType(selectedPlot.payment_type)}</span>
                   </div>
                   <div className="summary-row total">
                     <span>Amount Due</span>
-                    <span>{formatCurrency(selectedPlot.dueAmount)}</span>
+                    <span>{formatCurrency(selectedPlot.due_amount)}</span>
                   </div>
                 </div>
 
@@ -227,7 +246,7 @@ const PayDuesPage = () => {
                   onClick={handlePayment}
                   disabled={loading || !paymentMethod}
                 >
-                  {loading ? 'Processing...' : `Pay ${formatCurrency(selectedPlot.dueAmount)}`}
+                  {loading ? 'Processing...' : `Pay ${formatCurrency(selectedPlot.due_amount)}`}
                 </button>
 
                 <p className="payment-note">

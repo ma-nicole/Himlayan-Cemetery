@@ -50,6 +50,8 @@ const PaymentHistoryPage = () => {
     });
   };
 
+  const displayStatus = (item) => item.effective_status || item.status || 'pending';
+
   return (
     <div className="member-dashboard">
       <MemberHeader />
@@ -77,8 +79,8 @@ const PaymentHistoryPage = () => {
                 <article key={item.id} className="payment-history-card">
                   <div className="payment-history-row">
                     <h3>{item.reference_number || `Payment #${item.id}`}</h3>
-                    <span className={`payment-status ${item.status || 'pending'}`}>
-                      {item.status || 'pending'}
+                    <span className={`payment-status ${displayStatus(item)}`}>
+                      {displayStatus(item)}
                     </span>
                   </div>
 

@@ -10,6 +10,57 @@ use Illuminate\Support\Facades\Http;
 class PaymentController extends Controller
 {
     /**
+     * Build a stable obligation key so related records share one effective status.
+     */
+    private function buildObligationKey(Payment $payment): string
+    {
+        $plotPart = $payment->plot_id ? 'plot:' . $payment->plot_id : 'plot:' . $this->extractPlotToken($payment->notes);
+        $amountPart = number_format((float) $payment->amount, 2, '.', '');
+
+        return implode('|', [
+            'user:' . $payment->user_id,
+            $plotPart,
+            'type:' . strtolower((string) $payment->payment_type),
+            'amount:' . $amountPart,
+        ]);
+    }
+
+    /**
+     * Extract a plot-like token from notes when plot_id is not available.
+     */
+    private function extractPlotToken(?string $notes): string
+    {
+        if (!$notes) {
+            return 'none';
+        }
+
+        if (preg_match('/\b([A-Z]-\d{1,3}-\d{1,3})\b/i', $notes, $matches)) {
+            return strtoupper($matches[1]);
+        }
+
+        return 'none';
+    }
+
+    /**
+     * Apply an effective status to each payment based on matching verified obligations.
+     */
+    private function applyEffectiveStatuses($payments)
+    {
+        $verifiedKeys = [];
+        foreach ($payments as $payment) {
+            if ($payment->status === Payment::STATUS_VERIFIED) {
+                $verifiedKeys[$this->buildObligationKey($payment)] = true;
+            }
+        }
+
+        foreach ($payments as $payment) {
+            $key = $this->buildObligationKey($payment);
+            $payment->setAttribute('effective_status', isset($verifiedKeys[$key]) ? Payment::STATUS_VERIFIED : $payment->status);
+        }
+
+        return $payments;
+    }
+    /**
      * Retry without strict payment method filter when Xendit rejects business method choices.
      */
     private function createXenditInvoiceWithFallback(string $xenditSecret, array $payload): array
@@ -133,10 +184,12 @@ class PaymentController extends Controller
 
         $perPage = $request->get('per_page', 10);
         $payments = $query->paginate($perPage);
+        $items = collect($payments->items());
+        $this->applyEffectiveStatuses($items);
 
         return response()->json([
             'success' => true,
-            'data' => $payments->items(),
+            'data' => $items->values(),
             'meta' => [
                 'current_page' => $payments->currentPage(),
                 'last_page' => $payments->lastPage(),
@@ -432,16 +485,60 @@ class PaymentController extends Controller
      */
     public function myDues()
     {
-        // This would typically be linked to plots owned by the user
-        // For now, return user's pending payments
         $payments = Payment::where('user_id', auth()->id())
-            ->where('status', 'pending')
             ->with('plot:id,plot_number,section')
+            ->orderBy('created_at', 'desc')
             ->get();
+
+        if ($payments->isEmpty()) {
+            return response()->json([
+                'success' => true,
+                'data' => []
+            ]);
+        }
+
+        $this->applyEffectiveStatuses($payments);
+
+        $verifiedKeys = [];
+        foreach ($payments as $payment) {
+            if (($payment->effective_status ?? $payment->status) === Payment::STATUS_VERIFIED) {
+                $verifiedKeys[$this->buildObligationKey($payment)] = true;
+            }
+        }
+
+        $outstanding = $payments
+            ->filter(function ($payment) use ($verifiedKeys) {
+                if (!in_array($payment->status, [Payment::STATUS_PENDING, Payment::STATUS_REJECTED], true)) {
+                    return false;
+                }
+
+                $key = $this->buildObligationKey($payment);
+                return !isset($verifiedKeys[$key]);
+            })
+            ->groupBy(fn ($payment) => $this->buildObligationKey($payment))
+            ->map(function ($group) {
+                $latest = $group->sortByDesc('created_at')->first();
+                $isOverdue = $latest->status === Payment::STATUS_PENDING
+                    && $latest->created_at
+                    && $latest->created_at->lt(now()->subDays(14));
+
+                return [
+                    'id' => $latest->id,
+                    'plot_id' => $latest->plot_id,
+                    'plot_number' => $latest->plot->plot_number ?? ($this->extractPlotToken($latest->notes) !== 'none' ? $this->extractPlotToken($latest->notes) : 'N/A'),
+                    'section' => $latest->plot->section ?? 'N/A',
+                    'due_amount' => (float) $latest->amount,
+                    'due_date' => optional($latest->created_at)->toDateString(),
+                    'status' => $isOverdue ? 'overdue' : $latest->status,
+                    'payment_type' => $latest->payment_type,
+                    'notes' => $latest->notes,
+                ];
+            })
+            ->values();
 
         return response()->json([
             'success' => true,
-            'data' => $payments
+            'data' => $outstanding
         ]);
     }
 }
