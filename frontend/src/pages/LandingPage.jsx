@@ -456,16 +456,6 @@ const LandingPage = () => {
             </button>
           </form>
 
-          {/* Search Examples */}
-          {!hasSearched && (
-            <div className="search-examples">
-              <span>Examples:</span>
-              <button onClick={() => setSearchQuery('Juan Dela Cruz')} className="example-tag">Juan Dela Cruz</button>
-              <button onClick={() => setSearchQuery('Maria Santos')} className="example-tag">Maria Santos</button>
-              <button onClick={() => setSearchQuery('Pedro Garcia')} className="example-tag">Pedro Garcia</button>
-            </div>
-          )}
-
           {/* Search Results */}
           {hasSearched && (
             <div className="landing-search-results">
