@@ -15,7 +15,6 @@ use App\Http\Controllers\Api\PaymentController;
 use App\Http\Controllers\Api\FeedbackController;
 use App\Http\Controllers\Api\SecurityAuditLogController;
 use App\Http\Controllers\Api\ProfileController;
-use App\Http\Controllers\Api\SystemMaintenanceController;
 use App\Http\Controllers\Auth\SocialAuthController;
 use App\Http\Controllers\Api\InvitationController;
 
@@ -54,9 +53,6 @@ Route::get('/public/search', [PublicController::class, 'search']);
 // Public announcements
 Route::get('/announcements', [AnnouncementController::class, 'index']);
 
-// System maintenance status (public so frontend can show maintenance screen)
-Route::get('/system/maintenance-status', [SystemMaintenanceController::class, 'status']);
-
 // Public feedback submission
 Route::post('/feedback', [FeedbackController::class, 'store']);
 
@@ -80,7 +76,6 @@ Route::middleware(['auth:sanctum', 'sanitize.input'])->group(function () {
     Route::post('/profile/update', [UserController::class, 'updateProfile'])->middleware('recent_auth');
     Route::get('/get-profile', [ProfileController::class, 'getProfile']);
     Route::post('/save-token', [UserController::class, 'saveToken']);
-    Route::post('/system/maintenance', [SystemMaintenanceController::class, 'update'])->middleware('role:admin,staff');
 
     // My Loved Ones (Member access to their linked records)
     Route::get('/my-burial-records', [BurialRecordController::class, 'myRecords']);

@@ -2,10 +2,8 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Layout from '../components/common/Layout';
 import { useToast } from '../context/ToastContext';
-import { useAuth } from '../context/AuthContext';
 import useKeyboardShortcuts, { useAppShortcuts } from '../hooks/useKeyboardShortcuts';
 import dashboardService from '../services/dashboardService';
-import maintenanceService from '../services/maintenanceService';
 
 // New Components
 import StatCard from '../components/dashboard/StatCard';
@@ -18,19 +16,11 @@ import './EnhancedDashboard.css';
 
 const EnhancedDashboardPage = () => {
   const navigate = useNavigate();
-  const { user } = useAuth();
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [commandPaletteOpen, setCommandPaletteOpen] = useState(false);
   const [sortConfig, setSortConfig] = useState({ key: 'burial_date', direction: 'desc' });
-  const [maintenance, setMaintenance] = useState({
-    active: false,
-    message: 'System is under maintenance. Please try again later.',
-    updated_at: null,
-  });
-  const [maintenanceLoading, setMaintenanceLoading] = useState(true);
-  const [maintenanceSaving, setMaintenanceSaving] = useState(false);
   const toast = useToast();
 
   // Demo activities for the feed
@@ -79,26 +69,6 @@ const EnhancedDashboardPage = () => {
     loadDashboard();
   }, []);
 
-  useEffect(() => {
-    const loadMaintenanceStatus = async () => {
-      try {
-        const response = await maintenanceService.getStatus();
-        if (response?.success && response?.data) {
-          setMaintenance((prev) => ({
-            ...prev,
-            ...response.data,
-          }));
-        }
-      } catch (err) {
-        console.error('Failed to load maintenance status:', err);
-      } finally {
-        setMaintenanceLoading(false);
-      }
-    };
-
-    loadMaintenanceStatus();
-  }, []);
-
   // Keyboard shortcuts
   useKeyboardShortcuts({
     'ctrl+k': () => setCommandPaletteOpen(true),
@@ -121,35 +91,6 @@ const EnhancedDashboardPage = () => {
       })
       .finally(() => setLoading(false));
   }, [toast]);
-
-  const handleMaintenanceToggle = async () => {
-    const nextActive = !maintenance.active;
-    const confirmText = nextActive
-      ? 'Enable maintenance mode? Regular users will be blocked.'
-      : 'Disable maintenance mode and reopen the system?';
-
-    if (!window.confirm(confirmText)) {
-      return;
-    }
-
-    setMaintenanceSaving(true);
-    try {
-      const response = await maintenanceService.updateStatus({
-        active: nextActive,
-        message: maintenance.message || 'System is under maintenance. Please try again later.',
-      });
-
-      if (response?.success && response?.data) {
-        setMaintenance((prev) => ({ ...prev, ...response.data }));
-        toast?.success(nextActive ? 'Maintenance mode enabled' : 'Maintenance mode disabled');
-      }
-    } catch (err) {
-      const message = err?.response?.data?.message || 'Failed to update maintenance mode';
-      toast?.error(message);
-    } finally {
-      setMaintenanceSaving(false);
-    }
-  };
 
   // Sort handler for Recent Burials table
   const handleSort = (key) => {
@@ -222,36 +163,6 @@ const EnhancedDashboardPage = () => {
         <h1 style={{ fontSize: '28px', fontWeight: '700', color: '#1a472a', marginBottom: '4px' }}>Dashboard</h1>
         <p style={{ color: '#6b7280', fontSize: '15px' }}>Welcome to Himlayan Cemetery Management System</p>
       </div>
-
-      {(user?.role === 'admin' || user?.role === 'staff') && (
-        <section className="dashboard-section">
-          <div className="maintenance-panel">
-            <div className="maintenance-info">
-              <h3>System Maintenance</h3>
-              <p>
-                Current status:{' '}
-                <span className={`maintenance-status ${maintenance.active ? 'active' : 'inactive'}`}>
-                  {maintenance.active ? 'ON' : 'OFF'}
-                </span>
-              </p>
-            </div>
-
-            <button
-              className={`maintenance-toggle-btn ${maintenance.active ? 'is-on' : 'is-off'}`}
-              onClick={handleMaintenanceToggle}
-              disabled={maintenanceSaving || maintenanceLoading}
-              aria-label="Toggle maintenance mode"
-            >
-              <span className="toggle-track">
-                <span className="toggle-thumb" />
-              </span>
-              <span className="toggle-label">
-                {maintenanceLoading ? 'Loading...' : maintenanceSaving ? 'Saving...' : maintenance.active ? 'Disable' : 'Enable'}
-              </span>
-            </button>
-          </div>
-        </section>
-      )}
 
       {/* Quick Stats */}
       <section className="dashboard-section">
