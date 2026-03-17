@@ -14,12 +14,16 @@ class PaymentController extends Controller
      */
     private function buildObligationKey(Payment $payment): string
     {
-        // Service fees are unique per payment — avoid deduplication across them.
+        // Service fees: group by notes text so duplicate payment records for the
+        // same service request (same notes) collapse into a single obligation.
         if ($payment->payment_type === Payment::TYPE_SERVICE_FEE) {
+            $notesKey = $payment->notes
+                ? 'notes:' . md5(trim((string) $payment->notes))
+                : 'payment:' . $payment->id;
             return implode('|', [
                 'user:' . $payment->user_id,
                 'type:service_fee',
-                'payment:' . $payment->id,
+                $notesKey,
             ]);
         }
 
