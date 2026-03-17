@@ -242,6 +242,7 @@ Route::middleware(['auth:sanctum', 'sanitize.input'])->group(function () {
         Route::post('/xendit', [PaymentController::class, 'createXendit']);
         Route::get('/my-dues', [PaymentController::class, 'myDues']);
         Route::get('/statistics', [PaymentController::class, 'statistics'])->middleware('role:admin,staff');
+        Route::post('/{id}/checkout', [PaymentController::class, 'checkout']);
         Route::get('/{id}', [PaymentController::class, 'show']);
         
         Route::middleware('role:admin,staff')->group(function () {

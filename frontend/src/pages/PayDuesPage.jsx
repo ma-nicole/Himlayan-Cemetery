@@ -74,18 +74,9 @@ const PayDuesPage = () => {
 
     setLoading(true);
     try {
-      const paymentType = selectedPlot.payment_type === 'service_fee'
-        ? 'service_fee'
-        : selectedPlot.type?.toLowerCase().includes('quarterly')
-          ? 'quarterly_dues'
-          : (selectedPlot.payment_type || 'annual_maintenance');
-
-      const response = await api.post('/payments', {
-        plot_id: selectedPlot.plot_id || null,
-        amount: selectedPlot.due_amount,
-        payment_type: paymentType,
+      // Use the existing pending payment record — do not create a new one.
+      const response = await api.post(`/payments/${selectedPlot.id}/checkout`, {
         payment_method: paymentMethod,
-        notes: selectedPlot.description || selectedPlot.notes || `${selectedPlot.payment_type || 'dues'} for ${selectedPlot.plot_number || 'N/A'}`,
       });
 
       const checkoutUrl =

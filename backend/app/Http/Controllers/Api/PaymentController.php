@@ -222,6 +222,97 @@ class PaymentController extends Controller
     }
 
     /**
+     * Initiate checkout for an existing pending payment — no new record is created.
+     */
+    public function checkout(Request $request, $id)
+    {
+        $payment = Payment::where('id', $id)
+            ->where('user_id', auth()->id())
+            ->where('status', Payment::STATUS_PENDING)
+            ->first();
+
+        if (!$payment) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Payment not found or already processed.',
+            ], 404);
+        }
+
+        $validated = $request->validate([
+            'payment_method' => 'required|string|max:50',
+        ]);
+
+        $xenditSecret = config('services.xendit.secret_key');
+        if (!$xenditSecret) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Xendit secret key is not configured.',
+            ], 500);
+        }
+
+        $methodMap = [
+            'gcash' => 'GCASH',
+            'maya' => 'PAYMAYA',
+            'bank' => 'BANK_TRANSFER',
+            'card' => 'CREDIT_CARD',
+        ];
+
+        $payment->update(['payment_method' => $validated['payment_method']]);
+
+        $externalId = 'himlayan-payment-' . $payment->id . '-' . time();
+
+        $payload = [
+            'external_id'          => $externalId,
+            'amount'               => (float) $payment->amount,
+            'payer_email'          => auth()->user()->email,
+            'description'          => 'Himlayan dues payment (' . $payment->payment_type . ')',
+            'currency'             => 'PHP',
+            'success_redirect_url' => $this->buildPaymentReturnUrl('success', $payment),
+            'failure_redirect_url' => $this->buildPaymentReturnUrl('failed', $payment),
+        ];
+
+        if (isset($methodMap[$validated['payment_method']])) {
+            $payload['payment_methods'] = [$methodMap[$validated['payment_method']]];
+        }
+
+        try {
+            [$xenditResponse] = $this->createXenditInvoiceWithFallback($xenditSecret, $payload);
+
+            if (!$xenditResponse->successful()) {
+                $gatewayBody    = $xenditResponse->json() ?? [];
+                $gatewayMessage = $this->extractXenditErrorMessage($gatewayBody);
+
+                return response()->json([
+                    'success' => false,
+                    'message' => $gatewayMessage
+                        ? 'Failed to create payment checkout: ' . $gatewayMessage
+                        : 'Failed to create payment checkout. Please try again.',
+                    'errors' => $gatewayBody,
+                ], 502);
+            }
+
+            $invoice = $xenditResponse->json();
+            $payment->update([
+                'reference_number' => $invoice['id'] ?? $payment->reference_number,
+            ]);
+
+            return response()->json([
+                'success'      => true,
+                'message'      => 'Payment initiated successfully. Redirecting to checkout.',
+                'data'         => $payment->load(['user:id,name,email', 'plot:id,plot_number,section']),
+                'checkout_url' => $invoice['invoice_url'] ?? null,
+                'invoice_id'   => $invoice['id'] ?? null,
+            ]);
+        } catch (\Throwable $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to connect to payment gateway.',
+                'error'   => $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    /**
      * Store a newly created payment (member submits payment)
      */
     public function store(Request $request)
