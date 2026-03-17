@@ -50,7 +50,7 @@ const ReportGeneratorPage = () => {
     if (reportType === 'payments' && status) parts.push(`Status: ${status}`);
     if (userId) {
       const user = users.find(u => String(u.id) === String(userId));
-      if (user) parts.push(`User: ${user.first_name} ${user.last_name}`);
+      if (user) parts.push(`User: ${user.name}`);
     }
     return parts.length > 0 ? parts.join('  |  ') : 'All Records';
   };
@@ -91,7 +91,7 @@ const ReportGeneratorPage = () => {
     if (reportType === 'payments') {
       const tableData = (reportData.data || []).map(p => [
         p.id,
-        p.user ? `${p.user.first_name} ${p.user.last_name}` : 'N/A',
+        p.user?.name || 'N/A',
         p.type?.replace(/_/g, ' ') || '',
         `PHP ${Number(p.amount || 0).toLocaleString('en-PH', { minimumFractionDigits: 2 })}`,
         (p.payment_method || 'N/A').toUpperCase(),
@@ -123,17 +123,17 @@ const ReportGeneratorPage = () => {
       doc.setFont('helvetica', 'normal');
       doc.setTextColor(50, 50, 50);
       doc.setFontSize(9);
-      doc.text(`Total Records: ${summary.total_records || 0}`, 14, summaryY + 6);
+      doc.text(`Total Records: ${summary.total_count || 0}`, 14, summaryY + 6);
       doc.text(`Total Amount: PHP ${Number(summary.total_amount || 0).toLocaleString('en-PH', { minimumFractionDigits: 2 })}`, 14, summaryY + 12);
-      doc.text(`Paid: ${summary.paid_count || 0}  |  Pending: ${summary.pending_count || 0}  |  Failed: ${summary.failed_count || 0}`, 14, summaryY + 18);
+      doc.text(`Verified: ${summary.verified_count || 0}  |  Pending: ${summary.pending_count || 0}  |  Rejected: ${summary.rejected_count || 0}`, 14, summaryY + 18);
 
     } else {
       const tableData = (reportData.data || []).map(f => [
         f.id,
-        f.user ? `${f.user.first_name} ${f.user.last_name}` : 'N/A',
+        f.user?.name || 'N/A',
         f.subject || '',
         (f.message || '').substring(0, 80) + ((f.message || '').length > 80 ? '...' : ''),
-        f.rating ? `${'★'.repeat(f.rating)}${'☆'.repeat(5 - f.rating)}` : 'N/A',
+        f.rating ? `${f.rating}/5` : 'N/A',
         (f.status || '').charAt(0).toUpperCase() + (f.status || '').slice(1),
         f.created_at ? new Date(f.created_at).toLocaleDateString('en-PH') : '',
       ]);
@@ -161,9 +161,9 @@ const ReportGeneratorPage = () => {
       doc.setFont('helvetica', 'normal');
       doc.setTextColor(50, 50, 50);
       doc.setFontSize(9);
-      doc.text(`Total Records: ${summary.total_records || 0}`, 14, summaryY + 6);
+      doc.text(`Total Records: ${summary.total_count || 0}`, 14, summaryY + 6);
       doc.text(`Average Rating: ${summary.average_rating || 'N/A'}`, 14, summaryY + 12);
-      doc.text(`Pending: ${summary.pending_count || 0}  |  Reviewed: ${summary.reviewed_count || 0}`, 14, summaryY + 18);
+      doc.text(`New: ${summary.new_count || 0}  |  Read: ${summary.read_count || 0}  |  Responded: ${summary.responded_count || 0}`, 14, summaryY + 18);
     }
 
     // Footer
@@ -247,7 +247,7 @@ const ReportGeneratorPage = () => {
                 <select value={userId} onChange={e => setUserId(e.target.value)}>
                   <option value="">All Members</option>
                   {users.map(u => (
-                    <option key={u.id} value={u.id}>{u.first_name} {u.last_name}</option>
+                    <option key={u.id} value={u.id}>{u.name}</option>
                   ))}
                 </select>
               </div>
@@ -299,15 +299,15 @@ const ReportGeneratorPage = () => {
                   <>
                     <div className="report-stat">
                       <span className="report-stat-label">Total Records</span>
-                      <span className="report-stat-value">{reportData.summary?.total_records || 0}</span>
+                      <span className="report-stat-value">{reportData.summary?.total_count || 0}</span>
                     </div>
                     <div className="report-stat">
                       <span className="report-stat-label">Total Amount</span>
                       <span className="report-stat-value">PHP {Number(reportData.summary?.total_amount || 0).toLocaleString('en-PH', { minimumFractionDigits: 2 })}</span>
                     </div>
                     <div className="report-stat">
-                      <span className="report-stat-label">Paid</span>
-                      <span className="report-stat-value text-green">{reportData.summary?.paid_count || 0}</span>
+                      <span className="report-stat-label">Verified</span>
+                      <span className="report-stat-value text-green">{reportData.summary?.verified_count || 0}</span>
                     </div>
                     <div className="report-stat">
                       <span className="report-stat-label">Pending</span>
@@ -318,19 +318,19 @@ const ReportGeneratorPage = () => {
                   <>
                     <div className="report-stat">
                       <span className="report-stat-label">Total Records</span>
-                      <span className="report-stat-value">{reportData.summary?.total_records || 0}</span>
+                      <span className="report-stat-value">{reportData.summary?.total_count || 0}</span>
                     </div>
                     <div className="report-stat">
                       <span className="report-stat-label">Average Rating</span>
                       <span className="report-stat-value">{reportData.summary?.average_rating || 'N/A'}</span>
                     </div>
                     <div className="report-stat">
-                      <span className="report-stat-label">Pending</span>
-                      <span className="report-stat-value text-yellow">{reportData.summary?.pending_count || 0}</span>
+                      <span className="report-stat-label">New</span>
+                      <span className="report-stat-value text-yellow">{reportData.summary?.new_count || 0}</span>
                     </div>
                     <div className="report-stat">
-                      <span className="report-stat-label">Reviewed</span>
-                      <span className="report-stat-value text-green">{reportData.summary?.reviewed_count || 0}</span>
+                      <span className="report-stat-label">Responded</span>
+                      <span className="report-stat-value text-green">{reportData.summary?.responded_count || 0}</span>
                     </div>
                   </>
                 )}
@@ -367,7 +367,7 @@ const ReportGeneratorPage = () => {
                       (reportData.data || []).map(p => (
                         <tr key={p.id}>
                           <td>{p.id}</td>
-                          <td>{p.user ? `${p.user.first_name} ${p.user.last_name}` : 'N/A'}</td>
+                          <td>{p.user?.name || 'N/A'}</td>
                           <td>{(p.type || '').replace(/_/g, ' ')}</td>
                           <td className="text-right">PHP {Number(p.amount || 0).toLocaleString('en-PH', { minimumFractionDigits: 2 })}</td>
                           <td>{(p.payment_method || 'N/A').toUpperCase()}</td>
@@ -379,10 +379,10 @@ const ReportGeneratorPage = () => {
                       (reportData.data || []).map(f => (
                         <tr key={f.id}>
                           <td>{f.id}</td>
-                          <td>{f.user ? `${f.user.first_name} ${f.user.last_name}` : 'N/A'}</td>
+                          <td>{f.user?.name || 'N/A'}</td>
                           <td>{f.subject || ''}</td>
                           <td className="message-cell">{(f.message || '').substring(0, 80)}{(f.message || '').length > 80 ? '...' : ''}</td>
-                          <td>{f.rating ? '★'.repeat(f.rating) + '☆'.repeat(5 - f.rating) : 'N/A'}</td>
+                          <td>{f.rating ? `${f.rating}/5` : 'N/A'}</td>
                           <td><span className={`status-badge status-${f.status}`}>{(f.status || '').charAt(0).toUpperCase() + (f.status || '').slice(1)}</span></td>
                           <td>{f.created_at ? new Date(f.created_at).toLocaleDateString('en-PH') : ''}</td>
                         </tr>
