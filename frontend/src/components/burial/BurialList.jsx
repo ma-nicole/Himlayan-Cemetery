@@ -1,8 +1,9 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useAuth } from '../../hooks/useAuth';
 
 const BurialList = ({ records, onView, onEdit, onDelete, onGenerateQR, onSort, sortField, sortOrder }) => {
   const { isAdmin } = useAuth();
+  const [failedPhotoIds, setFailedPhotoIds] = useState({});
 
   const formatDate = (dateString) => {
     if (!dateString) return '-';
@@ -22,6 +23,24 @@ const BurialList = ({ records, onView, onEdit, onDelete, onGenerateQR, onSort, s
         </span>
       )}
     </th>
+  );
+
+  const renderDefaultAvatar = () => (
+    <div style={{
+      width: '32px',
+      height: '32px',
+      borderRadius: '50%',
+      backgroundColor: '#e5e7eb',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      flexShrink: 0
+    }}>
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#6b7280" strokeWidth="1.5">
+        <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/>
+        <circle cx="12" cy="7" r="4"/>
+      </svg>
+    </div>
   );
 
   if (!records || records.length === 0) {
@@ -50,7 +69,7 @@ const BurialList = ({ records, onView, onEdit, onDelete, onGenerateQR, onSort, s
             <tr key={record.id}>
               <td>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                  {record.deceased_photo_url ? (
+                  {record.deceased_photo_url && !failedPhotoIds[record.id] ? (
                     <div style={{
                       width: '40px',
                       height: '40px',
@@ -68,27 +87,12 @@ const BurialList = ({ records, onView, onEdit, onDelete, onGenerateQR, onSort, s
                           objectFit: 'cover'
                         }}
                         onError={(e) => {
-                          e.target.style.display = 'none';
-                          e.target.parentElement.style.display = 'none';
+                          setFailedPhotoIds(prev => ({ ...prev, [record.id]: true }));
                         }}
                       />
                     </div>
                   ) : (
-                    <div style={{
-                      width: '32px',
-                      height: '32px',
-                      borderRadius: '50%',
-                      backgroundColor: '#e5e7eb',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      flexShrink: 0
-                    }}>
-                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#6b7280" strokeWidth="1.5">
-                        <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/>
-                        <circle cx="12" cy="7" r="4"/>
-                      </svg>
-                    </div>
+                    renderDefaultAvatar()
                   )}
                   <strong>{record.deceased_name}</strong>
                 </div>
