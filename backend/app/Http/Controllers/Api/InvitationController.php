@@ -17,14 +17,28 @@ class InvitationController extends Controller
 {
     /**
      * Return the canonical frontend URL: HTTPS, no trailing slash.
+     * Falls back to hardcoded production domain if env value is missing or invalid.
      */
     private function canonicalFrontendUrl(): string
     {
-        $url = rtrim((string) config('app.frontend_url', 'https://himlayangpilipino.com'), '/');
+        $fallback = 'https://himlayangpilipino.com';
+        $url = rtrim(trim((string) config('app.frontend_url', '')), '/');
+
+        // If blank or doesn't contain a dot (no real domain), use fallback.
+        if ($url === '' || !str_contains($url, '.')) {
+            return $fallback;
+        }
+
+        // Add scheme if missing.
+        if (!str_starts_with($url, 'http://') && !str_starts_with($url, 'https://')) {
+            $url = 'https://' . $url;
+        }
+
         // Force HTTPS so email links never trigger an HTTP→HTTPS 301.
         if (str_starts_with($url, 'http://')) {
             $url = 'https://' . substr($url, 7);
         }
+
         return $url;
     }
 
