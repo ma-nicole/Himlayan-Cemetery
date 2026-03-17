@@ -81,9 +81,15 @@ const AddLandmarkModal = ({
   }, [selectedCoordinates]);
 
   // Reset form when modal opens (handles switching between add/edit)
+  // If selectedCoordinates already exist (map click mode), use them instead of defaults
   useEffect(() => {
     if (isOpen) {
-      setFormData(getInitialFormData());
+      const base = getInitialFormData();
+      if (!initialData && selectedCoordinates) {
+        base.latitude = selectedCoordinates.latitude;
+        base.longitude = selectedCoordinates.longitude;
+      }
+      setFormData(base);
       setError('');
       setSuccess('');
       setValidationErrors({});
