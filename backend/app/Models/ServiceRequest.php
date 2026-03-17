@@ -17,6 +17,7 @@ class ServiceRequest extends Model
         'contact_number',
         'status',
         'admin_notes',
+        'service_fee_amount',
         'processed_by',
         'processed_at',
     ];
@@ -24,6 +25,7 @@ class ServiceRequest extends Model
     protected $casts = [
         'preferred_date' => 'date',
         'processed_at' => 'datetime',
+        'service_fee_amount' => 'decimal:2',
     ];
 
     const STATUS_PENDING = 'pending';

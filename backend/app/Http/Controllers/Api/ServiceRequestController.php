@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Models\Payment;
 use App\Models\ServiceRequest;
 use Illuminate\Http\Request;
 
@@ -128,7 +129,10 @@ class ServiceRequestController extends Controller
         $validated = $request->validate([
             'status' => 'sometimes|required|in:pending,approved,rejected,completed',
             'admin_notes' => 'nullable|string',
+            'service_fee_amount' => 'nullable|numeric|min:0',
         ]);
+
+        $wasNotApproved = $serviceRequest->status !== 'approved';
 
         if (isset($validated['status']) && $validated['status'] !== $serviceRequest->status) {
             $serviceRequest->processed_by = auth()->id();
@@ -136,6 +140,25 @@ class ServiceRequestController extends Controller
         }
 
         $serviceRequest->update($validated);
+
+        // Auto-create a payment due when an admin approves the request with a service fee.
+        if (
+            isset($validated['status']) &&
+            $validated['status'] === 'approved' &&
+            $wasNotApproved &&
+            !empty($validated['service_fee_amount']) &&
+            $validated['service_fee_amount'] > 0
+        ) {
+            $serviceLabel = ucwords(str_replace('_', ' ', $serviceRequest->service_type));
+            Payment::create([
+                'user_id'        => $serviceRequest->user_id,
+                'plot_id'        => null,
+                'amount'         => $validated['service_fee_amount'],
+                'payment_type'   => Payment::TYPE_SERVICE_FEE,
+                'status'         => Payment::STATUS_PENDING,
+                'notes'          => 'Service fee for ' . $serviceLabel . ' (Request #' . $serviceRequest->id . ')',
+            ]);
+        }
 
         return response()->json([
             'success' => true,

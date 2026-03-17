@@ -74,16 +74,18 @@ const PayDuesPage = () => {
 
     setLoading(true);
     try {
-      const paymentType = selectedPlot.type?.toLowerCase().includes('quarterly')
-        ? 'quarterly_dues'
-        : (selectedPlot.payment_type || 'annual_maintenance');
+      const paymentType = selectedPlot.payment_type === 'service_fee'
+        ? 'service_fee'
+        : selectedPlot.type?.toLowerCase().includes('quarterly')
+          ? 'quarterly_dues'
+          : (selectedPlot.payment_type || 'annual_maintenance');
 
       const response = await api.post('/payments', {
         plot_id: selectedPlot.plot_id || null,
         amount: selectedPlot.due_amount,
         payment_type: paymentType,
         payment_method: paymentMethod,
-        notes: selectedPlot.notes || `${selectedPlot.payment_type || 'dues'} for ${selectedPlot.plot_number || 'N/A'}`,
+        notes: selectedPlot.description || selectedPlot.notes || `${selectedPlot.payment_type || 'dues'} for ${selectedPlot.plot_number || 'N/A'}`,
       });
 
       const checkoutUrl =
@@ -170,13 +172,19 @@ const PayDuesPage = () => {
                   </div>
                   
                   <div className="due-details">
-                    <h3>{plot.plot_number || 'N/A'}</h3>
+                    <h3>{plot.payment_type === 'service_fee' ? 'Service Fee' : (plot.plot_number || 'N/A')}</h3>
                     <p className="plot-info">
-                      <span className="plot-number">{plot.plot_number || 'N/A'}</span>
-                      {plot.section && plot.section !== 'N/A' && (
+                      {plot.payment_type === 'service_fee' ? (
+                        <span className="plot-number">{plot.description || plot.notes || 'Service Fee'}</span>
+                      ) : (
                         <>
-                          <span className="separator">•</span>
-                          <span>{plot.section}</span>
+                          <span className="plot-number">{plot.plot_number || 'N/A'}</span>
+                          {plot.section && plot.section !== 'N/A' && (
+                            <>
+                              <span className="separator">•</span>
+                              <span>{plot.section}</span>
+                            </>
+                          )}
                         </>
                       )}
                     </p>
@@ -212,12 +220,14 @@ const PayDuesPage = () => {
               <div className="payment-form">
                 <div className="payment-summary">
                   <div className="summary-row">
-                    <span>Plot</span>
-                    <span>{selectedPlot.plot_number || 'N/A'}</span>
+                    <span>{selectedPlot.payment_type === 'service_fee' ? 'Service' : 'Plot'}</span>
+                    <span>{selectedPlot.payment_type === 'service_fee' ? 'Service Fee' : (selectedPlot.plot_number || 'N/A')}</span>
                   </div>
                   <div className="summary-row">
                     <span>Description</span>
-                    <span>{formatPaymentType(selectedPlot.payment_type)}</span>
+                    <span>{selectedPlot.payment_type === 'service_fee'
+                      ? (selectedPlot.description || selectedPlot.notes || 'Service Fee')
+                      : formatPaymentType(selectedPlot.payment_type)}</span>
                   </div>
                   <div className="summary-row total">
                     <span>Amount Due</span>

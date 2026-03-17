@@ -60,7 +60,7 @@ const ServiceRequestManagementPage = () => {
 
   const handleOpenModal = (item) => {
     setSelectedItem(item);
-    setFormData({ status: item.status, admin_notes: item.admin_notes || '' });
+    setFormData({ status: item.status, admin_notes: item.admin_notes || '', service_fee_amount: item.service_fee_amount || '' });
     setFormError('');
     setValidationErrors({});
     setShowModal(true);
@@ -293,6 +293,22 @@ const ServiceRequestManagementPage = () => {
                     <small className="error-message">{validationErrors.admin_notes}</small>
                   )}
                 </div>
+                {formData.status === 'approved' && (
+                  <div className="form-group">
+                    <label>Service Fee (PHP)</label>
+                    <input
+                      type="number"
+                      min="0"
+                      step="0.01"
+                      value={formData.service_fee_amount}
+                      onChange={(e) => setFormData({...formData, service_fee_amount: e.target.value})}
+                      placeholder="e.g. 500.00 — leave blank if no charge"
+                    />
+                    <small style={{ color: '#6b7280', fontSize: '0.8rem' }}>
+                      A payment due will be created for the member when a fee is set.
+                    </small>
+                  </div>
+                )}
                 <div className="form-actions">
                   <button type="button" className="btn-cancel" onClick={() => setShowModal(false)}>Cancel</button>
                   <button type="submit" className="btn-submit" disabled={Object.keys(validationErrors).length > 0}>Update Status</button>

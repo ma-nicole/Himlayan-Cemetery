@@ -14,6 +14,15 @@ class PaymentController extends Controller
      */
     private function buildObligationKey(Payment $payment): string
     {
+        // Service fees are unique per payment — avoid deduplication across them.
+        if ($payment->payment_type === Payment::TYPE_SERVICE_FEE) {
+            return implode('|', [
+                'user:' . $payment->user_id,
+                'type:service_fee',
+                'payment:' . $payment->id,
+            ]);
+        }
+
         $plotPart = $payment->plot_id ? 'plot:' . $payment->plot_id : 'plot:' . $this->extractPlotToken($payment->notes);
         $amountPart = number_format((float) $payment->amount, 2, '.', '');
 
@@ -46,6 +55,11 @@ class PaymentController extends Controller
      */
     private function hasKnownPlotReference(Payment $payment): bool
     {
+        // Service fees created on approval don't need a plot reference.
+        if ($payment->payment_type === Payment::TYPE_SERVICE_FEE) {
+            return true;
+        }
+
         return (bool) $payment->plot_id || $this->extractPlotToken($payment->notes) !== 'none';
     }
 
@@ -221,7 +235,7 @@ class PaymentController extends Controller
             'notes' => 'nullable|string',
         ]);
 
-        if (auth()->user()->role === 'member' && empty($validated['plot_id'])) {
+        if (auth()->user()->role === 'member' && empty($validated['plot_id']) && ($validated['payment_type'] ?? '') !== Payment::TYPE_SERVICE_FEE) {
             return response()->json([
                 'success' => false,
                 'message' => 'Please select a valid plot before making a payment.',
@@ -317,7 +331,7 @@ class PaymentController extends Controller
             'notes' => 'nullable|string',
         ]);
 
-        if (auth()->user()->role === 'member' && empty($validated['plot_id'])) {
+        if (auth()->user()->role === 'member' && empty($validated['plot_id']) && ($validated['payment_type'] ?? '') !== Payment::TYPE_SERVICE_FEE) {
             return response()->json([
                 'success' => false,
                 'message' => 'Please select a valid plot before making a payment.',
@@ -551,13 +565,18 @@ class PaymentController extends Controller
                 return [
                     'id' => $latest->id,
                     'plot_id' => $latest->plot_id,
-                    'plot_number' => $latest->plot->plot_number ?? ($this->extractPlotToken($latest->notes) !== 'none' ? $this->extractPlotToken($latest->notes) : 'N/A'),
+                    'plot_number' => $latest->payment_type === Payment::TYPE_SERVICE_FEE
+                        ? 'Service Fee'
+                        : ($latest->plot->plot_number ?? ($this->extractPlotToken($latest->notes) !== 'none' ? $this->extractPlotToken($latest->notes) : 'N/A')),
                     'section' => $latest->plot->section ?? 'N/A',
                     'due_amount' => (float) $latest->amount,
                     'due_date' => optional($latest->created_at)->toDateString(),
                     'status' => $isOverdue ? 'overdue' : $latest->status,
                     'payment_type' => $latest->payment_type,
                     'notes' => $latest->notes,
+                    'description' => $latest->payment_type === Payment::TYPE_SERVICE_FEE
+                        ? ($latest->notes ?: 'Service Fee')
+                        : null,
                 ];
             })
             ->values();

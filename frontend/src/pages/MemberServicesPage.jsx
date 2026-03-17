@@ -371,6 +371,14 @@ const MemberServicesPage = () => {
                           <strong>Admin Notes:</strong> {request.admin_notes}
                         </div>
                       )}
+                      {request.status === 'approved' && request.service_fee_amount > 0 && (
+                        <div className="admin-notes" style={{ marginTop: '10px', background: '#fef9c3', border: '1px solid #fde047', borderRadius: '6px', padding: '10px' }}>
+                          <strong>💳 Service Fee:</strong> ₱{parseFloat(request.service_fee_amount).toLocaleString('en-PH', { minimumFractionDigits: 2 })}
+                          <span style={{ display: 'block', fontSize: '0.82rem', color: '#78716c', marginTop: '4px' }}>
+                            A payment due has been added to your <a href="/pay-dues" style={{ color: '#15803d', fontWeight: 600 }}>Pay Dues</a> page.
+                          </span>
+                        </div>
+                      )}
                     </div>
                   </div>
                 ))}
