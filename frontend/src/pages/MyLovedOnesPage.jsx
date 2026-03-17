@@ -5,41 +5,7 @@ import MemberHeader from '../components/common/MemberHeader';
 import MemberFooter from '../components/common/MemberFooter';
 import Layout from '../components/common/Layout';
 import LoadingSpinner from '../components/common/LoadingSpinner';
-
-const rawApiUrl = process.env.REACT_APP_API_URL || 'https://himlayangpilipino.com/api';
-const backendBaseUrl = rawApiUrl
-  .replace(/\/api\/?$/, '')
-  .replace(/\/$/, '');
-
-const resolveDeceasedPhotoUrl = (photoValue) => {
-  if (!photoValue) {
-    return null;
-  }
-
-  if (/^https?:\/\//i.test(photoValue)) {
-    // Normalize legacy localhost URLs saved from local environments.
-    if (/^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?\//i.test(photoValue)) {
-      try {
-        const url = new URL(photoValue);
-        const normalizedPath = url.pathname.replace(/^\/+/, '');
-        const storagePath = normalizedPath.startsWith('storage/')
-          ? normalizedPath
-          : `storage/${normalizedPath}`;
-        return `${backendBaseUrl}/${storagePath}`;
-      } catch {
-        return null;
-      }
-    }
-    return photoValue;
-  }
-
-  const normalizedPath = String(photoValue).replace(/^\/+/, '');
-  const storagePath = normalizedPath.startsWith('storage/')
-    ? normalizedPath
-    : `storage/${normalizedPath}`;
-
-  return `${backendBaseUrl}/${storagePath}`;
-};
+import { resolvePhotoUrl } from '../utils/imageHelpers';
 
 const MyLovedOnesPage = () => {
   const [records, setRecords] = useState([]);
@@ -87,7 +53,7 @@ const MyLovedOnesPage = () => {
       obituary: record.obituary || '',
       deceased_photo: null
     });
-    const photoUrl = resolveDeceasedPhotoUrl(record.deceased_photo_url);
+    const photoUrl = resolvePhotoUrl(record.deceased_photo_url, record.updated_at);
     setPhotoPreview(photoUrl);
     setError('');
     setSuccess('');
@@ -195,7 +161,7 @@ const MyLovedOnesPage = () => {
                   <div className="card-header" style={{ position: 'relative', height: '140px', backgroundColor: '#e5e7eb', flexShrink: 0 }}>
                     {record.deceased_photo_url && !brokenImageRecordIds.has(record.id) ? (
                       <img 
-                        src={resolveDeceasedPhotoUrl(record.deceased_photo_url)}
+                        src={resolvePhotoUrl(record.deceased_photo_url, record.updated_at)}
                         alt={record.deceased_name}
                         style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                         onError={(e) => {

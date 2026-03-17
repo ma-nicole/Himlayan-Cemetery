@@ -27,7 +27,9 @@ return [
         'public' => [
             'driver' => 'local',
             'root' => storage_path('app/public'),
-            'url' => env('APP_URL').'/storage',
+            // STORAGE_URL env overrides. Falls back to APP_URL with any /api suffix stripped, then /storage appended.
+            // This correctly handles deployments where APP_URL = https://domain.com/api.
+            'url' => env('STORAGE_URL', rtrim(preg_replace('#/api/?$#i', '', rtrim(env('APP_URL', ''), '/')), '/') . '/storage'),
             'visibility' => 'public',
             'throw' => false,
         ],

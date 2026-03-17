@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { GoogleMap, MarkerF, InfoWindowF, useJsApiLoader } from '@react-google-maps/api';
 import publicService from '../services/publicService';
+import { resolvePhotoUrl } from '../utils/imageHelpers';
 
 const mapContainerStyle = {
   width: '100%',
@@ -86,7 +87,7 @@ const PublicGravePage = () => {
         <div className="grave-profile-header">
           {(profile.deceased_photo_url || profile.photo_url) && (
             <img
-              src={profile.deceased_photo_url || profile.photo_url}
+              src={resolvePhotoUrl(profile.deceased_photo_url || profile.photo_url)}
               alt={profile.deceased_name}
               style={{
                 width: '120px',

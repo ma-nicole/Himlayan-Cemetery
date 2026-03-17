@@ -375,9 +375,22 @@ jobs:
             \$kernel->terminate(\$request, \$response);
             EOF
 
-            # Expose Laravel public storage uploads at /storage for image/files access.
-            rm -rf "$FRONTEND_PUBLIC_PATH/storage"
-            ln -s "$DEPLOY_PATH/backend/storage/app/public" "$FRONTEND_PUBLIC_PATH/storage"
+            # Ensure uploaded photo directories persist across deployments
+            mkdir -p "$DEPLOY_PATH/backend/storage/app/public/deceased_photos"
+            mkdir -p "$DEPLOY_PATH/backend/storage/app/public/avatars"
+
+            # Recreate storage symlink only if it is missing or points to wrong target.
+            # NEVER blindly rm -rf the symlink: if ln -s then failed, ALL photos would 404.
+            STORAGE_TARGET="$DEPLOY_PATH/backend/storage/app/public"
+            STORAGE_LINK="$FRONTEND_PUBLIC_PATH/storage"
+            CURRENT_TARGET=$(readlink "$STORAGE_LINK" 2>/dev/null || echo "")
+            if [ "$CURRENT_TARGET" = "$STORAGE_TARGET" ] && [ -e "$STORAGE_LINK" ]; then
+              echo "Storage symlink already correct, preserving"
+            else
+              rm -rf "$STORAGE_LINK"
+              ln -sf "$STORAGE_TARGET" "$STORAGE_LINK"
+              echo "Storage symlink (re)created: $STORAGE_LINK -> $STORAGE_TARGET"
+            fi
 
       - name: Prepare frontend target via SSH (attempt 2)
         id: frontend_ssh_2

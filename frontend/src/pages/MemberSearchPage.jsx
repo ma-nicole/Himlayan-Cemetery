@@ -5,6 +5,7 @@ import api from '../services/api';
 import MemberHeader from '../components/common/MemberHeader';
 import MemberFooter from '../components/common/MemberFooter';
 import '../styles/MemberSearch.css';
+import { resolvePhotoUrl } from '../utils/imageHelpers';
 
 const MemberSearchPage = () => {
   const { user, logout } = useAuth();
@@ -111,7 +112,7 @@ const MemberSearchPage = () => {
                       <div className="result-avatar">
                         {result.deceased_photo_url ? (
                           <img 
-                            src={result.deceased_photo_url} 
+                            src={resolvePhotoUrl(result.deceased_photo_url, result.updated_at)} 
                             alt={result.deceased_name} 
                             style={{ 
                               width: '100%', 

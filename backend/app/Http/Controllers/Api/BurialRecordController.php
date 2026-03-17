@@ -11,7 +11,9 @@ use Illuminate\Support\Facades\Storage;
 class BurialRecordController extends Controller
 {
     /**
-     * Normalize deceased photo path/URL for API responses.
+     * Normalize deceased photo path/URL to a full accessible URL for API responses.
+     * Uses Storage::disk('public')->url() to ensure the URL is always derived
+     * from the correctly configured STORAGE_URL / APP_URL, never from asset().
      */
     private function buildDeceasedPhotoUrl(?string $photoPath): ?string
     {
@@ -19,25 +21,47 @@ class BurialRecordController extends Controller
             return null;
         }
 
+        // Already a full URL
         if (filter_var($photoPath, FILTER_VALIDATE_URL)) {
-            // Normalize localhost/dev URLs to production storage path.
+            // Normalize local dev URLs (localhost / 127.0.0.1) → extract relative path
             if (preg_match('#^https?://(localhost|127\.0\.0\.1)(:\d+)?(/.*)?$#i', $photoPath, $m)) {
-                $path = ltrim($m[3] ?? '', '/');
-                if (!str_starts_with($path, 'storage/')) {
-                    $path = 'storage/' . $path;
-                }
-                return asset($path);
+                $photoPath = ltrim($m[3] ?? '', '/');
+                // Fall through to relative path handling below
+            } else {
+                // Fix legacy production URLs that accidentally contain /api/storage/
+                return preg_replace('#(/api)/storage/#i', '/storage/', $photoPath);
             }
-            return $photoPath;
         }
 
-        $normalizedPath = ltrim($photoPath, '/');
+        // Relative path: strip leading slash and any redundant 'storage/' prefix,
+        // then build the URL via the Storage facade so it respects STORAGE_URL config.
+        $relative = ltrim($photoPath, '/');
+        $relative = preg_replace('#^storage/#i', '', $relative);
 
-        if (str_starts_with($normalizedPath, 'storage/')) {
-            return asset($normalizedPath);
+        return Storage::disk('public')->url($relative);
+    }
+
+    /**
+     * Safely delete a photo file from storage.
+     * Accepts both relative storage keys and full URLs.
+     */
+    private function deletePhotoFile(?string $photoPath): void
+    {
+        if (!$photoPath) {
+            return;
         }
 
-        return asset('storage/' . $normalizedPath);
+        $key = $photoPath;
+        if (filter_var($photoPath, FILTER_VALIDATE_URL)) {
+            $parsed = parse_url($photoPath);
+            $key = ltrim($parsed['path'] ?? '', '/');
+        }
+        // Strip any 'storage/' prefix to get the Storage disk key
+        $key = ltrim(preg_replace('#^storage/#i', '', $key), '/');
+
+        if ($key && Storage::disk('public')->exists($key)) {
+            Storage::disk('public')->delete($key);
+        }
     }
 
     /**
@@ -180,14 +204,11 @@ class BurialRecordController extends Controller
 
         // Handle photo upload if present
         if ($request->hasFile('deceased_photo')) {
-            // Delete old photo if exists
-            if ($record->deceased_photo_url) {
-                Storage::disk('public')->delete($record->deceased_photo_url);
-            }
-            
             $photo = $request->file('deceased_photo');
-            $photoPath = $photo->store('deceased_photos', 'public');
-            $updateData['deceased_photo_url'] = $photoPath;
+            // Store NEW photo FIRST — only delete old one after successful store
+            $newPhotoPath = $photo->store('deceased_photos', 'public');
+            $this->deletePhotoFile($record->deceased_photo_url);
+            $updateData['deceased_photo_url'] = $newPhotoPath;
         }
 
         $record->update($updateData);
@@ -355,14 +376,11 @@ class BurialRecordController extends Controller
 
         // Handle photo upload if present
         if ($request->hasFile('deceased_photo')) {
-            // Delete old photo if exists
-            if ($record->deceased_photo_url) {
-                Storage::disk('public')->delete($record->deceased_photo_url);
-            }
-            
             $photo = $request->file('deceased_photo');
-            $photoPath = $photo->store('deceased_photos', 'public');
-            $validated['deceased_photo_url'] = $photoPath;
+            // Store NEW photo FIRST — only delete old one after successful store
+            $newPhotoPath = $photo->store('deceased_photos', 'public');
+            $this->deletePhotoFile($record->deceased_photo_url);
+            $validated['deceased_photo_url'] = $newPhotoPath;
         }
 
         // Remove the file from validated data

@@ -6,11 +6,13 @@ use App\Http\Controllers\Controller;
 use App\Models\QrCode;
 use App\Models\BurialRecord;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 
 class PublicController extends Controller
 {
     /**
-     * Normalize deceased photo path/URL for API responses.
+     * Normalize deceased photo path/URL to a full accessible URL.
+     * Mirrors BurialRecordController::buildDeceasedPhotoUrl — keep in sync.
      */
     private function buildDeceasedPhotoUrl(?string $photoPath): ?string
     {
@@ -19,24 +21,18 @@ class PublicController extends Controller
         }
 
         if (filter_var($photoPath, FILTER_VALIDATE_URL)) {
-            // Normalize localhost/dev URLs to production storage path.
             if (preg_match('#^https?://(localhost|127\.0\.0\.1)(:\d+)?(/.*)?$#i', $photoPath, $m)) {
-                $path = ltrim($m[3] ?? '', '/');
-                if (!str_starts_with($path, 'storage/')) {
-                    $path = 'storage/' . $path;
-                }
-                return asset($path);
+                $photoPath = ltrim($m[3] ?? '', '/');
+                // Fall through to relative path handling below
+            } else {
+                return preg_replace('#(/api)/storage/#i', '/storage/', $photoPath);
             }
-            return $photoPath;
         }
 
-        $normalizedPath = ltrim($photoPath, '/');
+        $relative = ltrim($photoPath, '/');
+        $relative = preg_replace('#^storage/#i', '', $relative);
 
-        if (str_starts_with($normalizedPath, 'storage/')) {
-            return asset($normalizedPath);
-        }
-
-        return asset('storage/' . $normalizedPath);
+        return Storage::disk('public')->url($relative);
     }
 
     /**
