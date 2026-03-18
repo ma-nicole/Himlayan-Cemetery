@@ -44,6 +44,7 @@ jobs:
           DEPLOY_PATH: ${{ secrets.HOSTINGER_DEPLOY_PATH }}
           APP_URL: ${{ secrets.APP_URL }}
           FRONTEND_URL: ${{ secrets.FRONTEND_URL }}
+          FIREBASE_PROJECT_ID: ${{ secrets.FIREBASE_PROJECT_ID || 'himlayang-push' }}
           MAIL_MAILER: ${{ secrets.MAIL_MAILER }}
           MAIL_HOST: ${{ secrets.MAIL_HOST }}
           MAIL_PORT: ${{ secrets.MAIL_PORT }}
@@ -62,7 +63,7 @@ jobs:
           port: ${{ secrets.HOSTINGER_SSH_PORT || '65002' }}
           timeout: 60s
           command_timeout: 5m
-          envs: REPO_URL,BRANCH,DEPLOY_PATH,APP_URL,FRONTEND_URL,FRONTEND_PUBLIC_PATH,MAIL_MAILER,MAIL_HOST,MAIL_PORT,MAIL_USERNAME,MAIL_PASSWORD,MAIL_ENCRYPTION,MAIL_FROM_ADDRESS,MAIL_FROM_NAME,MAIL_FEEDBACK_TO
+          envs: REPO_URL,BRANCH,DEPLOY_PATH,APP_URL,FRONTEND_URL,FIREBASE_PROJECT_ID,FRONTEND_PUBLIC_PATH,MAIL_MAILER,MAIL_HOST,MAIL_PORT,MAIL_USERNAME,MAIL_PASSWORD,MAIL_ENCRYPTION,MAIL_FROM_ADDRESS,MAIL_FROM_NAME,MAIL_FEEDBACK_TO
           script_stop: false
           script: |
             set -eux
@@ -171,6 +172,7 @@ jobs:
               sanitize_env_file ".env"
               upsert_env "APP_URL" "$APP_URL" ".env"
               upsert_env "FRONTEND_URL" "$FRONTEND_URL" ".env"
+              upsert_env "FIREBASE_PROJECT_ID" "$FIREBASE_PROJECT_ID" ".env"
               upsert_env "MAIL_MAILER" "$MAIL_MAILER" ".env"
               upsert_env "MAIL_HOST" "$MAIL_HOST" ".env"
               upsert_env "MAIL_PORT" "$MAIL_PORT" ".env"

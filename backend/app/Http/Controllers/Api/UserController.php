@@ -255,21 +255,30 @@ class UserController extends Controller
     }
 
     /**
-     * Save Expo push token for authenticated user
+     * Save Expo push token and Firebase token for authenticated user
      */
     public function saveToken(Request $request)
     {
         $validated = $request->validate([
-            'expo_push_token' => 'required|string|max:255',
+            'expo_push_token' => 'nullable|string|max:255',
+            'fcm_token' => 'nullable|string|max:255',
         ]);
 
         $user = auth()->user();
-        $user->expo_push_token = $validated['expo_push_token'];
+        
+        if ($validated['expo_push_token'] ?? null) {
+            $user->expo_push_token = $validated['expo_push_token'];
+        }
+        
+        if ($validated['fcm_token'] ?? null) {
+            $user->fcm_token = $validated['fcm_token'];
+        }
+        
         $user->save();
 
         return response()->json([
             'success' => true,
-            'message' => 'Push token saved successfully',
+            'message' => 'Push tokens saved successfully',
         ]);
     }
 
