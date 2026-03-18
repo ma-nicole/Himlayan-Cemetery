@@ -291,7 +291,7 @@ const ServiceRequestManagementPage = () => {
                     <small className="error-message">{validationErrors.admin_notes}</small>
                   )}
                 </div>
-                {formData.status === 'approved' && (
+                {(formData.status === 'approved' || (selectedItem?.status !== 'pending' && selectedItem?.service_fee_amount)) && (
                   <div className="form-group">
                     <label>Service Fee (PHP)</label>
                     <input
@@ -301,9 +301,13 @@ const ServiceRequestManagementPage = () => {
                       value={formData.service_fee_amount}
                       onChange={(e) => setFormData({...formData, service_fee_amount: e.target.value})}
                       placeholder="e.g. 500.00 — leave blank if no charge"
+                      disabled={selectedItem?.status !== 'pending'}
+                      style={selectedItem?.status !== 'pending' ? { backgroundColor: '#f3f4f6', cursor: 'not-allowed' } : {}}
                     />
                     <small style={{ color: '#6b7280', fontSize: '0.8rem' }}>
-                      A payment due will be created for the member when a fee is set.
+                      {selectedItem?.status !== 'pending'
+                        ? 'Service fee is locked once the request is no longer pending.'
+                        : 'A payment due will be created for the member when a fee is set.'}
                     </small>
                   </div>
                 )}

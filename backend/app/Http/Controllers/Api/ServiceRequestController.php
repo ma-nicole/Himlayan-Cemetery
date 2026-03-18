@@ -137,6 +137,11 @@ class ServiceRequestController extends Controller
             $serviceRequest->processed_at = now();
         }
 
+        // Lock service fee once the request is no longer pending
+        if ($serviceRequest->status !== 'pending' && array_key_exists('service_fee_amount', $validated)) {
+            unset($validated['service_fee_amount']);
+        }
+
         $serviceRequest->update($validated);
 
         // Auto-create a payment due when an admin approves the request with a service fee.
