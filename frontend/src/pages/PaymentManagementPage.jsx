@@ -11,6 +11,8 @@ const PaymentManagementPage = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
   const [showModal, setShowModal] = useState(false);
+  const [showViewModal, setShowViewModal] = useState(false);
+  const [viewItem, setViewItem] = useState(null);
   const [selectedItem, setSelectedItem] = useState(null);
   const [formData, setFormData] = useState({ status: '', notes: '' });
   const [validationErrors, setValidationErrors] = useState({});
@@ -253,6 +255,11 @@ const PaymentManagementPage = () => {
                                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
                               </button>
                             )}
+                            {item.status === 'rejected' && (
+                              <button className="btn-view" onClick={() => { setViewItem(item); setShowViewModal(true); }} title="View rejection details">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                              </button>
+                            )}
                             <button className="btn-delete" onClick={() => handleDelete(item.id)} title="Delete">
                               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M3 6h18M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg>
                             </button>
@@ -362,6 +369,9 @@ const PaymentManagementPage = () => {
                         : 'State the reason for rejecting this payment...'}
                       required
                     />
+                    <small style={{ color: '#6b7280', fontSize: '0.78rem' }}>
+                      ℹ️ This reason will be visible to the member on their Pay Dues page.
+                    </small>
                     {validationErrors.reason && (
                       <small className="error-message">{validationErrors.reason}</small>
                     )}
@@ -394,6 +404,51 @@ const PaymentManagementPage = () => {
                   <button type="submit" className="btn-submit" disabled={Object.keys(validationErrors).length > 0}>Submit</button>
                 </div>
               </form>
+            </div>
+          </div>
+        )}
+        {showViewModal && viewItem && (
+          <div className="modal-overlay" onClick={() => setShowViewModal(false)}>
+            <div className="modal-content" onClick={e => e.stopPropagation()}>
+              <button className="modal-close" onClick={() => setShowViewModal(false)}>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
+              </button>
+              <h2>Payment Details</h2>
+
+              <div className="request-details">
+                <p><strong>Payer:</strong> {viewItem.user?.name}</p>
+                <p><strong>Amount:</strong> {formatCurrency(viewItem.amount || 0)}</p>
+                <p><strong>Type:</strong> {formatPaymentType(viewItem.payment_type || '')}</p>
+                <p><strong>Method:</strong> {viewItem.payment_method?.toUpperCase() || 'Unpaid'}</p>
+                <p><strong>Reference:</strong> {viewItem.reference_number || 'N/A'}</p>
+                <p><strong>Paid At:</strong> {viewItem.paid_at ? new Date(viewItem.paid_at).toLocaleString() : 'N/A'}</p>
+                <p><strong>Date Created:</strong> {new Date(viewItem.created_at).toLocaleString()}</p>
+              </div>
+
+              <div style={{ marginTop: '14px', padding: '12px 14px', background: '#fee2e2', border: '1px solid #fca5a5', borderRadius: '6px' }}>
+                <p style={{ margin: '0 0 4px', fontWeight: 700, color: '#991b1b' }}>❌ Rejected</p>
+                {viewItem.admin_reason ? (
+                  <p style={{ margin: 0, color: '#7f1d1d', fontSize: '0.9rem' }}><strong>Reason:</strong> {viewItem.admin_reason}</p>
+                ) : (
+                  <p style={{ margin: 0, color: '#9ca3af', fontSize: '0.85rem', fontStyle: 'italic' }}>No reason provided.</p>
+                )}
+                {viewItem.verifier?.name && (
+                  <p style={{ margin: '6px 0 0', color: '#7f1d1d', fontSize: '0.82rem' }}>Rejected by: {viewItem.verifier.name}</p>
+                )}
+                {viewItem.verified_at && (
+                  <p style={{ margin: '2px 0 0', color: '#7f1d1d', fontSize: '0.82rem' }}>Rejected at: {new Date(viewItem.verified_at).toLocaleString()}</p>
+                )}
+              </div>
+
+              {viewItem.notes && (
+                <div style={{ marginTop: '10px', padding: '10px 14px', background: '#f9fafb', border: '1px solid #e5e7eb', borderRadius: '6px', fontSize: '0.875rem', color: '#374151' }}>
+                  <strong>Notes:</strong> {viewItem.notes}
+                </div>
+              )}
+
+              <div className="form-actions" style={{ marginTop: '16px' }}>
+                <button type="button" className="btn-submit" onClick={() => setShowViewModal(false)}>Close</button>
+              </div>
             </div>
           </div>
         )}

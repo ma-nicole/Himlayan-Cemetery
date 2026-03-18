@@ -358,7 +358,12 @@ const PayDuesPage = () => {
                     ) : selectedPlot.status === 'under_investigation' ? (
                       <>
                         <p style={{ color: '#d97706', fontWeight: 600, marginBottom: 4 }}>⚠️ Pending Confirmation (Under Investigation)</p>
-                        <p style={{ color: '#92400e', fontSize: '0.875rem', margin: 0 }}>Your payment is currently under review. Please allow 1–7 business days for confirmation.</p>
+                        <p style={{ color: '#92400e', fontSize: '0.875rem', margin: '0 0 6px' }}>Your payment is currently under review. Please allow 1–7 business days for confirmation.</p>
+                        {selectedPlot.admin_reason && (
+                          <p style={{ color: '#78350f', fontSize: '0.85rem', margin: 0, background: '#fef3c7', padding: '6px 10px', borderRadius: '4px', textAlign: 'left' }}>
+                            <strong>Reason:</strong> {selectedPlot.admin_reason}
+                          </p>
+                        )}
                       </>
                     ) : (
                       <>

@@ -142,6 +142,13 @@ const PaymentHistoryPage = () => {
                       <strong>Date:</strong> {formatDate(item.created_at)}
                     </p>
                   </div>
+
+                  {/* Reason shown for rejected and under_investigation payments */}
+                  {(item.status === 'rejected' || item.verification_decision === 'under_investigation') && item.admin_reason && (
+                    <div style={{ marginTop: '10px', padding: '8px 12px', background: item.status === 'rejected' ? '#fee2e2' : '#fef9c3', borderRadius: '6px', fontSize: '0.875rem', color: item.status === 'rejected' ? '#991b1b' : '#854d0e', borderLeft: `3px solid ${item.status === 'rejected' ? '#f87171' : '#fde047'}` }}>
+                      <strong>Reason:</strong> {item.admin_reason}
+                    </div>
+                  )}
                 </article>
               ))}
             </div>
