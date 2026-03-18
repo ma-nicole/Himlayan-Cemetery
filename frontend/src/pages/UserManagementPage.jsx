@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '../hooks/useAuth';
 import api from '../services/api';
 import Layout from '../components/common/Layout';
-import { validateName, validateEmail, validatePassword } from '../utils/formValidator';
+import { validateName, validateEmail } from '../utils/formValidator';
 import '../styles/UserManagement.css';
 
 const UserManagementPage = () => {
@@ -19,7 +19,7 @@ const UserManagementPage = () => {
   const [modalMode, setModalMode] = useState('add');
   const [selectedUser, setSelectedUser] = useState(null);
 
-  const [formData, setFormData] = useState({ name: '', email: '', password: '', role: 'member' });
+  const [formData, setFormData] = useState({ firstName: '', lastName: '', email: '', role: 'admin' });
   const [validationErrors, setValidationErrors] = useState({});
   const [formError, setFormError] = useState('');
   const [pagination, setPagination] = useState({ currentPage: 1, lastPage: 1, total: 0 });
@@ -71,11 +71,11 @@ const UserManagementPage = () => {
     setValidationErrors({});
   };
 
-  // ── Add User ────────────────────────────────────────────────
+  // ── Add User (invitation) ────────────────────────────────────────────────
   const handleOpenAdd = () => {
     setModalMode('add');
     setSelectedUser(null);
-    setFormData({ name: '', email: '', password: '', role: 'member' });
+    setFormData({ firstName: '', lastName: '', email: '', role: 'admin' });
     setFormError('');
     setValidationErrors({});
     setShowModal(true);
@@ -86,19 +86,28 @@ const UserManagementPage = () => {
     setFormError('');
     const newErrors = {};
 
-    const nameVal = validateName(formData.name);
-    if (!nameVal.valid) newErrors.name = nameVal.error;
+    const firstNameVal = validateName(formData.firstName.trim(), 'First name');
+    if (!firstNameVal.valid) newErrors.firstName = firstNameVal.error;
 
-    const emailVal = validateEmail(formData.email);
+    const lastNameVal = validateName(formData.lastName.trim(), 'Last name');
+    if (!lastNameVal.valid) newErrors.lastName = lastNameVal.error;
+
+    const emailVal = validateEmail(formData.email.trim());
     if (!emailVal.valid) newErrors.email = emailVal.error;
 
-    const passVal = validatePassword(formData.password);
-    if (!passVal.valid) newErrors.password = passVal.error;
+    if (!['admin', 'staff'].includes(formData.role)) {
+      newErrors.role = 'Role must be Admin or Staff.';
+    }
 
     if (Object.keys(newErrors).length > 0) { setValidationErrors(newErrors); return; }
 
     try {
-      const response = await api.post('/users', formData);
+      const response = await api.post('/users/staff-invite', {
+        first_name: formData.firstName.trim(),
+        last_name: formData.lastName.trim(),
+        email: formData.email.trim().toLowerCase(),
+        role: formData.role,
+      });
       if (response.data.success) {
         handleCloseModal();
         loadUsers();
@@ -364,56 +373,75 @@ const UserManagementPage = () => {
               </svg>
             </button>
 
-            {/* ── Add User ── */}
+            {/* ── Add User (invitation) ── */}
             {modalMode === 'add' && (
               <>
-                <h2>Add New User</h2>
+                <h2>Invite New User</h2>
+                <p style={{ margin: '-4px 0 16px', color: '#64748b', fontSize: '0.875rem' }}>
+                  An invitation email will be sent. The account is created only after the invitation is accepted.
+                </p>
                 {formError && <div className="form-error">{formError}</div>}
                 <form onSubmit={handleSubmitAdd}>
-                  <div className="form-group">
-                    <label>Name</label>
-                    <input
-                      type="text"
-                      value={formData.name}
-                      onChange={(e) => { setFormData({ ...formData, name: e.target.value }); setValidationErrors(p => { const n = {...p}; delete n.name; return n; }); }}
-                      className={validationErrors.name ? 'error' : ''}
-                      required
-                    />
-                    {validationErrors.name && <small className="error-message">{validationErrors.name}</small>}
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0 1rem' }}>
+                    <div className="form-group">
+                      <label>First Name *</label>
+                      <input
+                        type="text"
+                        value={formData.firstName}
+                        onChange={(e) => { setFormData({ ...formData, firstName: e.target.value }); setValidationErrors(p => { const n = {...p}; delete n.firstName; return n; }); }}
+                        className={validationErrors.firstName ? 'error' : ''}
+                        placeholder="e.g. Maria"
+                        required
+                      />
+                      {validationErrors.firstName && <small className="error-message">{validationErrors.firstName}</small>}
+                    </div>
+                    <div className="form-group">
+                      <label>Last Name *</label>
+                      <input
+                        type="text"
+                        value={formData.lastName}
+                        onChange={(e) => { setFormData({ ...formData, lastName: e.target.value }); setValidationErrors(p => { const n = {...p}; delete n.lastName; return n; }); }}
+                        className={validationErrors.lastName ? 'error' : ''}
+                        placeholder="e.g. Santos"
+                        required
+                      />
+                      {validationErrors.lastName && <small className="error-message">{validationErrors.lastName}</small>}
+                    </div>
                   </div>
                   <div className="form-group">
-                    <label>Email</label>
+                    <label>Email *</label>
                     <input
                       type="email"
                       value={formData.email}
                       onChange={(e) => { setFormData({ ...formData, email: e.target.value }); setValidationErrors(p => { const n = {...p}; delete n.email; return n; }); }}
                       className={validationErrors.email ? 'error' : ''}
+                      placeholder="e.g. maria@example.com"
                       required
                     />
                     {validationErrors.email && <small className="error-message">{validationErrors.email}</small>}
                   </div>
                   <div className="form-group">
-                    <label>Password</label>
-                    <input
-                      type="password"
-                      value={formData.password}
-                      onChange={(e) => { setFormData({ ...formData, password: e.target.value }); setValidationErrors(p => { const n = {...p}; delete n.password; return n; }); }}
-                      className={validationErrors.password ? 'error' : ''}
+                    <label>Role *</label>
+                    <select
+                      value={formData.role}
+                      onChange={(e) => { setFormData({ ...formData, role: e.target.value }); setValidationErrors(p => { const n = {...p}; delete n.role; return n; }); }}
+                      className={validationErrors.role ? 'error' : ''}
                       required
-                    />
-                    {validationErrors.password && <small className="error-message">{validationErrors.password}</small>}
-                  </div>
-                  <div className="form-group">
-                    <label>Role</label>
-                    <select value={formData.role} onChange={(e) => setFormData({ ...formData, role: e.target.value })}>
-                      <option value="member">Member</option>
-                      <option value="staff">Staff</option>
+                    >
                       <option value="admin">Admin</option>
+                      <option value="staff">Staff</option>
                     </select>
+                    {validationErrors.role && <small className="error-message">{validationErrors.role}</small>}
+                  </div>
+                  <div style={{ padding: '10px 14px', background: '#eff6ff', border: '1px solid #93c5fd', borderRadius: '6px', fontSize: '0.83rem', color: '#1e40af', marginBottom: '16px' }}>
+                    ℹ️ A temporary password will be generated and sent via email. The invited user must change it on first login.
                   </div>
                   <div className="form-actions">
                     <button type="button" className="btn-cancel" onClick={handleCloseModal}>Cancel</button>
-                    <button type="submit" className="btn-submit" disabled={Object.keys(validationErrors).length > 0}>Create User</button>
+                    <button type="submit" className="btn-submit" disabled={Object.keys(validationErrors).length > 0}>
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="16" height="16" style={{ marginRight: '6px' }}><path d="M22 2L11 13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+                      Send Invitation
+                    </button>
                   </div>
                 </form>
               </>

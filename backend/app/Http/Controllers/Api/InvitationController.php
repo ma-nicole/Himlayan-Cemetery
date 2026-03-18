@@ -526,11 +526,17 @@ class InvitationController extends Controller
 
         // Create user account
         try {
+            // Securely resolve role from invitation data; whitelist prevents cache tampering.
+            $allowedRoles = ['admin', 'staff', 'member'];
+            $role = in_array($invitationData['role'] ?? '', $allowedRoles, true)
+                ? $invitationData['role']
+                : 'member';
+
             $user = User::create([
                 'email' => $invitationData['email'],
                 'name' => $invitationData['name'],
                 'password' => Hash::make($invitationData['password']),
-                'role' => 'member',
+                'role' => $role,
                 'invitation_accepted' => true,
                 'must_change_password' => true,
             ]);
@@ -603,6 +609,83 @@ class InvitationController extends Controller
             'status' => 'pending',
             'user' => $user
         ], 'Invitation pending');
+    }
+
+    /**
+     * Send a staff/admin account invitation from the Admin > User Management screen.
+     * Does NOT create the account — account is created only when the invited user
+     * clicks the activation link in the email.
+     */
+    public function sendStaffAdminInvitation(Request $request)
+    {
+        $validated = $request->validate([
+            'first_name' => ['required', 'string', 'min:2', 'max:100', 'regex:/^[\p{L}\s\'\-]+$/u'],
+            'last_name'  => ['required', 'string', 'min:2', 'max:100', 'regex:/^[\p{L}\s\'\-]+$/u'],
+            'email'      => 'required|email:rfc|max:255|unique:users,email',
+            'role'       => 'required|in:admin,staff',
+        ], [
+            'first_name.regex' => 'First name may only contain letters, spaces, apostrophes, and hyphens.',
+            'last_name.regex'  => 'Last name may only contain letters, spaces, apostrophes, and hyphens.',
+            'email.unique'     => 'An account with this email address already exists.',
+            'role.in'          => 'Role must be either Admin or Staff.',
+        ]);
+
+        $mailConfigError = $this->validateMailConfiguration();
+        if ($mailConfigError) {
+            Log::error('Staff/admin invitation blocked: invalid mail configuration', [
+                'recipient' => $validated['email'],
+                'message'   => $mailConfigError,
+            ]);
+            return $this->errorResponse($mailConfigError, 500);
+        }
+
+        $name        = trim($validated['first_name'] . ' ' . $validated['last_name']);
+        $token       = Str::random(64);
+        $expiresAt   = now()->addDay();
+
+        // Generate a cryptographically secure temporary password (never derived from user data).
+        // Satisfies: uppercase, lowercase, digit, special char, 12+ chars.
+        $tempPassword = ucfirst(Str::random(8)) . rand(10, 99) . '@1';
+
+        $invitationData = [
+            'email'      => $validated['email'],
+            'name'       => $name,
+            'first_name' => $validated['first_name'],
+            'last_name'  => $validated['last_name'],
+            'role'       => $validated['role'],   // stored securely in server-side cache
+            'password'   => $tempPassword,
+            'token'      => $token,
+            'type'       => 'staff_admin',
+            'accept_url' => $this->canonicalFrontendUrl() . '/accept-invitation?token=' . $token,
+        ];
+
+        try {
+            Mail::mailer($this->resolveMailer())
+                ->to($validated['email'])
+                ->send(new \App\Mail\StaffAdminInvitation($invitationData));
+        } catch (\Throwable $e) {
+            Log::error('Staff/admin invitation email failed', [
+                'recipient'       => $validated['email'],
+                'exception_class' => get_class($e),
+                'error'           => $e->getMessage(),
+                'file'            => $e->getFile(),
+                'line'            => $e->getLine(),
+            ]);
+            return $this->errorResponse($this->mapMailErrorToMessage($e), 500);
+        }
+
+        // Persist only after successful delivery so no orphaned cache entries exist.
+        cache()->put('invitation_' . $token, $invitationData, $expiresAt);
+
+        Log::info('Staff/admin invitation sent', [
+            'recipient' => $validated['email'],
+            'role'      => $validated['role'],
+            'sent_by'   => auth()->id(),
+        ]);
+
+        return $this->successResponse([
+            'message' => 'Invitation email sent to ' . $validated['email'] . '. The account will be created only after the invitation is accepted.',
+        ], 'Invitation sent successfully');
     }
 
     /**
