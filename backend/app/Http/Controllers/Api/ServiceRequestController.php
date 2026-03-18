@@ -233,9 +233,23 @@ class ServiceRequestController extends Controller
             return response()->json(['success' => false, 'message' => 'Cannot cancel a paid service request.'], 422);
         }
 
-        // Mark the associated pending service fee payment as cancelled
-        if ($servicePayment && !$servicePayment->paid_at && $servicePayment->status === Payment::STATUS_PENDING) {
-            $servicePayment->update(['status' => Payment::STATUS_CANCELLED]);
+        // Hard-delete the unpaid service fee payment — works regardless of DB migration state.
+        // Notes-pattern delete catches both new (service_request_id linked) and legacy rows.
+        Payment::where('user_id', $serviceRequest->user_id)
+            ->where('payment_type', Payment::TYPE_SERVICE_FEE)
+            ->where('notes', 'like', '%Request #' . $serviceRequest->id . ')')
+            ->whereNull('paid_at')
+            ->where('status', Payment::STATUS_PENDING)
+            ->delete();
+
+        // Also try via service_request_id if the column exists on this environment
+        try {
+            Payment::where('service_request_id', $serviceRequest->id)
+                ->whereNull('paid_at')
+                ->where('status', Payment::STATUS_PENDING)
+                ->delete();
+        } catch (\Exception $e) {
+            // Column may not exist yet — notes-pattern above already handled it
         }
 
         $serviceRequest->update(['status' => 'cancelled']);

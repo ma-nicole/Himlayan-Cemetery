@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Payment;
+use App\Models\ServiceRequest;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
 
@@ -192,8 +193,21 @@ class PaymentController extends Controller
         // Every other role (member, null, or any future role) is strictly
         // restricted to their own records, preventing data leakage.
         if (!in_array(auth()->user()->role, ['admin', 'staff'], true)) {
-            $query->where('user_id', auth()->id())
-                  ->where('status', '!=', Payment::STATUS_CANCELLED);
+            $query->where('user_id', auth()->id());
+        }
+
+        // Exclude service fee payments for ALL cancelled service requests (all roles)
+        $cancelledIds = ServiceRequest::where('status', 'cancelled')->pluck('id');
+        if ($cancelledIds->isNotEmpty()) {
+            $query->where(function ($q) use ($cancelledIds) {
+                $q->where('payment_type', '!=', Payment::TYPE_SERVICE_FEE)
+                  ->orWhere(function ($q2) use ($cancelledIds) {
+                      $q2->where('payment_type', Payment::TYPE_SERVICE_FEE);
+                      foreach ($cancelledIds as $rid) {
+                          $q2->where('notes', 'not like', '%Request #' . $rid . ')');
+                      }
+                  });
+            });
         }
 
         // Status filter
@@ -589,11 +603,15 @@ class PaymentController extends Controller
             ], 404);
         }
 
-        if ($payment->status === Payment::STATUS_CANCELLED) {
-            return response()->json([
-                'success' => false,
-                'message' => 'This payment has been cancelled and cannot be verified.',
-            ], 422);
+        // Block verify if the payment belongs to a cancelled service request
+        if ($payment->payment_type === Payment::TYPE_SERVICE_FEE) {
+            preg_match('/\(Request #(\d+)\)/', $payment->notes ?? '', $m);
+            if (!empty($m[1])) {
+                $linked = ServiceRequest::find((int) $m[1]);
+                if ($linked && $linked->status === 'cancelled') {
+                    return response()->json(['success' => false, 'message' => 'This payment belongs to a cancelled service request and cannot be verified.'], 422);
+                }
+            }
         }
 
         $validated = $request->validate([
@@ -662,11 +680,27 @@ class PaymentController extends Controller
      */
     public function myDues()
     {
-        $payments = Payment::where('user_id', auth()->id())
-            ->with('plot:id,plot_number,section')
-            ->where('status', '!=', Payment::STATUS_CANCELLED)
-            ->orderBy('created_at', 'desc')
-            ->get();
+        // Exclude service fee payments for cancelled service requests
+        $cancelledIds = ServiceRequest::where('user_id', auth()->id())
+            ->where('status', 'cancelled')
+            ->pluck('id');
+
+        $query = Payment::where('user_id', auth()->id())
+            ->with('plot:id,plot_number,section');
+
+        if ($cancelledIds->isNotEmpty()) {
+            $query->where(function ($q) use ($cancelledIds) {
+                $q->where('payment_type', '!=', Payment::TYPE_SERVICE_FEE)
+                  ->orWhere(function ($q2) use ($cancelledIds) {
+                      $q2->where('payment_type', Payment::TYPE_SERVICE_FEE);
+                      foreach ($cancelledIds as $rid) {
+                          $q2->where('notes', 'not like', '%Request #' . $rid . ')');
+                      }
+                  });
+            });
+        }
+
+        $payments = $query->orderBy('created_at', 'desc')->get();
 
         if ($payments->isEmpty()) {
             return response()->json([
