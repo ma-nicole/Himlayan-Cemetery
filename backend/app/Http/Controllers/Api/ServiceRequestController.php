@@ -42,7 +42,8 @@ class ServiceRequestController extends Controller
             });
         }
 
-        $query->orderBy('created_at', 'desc');
+        $sortDirection = $request->get('sort', 'desc') === 'asc' ? 'asc' : 'desc';
+        $query->orderBy('created_at', $sortDirection);
 
         $perPage = $request->get('per_page', 10);
         $requests = $query->paginate($perPage);

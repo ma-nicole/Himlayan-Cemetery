@@ -1027,6 +1027,118 @@
   gap: 1rem;
 }
 
+/* ── Filter / Sort controls ─────────────────────── */
+.requests-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 12px;
+  background: #f8faf9;
+  border: 1px solid #d6e2da;
+  border-radius: 12px;
+  padding: 14px 16px;
+  margin-bottom: 20px;
+}
+
+.rc-group {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 150px;
+}
+
+.rc-group label {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: #6b7280;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.rc-group select {
+  height: 38px;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  background: #fff;
+  color: #1f2937;
+  font-size: 0.875rem;
+  padding: 0 10px;
+  cursor: pointer;
+  appearance: auto;
+}
+
+.rc-group select:focus {
+  outline: 2px solid #1a472a;
+  border-color: transparent;
+}
+
+.rc-clear {
+  align-self: flex-end;
+  height: 38px;
+  padding: 0 14px;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  background: #fff;
+  color: #6b7280;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.rc-clear:hover {
+  background: #f3f4f6;
+  color: #374151;
+}
+
+.rc-count {
+  align-self: flex-end;
+  margin-left: auto;
+  font-size: 0.82rem;
+  color: #9ca3af;
+  padding-bottom: 8px;
+}
+
+/* ── Pagination ──────────────────────────────────── */
+.requests-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  margin-top: 24px;
+  padding: 12px 0;
+}
+
+.rp-btn {
+  padding: 8px 20px;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  background: #fff;
+  color: #1a472a;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.rp-btn:hover:not(:disabled) {
+  background: #e8f2eb;
+  border-color: #1a472a;
+}
+
+.rp-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.rp-info {
+  font-size: 0.875rem;
+  color: #6b7280;
+  font-weight: 500;
+  min-width: 110px;
+  text-align: center;
+}
+
 .request-card {
   background: white;
   border-radius: 16px;

@@ -24,6 +24,10 @@ const MemberServicesPage = () => {
   const [contactError, setContactError] = useState('');
   const [myRequests, setMyRequests] = useState([]);
   const [requestsLoading, setRequestsLoading] = useState(false);
+  const [filterStatus, setFilterStatus] = useState('');
+  const [sortOrder, setSortOrder] = useState('newest');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [requestsMeta, setRequestsMeta] = useState({ current_page: 1, last_page: 1, total: 0 });
 
   // Digit length rules per country code: [min, max] — local subscriber digits only (no country code prefix)
   // Sources: ITU-T E.164 national numbering plans
@@ -83,16 +87,27 @@ const MemberServicesPage = () => {
 
   useEffect(() => {
     if (activeTab === 'my-requests') {
-      loadMyRequests();
+      loadMyRequests(1, filterStatus, sortOrder);
     }
-  }, [activeTab]);
+  }, [activeTab]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const loadMyRequests = async () => {
+  useEffect(() => {
+    if (activeTab === 'my-requests') {
+      loadMyRequests(1, filterStatus, sortOrder);
+    }
+  }, [filterStatus, sortOrder]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const loadMyRequests = async (page = 1, status = filterStatus, sort = sortOrder) => {
     setRequestsLoading(true);
     try {
-      const response = await api.get('/service-requests');
+      const params = new URLSearchParams({ per_page: 5, page });
+      if (status) params.append('status', status);
+      params.append('sort', sort === 'oldest' ? 'asc' : 'desc');
+      const response = await api.get(`/service-requests?${params}`);
       if (response.data.success) {
         setMyRequests(response.data.data || []);
+        setRequestsMeta(response.data.meta || { current_page: 1, last_page: 1, total: 0 });
+        setCurrentPage(page);
       }
     } catch (error) {
       console.error('Failed to load service requests:', error);
@@ -106,7 +121,7 @@ const MemberServicesPage = () => {
     if (!window.confirm('Are you sure you want to cancel this service request? This cannot be undone.')) return;
     try {
       await api.patch(`/service-requests/${id}/cancel`);
-      loadMyRequests();
+      loadMyRequests(currentPage, filterStatus, sortOrder);
     } catch (error) {
       alert(error.response?.data?.message || 'Failed to cancel request');
     }
@@ -384,13 +399,41 @@ const MemberServicesPage = () => {
               <h2>My Service Requests</h2>
               <p>Track the status of your service requests</p>
             </div>
-            
+
+            {/* Filter + Sort controls */}
+            <div className="requests-controls">
+              <div className="rc-group">
+                <label htmlFor="rc-status">Status</label>
+                <select id="rc-status" value={filterStatus} onChange={(e) => setFilterStatus(e.target.value)}>
+                  <option value="">All Statuses</option>
+                  <option value="pending">Pending</option>
+                  <option value="approved">Approved</option>
+                  <option value="rejected">Rejected</option>
+                  <option value="completed">Completed</option>
+                  <option value="cancelled">Cancelled</option>
+                </select>
+              </div>
+              <div className="rc-group">
+                <label htmlFor="rc-sort">Sort</label>
+                <select id="rc-sort" value={sortOrder} onChange={(e) => setSortOrder(e.target.value)}>
+                  <option value="newest">Newest First</option>
+                  <option value="oldest">Oldest First</option>
+                </select>
+              </div>
+              {(filterStatus || sortOrder !== 'newest') && (
+                <button className="rc-clear" onClick={() => { setFilterStatus(''); setSortOrder('newest'); }}>Clear</button>
+              )}
+              {!requestsLoading && (
+                <span className="rc-count">{requestsMeta.total} request{requestsMeta.total !== 1 ? 's' : ''}</span>
+              )}
+            </div>
+
             {requestsLoading ? (
               <div className="loading-spinner-container">
                 <div className="loading-spinner"></div>
                 <p>Loading your requests...</p>
               </div>
-            ) : myRequests.length === 0 ? (
+            ) : myRequests.length === 0 && !filterStatus ? (
               <div className="no-requests">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
                   <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
@@ -402,7 +445,18 @@ const MemberServicesPage = () => {
                   Browse Services
                 </button>
               </div>
+            ) : myRequests.length === 0 ? (
+              <div className="no-requests">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                  <polyline points="14 2 14 8 20 8"/>
+                </svg>
+                <h3>No Matching Requests</h3>
+                <p>No requests found for the selected filter.</p>
+                <button className="btn-browse" onClick={() => setFilterStatus('')}>Clear Filter</button>
+              </div>
             ) : (
+              <>
               <div className="requests-list">
                 {myRequests.map((request) => (
                   <div key={request.id} className="request-card">
@@ -478,6 +532,28 @@ const MemberServicesPage = () => {
                   </div>
                 ))}
               </div>
+
+              {/* Pagination */}
+              {requestsMeta.last_page > 1 && (
+                <div className="requests-pagination">
+                  <button
+                    className="rp-btn"
+                    disabled={currentPage <= 1}
+                    onClick={() => loadMyRequests(currentPage - 1, filterStatus, sortOrder)}
+                  >
+                    ← Prev
+                  </button>
+                  <span className="rp-info">Page {currentPage} of {requestsMeta.last_page}</span>
+                  <button
+                    className="rp-btn"
+                    disabled={currentPage >= requestsMeta.last_page}
+                    onClick={() => loadMyRequests(currentPage + 1, filterStatus, sortOrder)}
+                  >
+                    Next →
+                  </button>
+                </div>
+              )}
+              </>
             )}
           </section>
         ) : (
