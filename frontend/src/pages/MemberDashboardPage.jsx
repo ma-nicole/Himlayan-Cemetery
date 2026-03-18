@@ -291,7 +291,7 @@ const MemberDashboardPage = () => {
             </div>
             <div className="stat-info">
               {!statsLoading && <span className="stat-number">{dashboardStats.pending_payments}</span>}
-              <span className="stat-label">Pending Payments</span>
+              <span className="stat-label">Pay Dues</span>
             </div>
           </Link>
 

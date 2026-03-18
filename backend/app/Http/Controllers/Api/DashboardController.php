@@ -112,17 +112,17 @@ class DashboardController extends Controller
             }
         }
 
+        // Mirror the my-dues endpoint: include ALL pending records (unpaid, awaiting_verification,
+        // under_investigation) — do NOT filter by paid_at, so this count always matches
+        // what the member sees under "Outstanding Dues" on the Pay Dues page.
         $pendingPaymentsCount = $allUserPayments
             ->filter(function ($pmt) use ($verifiedKeys) {
                 // Mirror hasKnownPlotReference: service fees are always valid;
                 // other types require a plot_id.
                 $hasRef = $pmt->payment_type === Payment::TYPE_SERVICE_FEE
                     || !empty($pmt->plot_id);
-                // Only count truly unpaid obligations:
-                // exclude payments where paid_at is set (user already submitted — awaiting verification)
                 return $hasRef
                     && $pmt->status === Payment::STATUS_PENDING
-                    && !$pmt->paid_at
                     && !isset($verifiedKeys[$this->buildObligationKey($pmt)]);
             })
             ->groupBy(fn ($pmt) => $this->buildObligationKey($pmt))
