@@ -104,20 +104,39 @@ class DashboardController extends Controller
     public function memberStats()    {
         $user = auth()->user();
         $userId = $user->id;
-        $currentYear = now()->year;
 
         // Count plots owned by the user (via burial records with matching contact_email)
         $myPlotsCount = Plot::whereHas('burialRecord', function ($query) use ($user) {
             $query->where('contact_email', $user->email);
         })->count();
 
-        // Count outstanding dues using the same logic as the Pay Dues page (myDues):
-        // 1. Build the set of verified obligation keys to exclude already-paid obligations.
-        // 2. Keep only pending payments that have a known plot/service reference.
-        // 3. Group by obligation key (deduplication) — the unique group count is what
-        //    the Pay Dues page shows, so these two numbers are always in sync.
-        $allUserPayments = Payment::where('user_id', $userId)->get();
+        // ── Outstanding dues count ──────────────────────────────────────────
+        // Must mirror PaymentController::myDues() exactly so the dashboard
+        // count always equals the number of cards on the Pay Dues page.
+        //
+        // Step 1: Exclude service-fee payments for cancelled service requests
+        //         (same filter that myDues applies at the query level).
+        $cancelledIds = ServiceRequest::where('user_id', $userId)
+            ->where('status', 'cancelled')
+            ->pluck('id');
 
+        $paymentQuery = Payment::where('user_id', $userId);
+
+        if ($cancelledIds->isNotEmpty()) {
+            $paymentQuery->where(function ($q) use ($cancelledIds) {
+                $q->where('payment_type', '!=', Payment::TYPE_SERVICE_FEE)
+                  ->orWhere(function ($q2) use ($cancelledIds) {
+                      $q2->where('payment_type', Payment::TYPE_SERVICE_FEE);
+                      foreach ($cancelledIds as $rid) {
+                          $q2->where('notes', 'not like', '%Request #' . $rid . ')');
+                      }
+                  });
+            });
+        }
+
+        $allUserPayments = $paymentQuery->get();
+
+        // Step 2: Build verified-obligation set
         $verifiedKeys = [];
         foreach ($allUserPayments as $pmt) {
             if ($pmt->status === Payment::STATUS_VERIFIED) {
@@ -125,15 +144,18 @@ class DashboardController extends Controller
             }
         }
 
-        // Mirror the my-dues endpoint: include ALL pending records (unpaid, awaiting_verification,
-        // under_investigation) — do NOT filter by paid_at, so this count always matches
-        // what the member sees under "Outstanding Dues" on the Pay Dues page.
+        // Step 3: Filter + group (same rules as myDues)
         $pendingPaymentsCount = $allUserPayments
             ->filter(function ($pmt) use ($verifiedKeys) {
-                // Mirror hasKnownPlotReference: service fees are always valid;
-                // other types require a plot_id.
-                $hasRef = $pmt->payment_type === Payment::TYPE_SERVICE_FEE
-                    || !empty($pmt->plot_id);
+                // hasKnownPlotReference: service fees always valid, others need plot_id
+                // or a parseable plot token inside notes.
+                if ($pmt->payment_type === Payment::TYPE_SERVICE_FEE) {
+                    $hasRef = true;
+                } else {
+                    $hasRef = (bool) $pmt->plot_id
+                        || (bool) preg_match('/\b([A-Z]-\d{1,3}-\d{1,3})\b/i', (string) $pmt->notes);
+                }
+
                 return $hasRef
                     && $pmt->status === Payment::STATUS_PENDING
                     && !isset($verifiedKeys[$this->buildObligationKey($pmt)]);
@@ -146,14 +168,10 @@ class DashboardController extends Controller
             ->where('status', 'pending')
             ->count();
 
-        // For visits, we don't have a tracking table, so we'll set to 0
-        // You can implement visit tracking later if needed
-        $visitsThisYear = 0;
-
         $stats = [
             'my_plots' => $myPlotsCount,
             'pending_payments' => $pendingPaymentsCount,
-            'visits_this_year' => $visitsThisYear,
+            'visits_this_year' => 0,
             'service_requests' => $serviceRequestsCount,
         ];
 
