@@ -246,16 +246,22 @@ class UserController extends Controller
      */
     public function statistics()
     {
-        // Exclude pending invited users (invitation_accepted = false AND invitation_token IS NOT NULL)
-        $activatedUsers = User::where('is_archived', false)->where('invitation_accepted', true);
-        $activatedUsersArchived = User::where('is_archived', false)->where('invitation_accepted', true);
+        // A "pending" user has an unaccepted invitation token.
+        // Directly-created accounts (invitation_token IS NULL) are always real users.
+        // Exclude only: invitation_token IS NOT NULL AND invitation_accepted = false.
+        $realUser = function ($q) {
+            $q->where(function ($inner) {
+                $inner->whereNull('invitation_token')
+                      ->orWhere('invitation_accepted', true);
+            });
+        };
 
         $stats = [
-            'total'    => $activatedUsers->count(),
-            'admins'   => $activatedUsersArchived->where('role', 'admin')->count(),
-            'staff'    => $activatedUsersArchived->where('role', 'staff')->count(),
-            'members'  => $activatedUsersArchived->where('role', 'member')->count(),
-            'recent'   => $activatedUsersArchived->where('created_at', '>=', now()->subDays(30))->count(),
+            'total'    => User::where('is_archived', false)->where($realUser)->count(),
+            'admins'   => User::where('is_archived', false)->where('role', 'admin')->where($realUser)->count(),
+            'staff'    => User::where('is_archived', false)->where('role', 'staff')->where($realUser)->count(),
+            'members'  => User::where('is_archived', false)->where('role', 'member')->where($realUser)->count(),
+            'recent'   => User::where('is_archived', false)->where($realUser)->where('created_at', '>=', now()->subDays(30))->count(),
             'archived' => User::where('is_archived', true)->count(),
         ];
 
