@@ -22,6 +22,8 @@ class Payment extends Model
         'paid_at',
         'verified_by',
         'verified_at',
+        'verification_decision',
+        'admin_reason',
     ];
 
     protected $casts = [
@@ -30,10 +32,13 @@ class Payment extends Model
         'verified_at' => 'datetime',
     ];
 
-    const STATUS_PENDING = 'pending';
+    const STATUS_PENDING  = 'pending';
     const STATUS_VERIFIED = 'verified';
     const STATUS_REJECTED = 'rejected';
     const STATUS_CANCELLED = 'cancelled';
+
+    /** Admin sub-decision: payment flagged for investigation while remaining "pending". */
+    const DECISION_UNDER_INVESTIGATION = 'under_investigation';
 
     const TYPE_ANNUAL_MAINTENANCE = 'annual_maintenance';
     const TYPE_QUARTERLY_DUES = 'quarterly_dues';

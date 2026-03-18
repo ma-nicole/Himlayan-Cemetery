@@ -60,8 +60,17 @@ const PaymentManagementPage = () => {
 
   const handleOpenModal = (item) => {
     setSelectedItem(item);
-    // For verified payments the decision is locked; pre-fill status so UI reflects it
-    setFormData({ status: item.status === 'verified' ? 'verified' : '', notes: item.notes || '' });
+    // Pre-fill state based on current payment state
+    const preStatus = item.status === 'verified'
+      ? 'verified'
+      : item.verification_decision === 'under_investigation'
+        ? 'under_investigation'
+        : '';
+    setFormData({
+      status: preStatus,
+      notes: item.notes || '',
+      reason: item.admin_reason || '',
+    });
     setFormError('');
     setValidationErrors({});
     setShowModal(true);
@@ -77,6 +86,10 @@ const PaymentManagementPage = () => {
       const statusValidation = validateRequired(formData.status, 'Verification decision');
       if (!statusValidation.valid) {
         newErrors.status = statusValidation.error;
+      }
+      // Reason is mandatory when rejecting or flagging as under investigation
+      if (['rejected', 'under_investigation'].includes(formData.status) && !formData.reason.trim()) {
+        newErrors.reason = 'Reason is required for this decision.';
       }
     }
 
@@ -96,7 +109,9 @@ const PaymentManagementPage = () => {
     setFormError('');
     try {
       // For verified payments only send notes (decision is immutable)
-      const payload = isAlreadyVerified ? { notes: formData.notes } : formData;
+      const payload = isAlreadyVerified
+        ? { notes: formData.notes }
+        : { status: formData.status, notes: formData.notes, reason: formData.reason };
       await api.post(`/payments/${selectedItem.id}/verify`, payload);
       setShowModal(false);
       loadPayments();
@@ -118,8 +133,30 @@ const PaymentManagementPage = () => {
   };
 
   const getStatusBadgeClass = (status) => {
-    const classes = { pending: 'badge-pending', verified: 'badge-verified', rejected: 'badge-rejected', cancelled: 'badge-cancelled' };
+    const classes = {
+      unpaid: 'badge-cancelled',
+      pending: 'badge-pending',
+      verified: 'badge-verified',
+      rejected: 'badge-rejected',
+      cancelled: 'badge-cancelled',
+    };
     return classes[status] || 'badge-pending';
+  };
+
+  // Derive the display status for the admin table.
+  // - unpaid: payment_method=null and paid_at=null → not yet submitted
+  // - pending: submitted (paid_at set) or under_investigation → awaiting review
+  // - verified / rejected / cancelled → final states
+  const getAdminDisplayStatus = (item) => {
+    const eff = item.effective_status || item.status;
+    if (eff === 'unpaid') return 'unpaid';
+    if (['awaiting_verification', 'under_investigation', 'pending'].includes(eff)) return 'pending';
+    return eff;
+  };
+
+  const getAdminDisplayLabel = (item) => {
+    const display = getAdminDisplayStatus(item);
+    return display.charAt(0).toUpperCase() + display.slice(1);
   };
 
   const formatPaymentType = (type) => {
@@ -207,7 +244,7 @@ const PaymentManagementPage = () => {
                         <td><strong>{formatCurrency(item.amount)}</strong></td>
                         <td>{item.payment_method ? item.payment_method.toUpperCase() : 'Unpaid'}</td>
                         <td><code>{item.reference_number || '-'}</code></td>
-                        <td><span className={`status-badge ${getStatusBadgeClass(item.status)}`}>{item.status.charAt(0).toUpperCase() + item.status.slice(1)}</span></td>
+                        <td><span className={`status-badge ${getStatusBadgeClass(getAdminDisplayStatus(item))}`}>{getAdminDisplayLabel(item)}</span></td>
                         <td>{new Date(item.created_at).toLocaleDateString()}</td>
                         <td>
                           <div className="action-buttons">
@@ -246,6 +283,16 @@ const PaymentManagementPage = () => {
               <h2>{selectedItem?.status === 'verified' ? 'Edit Payment Notes' : 'Verify Payment'}</h2>
               {formError && <div className="form-error">{formError}</div>}
               
+              {/* Sub-status notice when payment is under investigation */}
+              {selectedItem?.verification_decision === 'under_investigation' && (
+                <div style={{ marginBottom: '12px', padding: '10px 14px', background: '#fef9c3', border: '1px solid #fde047', borderRadius: '6px', fontSize: '0.85rem', color: '#854d0e' }}>
+                  <strong>⚠️ Pending Confirmation (Under Investigation)</strong>
+                  {selectedItem?.admin_reason && (
+                    <p style={{ margin: '4px 0 0' }}>Reason: {selectedItem.admin_reason}</p>
+                  )}
+                </div>
+              )}
+
               <div className="request-details">
                 <p><strong>Payer:</strong> {selectedItem?.user?.name}</p>
                 <p><strong>Amount:</strong> {formatCurrency(selectedItem?.amount || 0)}</p>
@@ -289,9 +336,34 @@ const PaymentManagementPage = () => {
                         <option value="verified">Verify Payment</option>
                       )}
                       <option value="rejected">Reject Payment</option>
+                      <option value="under_investigation">Pending Confirmation (Under Investigation)</option>
                     </select>
                     {validationErrors.status && (
                       <small className="error-message">{validationErrors.status}</small>
+                    )}
+                  </div>
+                )}
+                {/* Reason field — required for rejected and under_investigation decisions */}
+                {['rejected', 'under_investigation'].includes(formData.status) && (
+                  <div className="form-group">
+                    <label>Reason *</label>
+                    <textarea
+                      rows="2"
+                      value={formData.reason}
+                      onChange={(e) => {
+                        setFormData({...formData, reason: e.target.value});
+                        if (validationErrors.reason) {
+                          setValidationErrors(prev => { const n = {...prev}; delete n.reason; return n; });
+                        }
+                      }}
+                      className={validationErrors.reason ? 'error' : ''}
+                      placeholder={formData.status === 'under_investigation'
+                        ? 'Describe the issue or what needs investigation...'
+                        : 'State the reason for rejecting this payment...'}
+                      required
+                    />
+                    {validationErrors.reason && (
+                      <small className="error-message">{validationErrors.reason}</small>
                     )}
                   </div>
                 )}

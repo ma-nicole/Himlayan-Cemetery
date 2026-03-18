@@ -19,6 +19,7 @@ use App\Http\Controllers\Api\ProfileController;
 use App\Http\Controllers\Api\SystemMaintenanceController;
 use App\Http\Controllers\Auth\SocialAuthController;
 use App\Http\Controllers\Api\InvitationController;
+use App\Http\Controllers\Api\PaymentWebhookController;
 
 /*
 |--------------------------------------------------------------------------
@@ -70,6 +71,9 @@ Route::get('/debug/urls', function () {
 
 // Public feedback submission
 Route::post('/feedback', [FeedbackController::class, 'store']);
+
+// Xendit payment webhook (authenticated by x-callback-token header, not by Sanctum)
+Route::post('/payments/webhook/xendit', [PaymentWebhookController::class, 'xendit']);
 
 // Invitation acceptance (public - user accepts invitation from email)
 Route::get('/invitations/activate', [InvitationController::class, 'activateRedirect']);

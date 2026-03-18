@@ -84,9 +84,20 @@ class PaymentController extends Controller
             $key = $this->buildObligationKey($payment);
             if (isset($verifiedKeys[$key])) {
                 $effective = Payment::STATUS_VERIFIED;
+            } elseif (
+                $payment->status === Payment::STATUS_PENDING &&
+                $payment->verification_decision === Payment::DECISION_UNDER_INVESTIGATION
+            ) {
+                // Admin has flagged this payment as under investigation.
+                // Main status stays "pending" in the admin table; effective is 'under_investigation'
+                // so the user side can display the correct message.
+                $effective = 'under_investigation';
             } elseif ($payment->status === Payment::STATUS_PENDING && $payment->paid_at) {
                 // User has submitted payment via Xendit but admin hasn't verified yet
                 $effective = 'awaiting_verification';
+            } elseif ($payment->status === Payment::STATUS_PENDING && !$payment->paid_at) {
+                // No payment submitted yet — truly unpaid
+                $effective = 'unpaid';
             } else {
                 $effective = $payment->status;
             }
@@ -637,20 +648,56 @@ class PaymentController extends Controller
         }
 
         $validated = $request->validate([
-            'status' => 'required|in:verified,rejected',
-            'notes' => 'nullable|string|max:1500',
+            'status' => 'required|in:verified,rejected,under_investigation',
+            'notes'  => 'nullable|string|max:1500',
+            'reason' => 'nullable|string|max:1500',
         ]);
 
-        $payment->update([
-            'status' => $validated['status'],
-            'notes' => $validated['notes'] ?? $payment->notes,
-            'verified_by' => auth()->id(),
-            'verified_at' => now(),
-        ]);
+        // Reason is mandatory for rejection and under-investigation decisions
+        if (
+            in_array($validated['status'], ['rejected', 'under_investigation'], true) &&
+            empty(trim($validated['reason'] ?? ''))
+        ) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Reason is required for this decision.',
+                'errors'  => ['reason' => ['Reason is required.']],
+            ], 422);
+        }
+
+        if ($validated['status'] === 'under_investigation') {
+            // Keep the payment in "pending" status but flag it for investigation
+            $payment->verification_decision = Payment::DECISION_UNDER_INVESTIGATION;
+            $payment->admin_reason  = trim($validated['reason']);
+            $payment->notes         = $validated['notes'] ?? $payment->notes;
+            $payment->verified_by   = auth()->id();
+            $payment->verified_at   = now();
+            // status stays 'pending' intentionally
+        } elseif ($validated['status'] === 'rejected') {
+            $payment->status                = Payment::STATUS_REJECTED;
+            $payment->verification_decision = null;
+            $payment->admin_reason          = trim($validated['reason']);
+            $payment->notes                 = $validated['notes'] ?? $payment->notes;
+            $payment->verified_by           = auth()->id();
+            $payment->verified_at           = now();
+        } else {
+            // verified
+            $payment->status                = Payment::STATUS_VERIFIED;
+            $payment->verification_decision = null;
+            $payment->notes                 = $validated['notes'] ?? $payment->notes;
+            $payment->verified_by           = auth()->id();
+            $payment->verified_at           = now();
+        }
+
+        $payment->save();
+
+        $label = $validated['status'] === 'under_investigation'
+            ? 'flagged as Pending Confirmation (Under Investigation)'
+            : $validated['status'];
 
         return response()->json([
             'success' => true,
-            'message' => 'Payment ' . $validated['status'] . ' successfully',
+            'message' => 'Payment ' . $label . ' successfully',
             'data' => $payment->load(['user:id,name,email', 'verifier:id,name'])
         ]);
     }
@@ -761,12 +808,16 @@ class PaymentController extends Controller
                     && $latest->created_at->lt(now()->subDays(14));
 
                 // Derive a display status:
+                // - 'under_investigation' when admin has flagged this payment for review
                 // - 'awaiting_verification' when user already paid (paid_at set) but admin hasn't verified yet
                 // - 'overdue' when past 14 days and still pending
+                // - 'unpaid' when no payment has been submitted yet
                 // - otherwise use the raw status
-                $displayStatus = $latest->paid_at
-                    ? 'awaiting_verification'
-                    : ($isOverdue ? 'overdue' : $latest->status);
+                $displayStatus = $latest->verification_decision === Payment::DECISION_UNDER_INVESTIGATION
+                    ? 'under_investigation'
+                    : ($latest->paid_at
+                        ? 'awaiting_verification'
+                        : ($isOverdue ? 'overdue' : 'unpaid'));
 
                 return [
                     'id' => $latest->id,
@@ -784,6 +835,8 @@ class PaymentController extends Controller
                     'description' => $latest->payment_type === Payment::TYPE_SERVICE_FEE
                         ? ($latest->notes ?: 'Service Fee')
                         : null,
+                    'admin_reason' => $latest->admin_reason,
+                    'verification_decision' => $latest->verification_decision,
                 ];
             })
             ->values();

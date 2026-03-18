@@ -262,9 +262,21 @@ const PayDuesPage = () => {
                   <div className="due-status">
                     <span className={`status-badge ${plot.status}`}>
                       {plot.status === 'overdue' ? 'Overdue'
-                        : plot.status === 'awaiting_verification' ? 'Paid - Waiting for Verification'
+                        : plot.status === 'awaiting_verification' ? 'Waiting for Payment Verification'
+                        : plot.status === 'under_investigation' ? 'Pending Confirmation (Under Investigation)'
+                        : plot.status === 'unpaid' ? 'Unpaid'
                         : 'Pending'}
                     </span>
+                    {plot.status === 'awaiting_verification' && (
+                      <span className="status-hint" style={{ display: 'block', fontSize: '0.72rem', color: '#166534', marginTop: '2px' }}>
+                        Please allow 1–3 business days for payment verification.
+                      </span>
+                    )}
+                    {plot.status === 'under_investigation' && (
+                      <span className="status-hint" style={{ display: 'block', fontSize: '0.72rem', color: '#92400e', marginTop: '2px' }}>
+                        Under review. Allow 1–7 business days.
+                      </span>
+                    )}
                   </div>
                   
                   <div className="due-details">
@@ -331,17 +343,23 @@ const PayDuesPage = () => {
                   </div>
                 </div>
 
-                {isVerifying || selectedPlot.status === 'awaiting_verification' ? (
-                  <div style={{ textAlign: 'center', padding: '20px', background: '#f0fdf4', borderRadius: '8px', border: '1px solid #bbf7d0' }}>
+                {isVerifying || selectedPlot.status === 'awaiting_verification' || selectedPlot.status === 'under_investigation' ? (
+                  <div style={{ textAlign: 'center', padding: '20px', background: selectedPlot.status === 'under_investigation' ? '#fffbeb' : '#f0fdf4', borderRadius: '8px', border: `1px solid ${selectedPlot.status === 'under_investigation' ? '#fde68a' : '#bbf7d0'}` }}>
                     {isVerifying ? (
                       <>
                         <p style={{ color: '#15803d', fontWeight: 600, marginBottom: 4 }}>⏳ Verifying Payment…</p>
                         <p style={{ color: '#166534', fontSize: '0.875rem', margin: 0 }}>Please refresh your browser to confirm your payment.</p>
                       </>
+                    ) : selectedPlot.status === 'under_investigation' ? (
+                      <>
+                        <p style={{ color: '#d97706', fontWeight: 600, marginBottom: 4 }}>⚠️ Pending Confirmation (Under Investigation)</p>
+                        <p style={{ color: '#92400e', fontSize: '0.875rem', margin: 0 }}>Your payment is currently under review. Please allow 1–7 business days for confirmation.</p>
+                      </>
                     ) : (
                       <>
                         <p style={{ color: '#15803d', fontWeight: 600, marginBottom: 4 }}>✓ Payment Submitted</p>
-                        <p style={{ color: '#166534', fontSize: '0.875rem', margin: 0 }}>Your payment is awaiting admin verification.</p>
+                        <p style={{ color: '#166534', fontSize: '0.875rem', margin: '0 0 6px' }}>Your payment is awaiting admin verification.</p>
+                        <p style={{ color: '#166534', fontSize: '0.8rem', margin: 0 }}>Please allow 1–3 business days for payment verification.</p>
                       </>
                     )}
                   </div>
