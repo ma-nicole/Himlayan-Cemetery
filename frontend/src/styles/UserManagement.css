@@ -256,7 +256,8 @@
 
 .btn-view,
 .btn-archive,
-.btn-unarchive {
+.btn-unarchive,
+.btn-resend {
   width: 36px;
   height: 36px;
   border: none;
@@ -298,11 +299,44 @@
   color: white;
 }
 
+.btn-resend {
+  background: #dbeafe;
+  color: #3b82f6;
+}
+
+.btn-resend:hover:not(:disabled) {
+  background: #3b82f6;
+  color: white;
+}
+
+.btn-resend:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
 .btn-view svg,
 .btn-archive svg,
-.btn-unarchive svg {
+.btn-unarchive svg,
+.btn-resend svg {
   width: 16px;
   height: 16px;
+}
+
+/* Loading spinner for buttons */
+.btn-spinner {
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  border: 2px solid currentColor;
+  border-top-color: transparent;
+  border-radius: 50%;
+  animation: spin 0.6s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 /* Archive toggle */
@@ -349,6 +383,25 @@
 .badge-archived {
   background: #f1f5f9;
   color: #64748b;
+}
+
+.badge-pending {
+  background: #fef3c7;
+  color: #b45309;
+}
+
+.badge-disabled {
+  opacity: 0.6;
+}
+
+/* Pending invitation row styling */
+.row-pending {
+  opacity: 0.85;
+  background: rgba(254, 243, 199, 0.1);
+}
+
+.avatar-pending {
+  opacity: 0.7;
 }
 
 /* Archived row dimming */

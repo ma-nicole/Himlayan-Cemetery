@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../hooks/useAuth';
+import { useToast } from '../context/ToastContext';
 import api from '../services/api';
 import Layout from '../components/common/Layout';
 import { validateName, validateEmail } from '../utils/formValidator';
@@ -7,6 +8,7 @@ import '../styles/UserManagement.css';
 
 const UserManagementPage = () => {
   const { user: currentUser } = useAuth();
+  const toast = useToast();
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState({});
@@ -22,6 +24,8 @@ const UserManagementPage = () => {
   const [formData, setFormData] = useState({ firstName: '', middleInitial: '', lastName: '', email: '', role: 'admin' });
   const [validationErrors, setValidationErrors] = useState({});
   const [formError, setFormError] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [resendingUserId, setResendingUserId] = useState(null);
   const [pagination, setPagination] = useState({ currentPage: 1, lastPage: 1, total: 0 });
 
   useEffect(() => {
@@ -101,6 +105,7 @@ const UserManagementPage = () => {
 
     if (Object.keys(newErrors).length > 0) { setValidationErrors(newErrors); return; }
 
+    setIsSubmitting(true);
     try {
       const response = await api.post('/users/staff-invite', {
         first_name: formData.firstName.trim(),
@@ -110,12 +115,31 @@ const UserManagementPage = () => {
         role: formData.role,
       });
       if (response.data.success) {
+        toast?.success('Invitation successfully sent!');
         handleCloseModal();
         loadUsers();
         loadStats();
       }
     } catch (err) {
-      setFormError(err.response?.data?.message || 'An error occurred');
+      const errorMsg = err.response?.data?.message || 'An error occurred';
+      setFormError(errorMsg);
+      toast?.error(errorMsg);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleResendInvitation = async (userId) => {
+    setResendingUserId(userId);
+    try {
+      await api.post(`/users/${userId}/resend-invitation`);
+      toast?.success('Invitation resent successfully!');
+      loadUsers();
+    } catch (err) {
+      const errorMsg = err.response?.data?.message || 'Failed to resend invitation';
+      toast?.error(errorMsg);
+    } finally {
+      setResendingUserId(null);
     }
   };
 
@@ -295,10 +319,10 @@ const UserManagementPage = () => {
               </thead>
               <tbody>
                 {users.length > 0 ? users.map((user) => (
-                  <tr key={user.id} className={user.is_archived ? 'row-archived' : ''}>
+                  <tr key={user.id} className={`${user.is_archived ? 'row-archived' : ''} ${user.is_pending_invitation ? 'row-pending' : ''}`}>
                     <td>
                       <div className="user-cell">
-                        <div className={`user-avatar ${user.is_archived ? 'avatar-archived' : ''}`}>
+                        <div className={`user-avatar ${user.is_archived ? 'avatar-archived' : user.is_pending_invitation ? 'avatar-pending' : ''}`}>
                           {user.name.charAt(0).toUpperCase()}
                         </div>
                         <span className="user-name">{user.name}</span>
@@ -306,43 +330,61 @@ const UserManagementPage = () => {
                     </td>
                     <td>{user.email}</td>
                     <td>
-                      <span className={`role-badge ${getRoleBadgeClass(user.role)}`}>
+                      <span className={`role-badge ${getRoleBadgeClass(user.role)} ${user.is_pending_invitation ? 'badge-disabled' : ''}`}>
                         {getRoleLabel(user.role)}
                       </span>
                     </td>
                     <td>
-                      <span className={`status-badge ${user.is_archived ? 'badge-archived' : 'badge-active'}`}>
-                        {user.is_archived ? 'Archived' : 'Active'}
+                      <span className={`status-badge ${user.is_pending_invitation ? 'badge-pending' : user.is_archived ? 'badge-archived' : 'badge-active'}`}>
+                        {user.is_pending_invitation ? 'Pending' : (user.is_archived ? 'Archived' : 'Active')}
                       </span>
                     </td>
-                    <td>{formatDate(user.created_at)}</td>
+                    <td>{user.is_pending_invitation ? '' : formatDate(user.created_at)}</td>
                     <td>
                       <div className="action-buttons">
-                        {/* View — always visible */}
-                        <button className="btn-view" onClick={() => handleOpenView(user)} title="View details">
-                          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
-                            <circle cx="12" cy="12" r="3"/>
-                          </svg>
-                        </button>
-                        {/* Archive / Unarchive — not allowed on self or other admins */}
-                        {user.id !== currentUser?.id && user.role !== 'admin' && (
+                        {user.is_pending_invitation ? (
                           <button
-                            className={user.is_archived ? 'btn-unarchive' : 'btn-archive'}
-                            onClick={() => handleOpenArchive(user)}
-                            title={user.is_archived ? 'Restore user' : 'Archive user'}
+                            className="btn-resend"
+                            onClick={() => handleResendInvitation(user.id)}
+                            disabled={resendingUserId === user.id}
+                            title="Resend invitation email"
                           >
-                            {user.is_archived ? (
-                              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                <path d="M3 12l9-9 9 9"/><path d="M9 21V12h6v9"/>
-                              </svg>
+                            {resendingUserId === user.id ? (
+                              <span className="btn-spinner" style={{ width: '14px', height: '14px' }} />
                             ) : (
                               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                <polyline points="21 8 21 21 3 21 3 8"/><rect x="1" y="3" width="22" height="5"/>
-                                <line x1="10" y1="12" x2="14" y2="12"/>
+                                <polyline points="23 4 23 10 17 10"/>
+                                <path d="M20.49 15a9 9 0 1 1-2-8.83"/>
                               </svg>
                             )}
                           </button>
+                        ) : (
+                          <>
+                            <button className="btn-view" onClick={() => handleOpenView(user)} title="View details">
+                              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                                <circle cx="12" cy="12" r="3"/>
+                              </svg>
+                            </button>
+                            {user.id !== currentUser?.id && user.role !== 'admin' && (
+                              <button
+                                className={user.is_archived ? 'btn-unarchive' : 'btn-archive'}
+                                onClick={() => handleOpenArchive(user)}
+                                title={user.is_archived ? 'Restore user' : 'Archive user'}
+                              >
+                                {user.is_archived ? (
+                                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                    <path d="M3 12l9-9 9 9"/><path d="M9 21V12h6v9"/>
+                                  </svg>
+                                ) : (
+                                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                    <polyline points="21 8 21 21 3 21 3 8"/><rect x="1" y="3" width="22" height="5"/>
+                                    <line x1="10" y1="12" x2="14" y2="12"/>
+                                  </svg>
+                                )}
+                              </button>
+                            )}
+                          </>
                         )}
                       </div>
                     </td>
@@ -449,10 +491,19 @@ const UserManagementPage = () => {
                     ℹ️ A temporary password will be generated and sent via email. The invited user must change it on first login.
                   </div>
                   <div className="form-actions">
-                    <button type="button" className="btn-cancel" onClick={handleCloseModal}>Cancel</button>
-                    <button type="submit" className="btn-submit" disabled={Object.keys(validationErrors).length > 0}>
-                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="16" height="16" style={{ marginRight: '6px' }}><path d="M22 2L11 13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
-                      Send Invitation
+                    <button type="button" className="btn-cancel" onClick={handleCloseModal} disabled={isSubmitting}>Cancel</button>
+                    <button type="submit" className="btn-submit" disabled={Object.keys(validationErrors).length > 0 || isSubmitting}>
+                      {isSubmitting ? (
+                        <>
+                          <span className="btn-spinner" style={{ marginRight: '6px' }} />
+                          Sending...
+                        </>
+                      ) : (
+                        <>
+                          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="16" height="16" style={{ marginRight: '6px' }}><path d="M22 2L11 13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+                          Send Invitation
+                        </>
+                      )}
                     </button>
                   </div>
                 </form>

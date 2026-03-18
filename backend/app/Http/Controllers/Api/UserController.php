@@ -12,7 +12,7 @@ use Illuminate\Validation\Rule;
 class UserController extends Controller
 {
     /**
-     * Display a listing of all users
+     * Display a listing of all users including pending invited users
      */
     public function index(Request $request)
     {
@@ -48,6 +48,13 @@ class UserController extends Controller
         // Pagination
         $perPage = $request->get('per_page', 10);
         $users = $query->paginate($perPage);
+
+        // Add status indicator for pending invited users
+        $users->getCollection()->transform(function ($user) {
+            $user->is_pending_invitation = !$user->invitation_accepted && $user->invitation_token;
+            $user->status = $user->is_pending_invitation ? 'pending' : ($user->is_archived ? 'archived' : 'active');
+            return $user;
+        });
 
         return response()->json([
             'success' => true,
@@ -239,12 +246,16 @@ class UserController extends Controller
      */
     public function statistics()
     {
+        // Exclude pending invited users (invitation_accepted = false AND invitation_token IS NOT NULL)
+        $activatedUsers = User::where('is_archived', false)->where('invitation_accepted', true);
+        $activatedUsersArchived = User::where('is_archived', false)->where('invitation_accepted', true);
+
         $stats = [
-            'total'    => User::where('is_archived', false)->count(),
-            'admins'   => User::where('role', 'admin')->where('is_archived', false)->count(),
-            'staff'    => User::where('role', 'staff')->where('is_archived', false)->count(),
-            'members'  => User::where('role', 'member')->where('is_archived', false)->count(),
-            'recent'   => User::where('is_archived', false)->where('created_at', '>=', now()->subDays(30))->count(),
+            'total'    => $activatedUsers->count(),
+            'admins'   => $activatedUsersArchived->where('role', 'admin')->count(),
+            'staff'    => $activatedUsersArchived->where('role', 'staff')->count(),
+            'members'  => $activatedUsersArchived->where('role', 'member')->count(),
+            'recent'   => $activatedUsersArchived->where('created_at', '>=', now()->subDays(30))->count(),
             'archived' => User::where('is_archived', true)->count(),
         ];
 

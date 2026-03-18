@@ -201,6 +201,8 @@ Route::middleware(['auth:sanctum', 'sanitize.input'])->group(function () {
         Route::post('/', [UserController::class, 'store']);
         // Send invitation to a new admin/staff account (invitation flow, no immediate account creation)
         Route::post('/staff-invite', [InvitationController::class, 'sendStaffAdminInvitation']);
+        // Resend invitation to pending user
+        Route::post('/{id}/resend-invitation', [InvitationController::class, 'resendStaffAdminInvitation']);
         // Edit and hard-delete are disabled; use archive/unarchive instead.
         Route::post('/{id}/archive', [UserController::class, 'archive']);
         Route::post('/{id}/unarchive', [UserController::class, 'unarchive']);

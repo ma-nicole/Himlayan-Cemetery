@@ -622,15 +622,26 @@ class InvitationController extends Controller
             'first_name' => ['required', 'string', 'min:2', 'max:100', 'regex:/^[\p{L}\s\'\-]+$/u'],
             'middle_initial' => ['nullable', 'string', 'max:1', 'regex:/^[\p{L}]?$/u'],
             'last_name'  => ['required', 'string', 'min:2', 'max:100', 'regex:/^[\p{L}\s\'\-]+$/u'],
-            'email'      => 'required|email:rfc|max:255|unique:users,email',
+            'email'      => 'required|email:rfc|max:255',
             'role'       => 'required|in:admin,staff',
         ], [
             'first_name.regex' => 'First name may only contain letters, spaces, apostrophes, and hyphens.',
             'middle_initial.regex' => 'Middle initial must be a single letter only.',
             'last_name.regex'  => 'Last name may only contain letters, spaces, apostrophes, and hyphens.',
-            'email.unique'     => 'An account with this email address already exists.',
             'role.in'          => 'Role must be either Admin or Staff.',
         ]);
+
+        // Check for existing active user with this email (accepted invitation)
+        $existingUser = User::where('email', $validated['email'])->where('invitation_accepted', true)->first();
+        if ($existingUser) {
+            return $this->errorResponse('An account with this email address already exists.', 422);
+        }
+
+        // Check for existing pending invitation (prevent duplicate spam)
+        $pendingUser = User::where('email', $validated['email'])->where('invitation_accepted', false)->first();
+        if ($pendingUser) {
+            return $this->errorResponse('An invitation has already been sent to this email. Resend instead.', 422);
+        }
 
         $mailConfigError = $this->validateMailConfiguration();
         if ($mailConfigError) {
@@ -680,6 +691,29 @@ class InvitationController extends Controller
         // Persist only after successful delivery so no orphaned cache entries exist.
         cache()->put('invitation_' . $token, $invitationData, $expiresAt);
 
+        // Create user record with invitation data (not yet activated)
+        try {
+            User::create([
+                'name' => $name,
+                'email' => $validated['email'],
+                'password' => Hash::make($tempPassword),
+                'role' => $validated['role'],
+                'invitation_token' => $token,
+                'invitation_sent_at' => now(),
+                'invitation_expires_at' => $expiresAt,
+                'invitation_accepted' => false,
+                'must_change_password' => true,
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Failed to create pending user record', [
+                'email' => $validated['email'],
+                'error' => $e->getMessage(),
+            ]);
+            // Cache entry exists but user record failed — return error
+            cache()->forget('invitation_' . $token);
+            return $this->errorResponse('Failed to create invitation record. Please try again.', 500);
+        }
+
         Log::info('Staff/admin invitation sent', [
             'recipient' => $validated['email'],
             'role'      => $validated['role'],
@@ -689,6 +723,89 @@ class InvitationController extends Controller
         return $this->successResponse([
             'message' => 'Invitation email sent to ' . $validated['email'] . '. The account will be created only after the invitation is accepted.',
         ], 'Invitation sent successfully');
+    }
+
+    /**
+     * Resend invitation to a pending user (by user ID)
+     * Only works for users with pending invitations (invitation_accepted = false)
+     */
+    public function resendStaffAdminInvitation($userId)
+    {
+        // Find the pending user
+        $user = User::where('id', $userId)
+            ->where('invitation_accepted', false)
+            ->whereNotNull('invitation_token')
+            ->first();
+
+        if (!$user) {
+            return $this->errorResponse('User not found or invitation is not pending.', 404);
+        }
+
+        $mailConfigError = $this->validateMailConfiguration();
+        if ($mailConfigError) {
+            Log::error('Resend invitation blocked: invalid mail configuration', [
+                'recipient' => $user->email,
+                'message'   => $mailConfigError,
+            ]);
+            return $this->errorResponse($mailConfigError, 500);
+        }
+
+        // Generate new token
+        $token = Str::random(64);
+        $expiresAt = now()->addDay();
+
+        $invitationData = [
+            'email'      => $user->email,
+            'name'       => $user->name,
+            'first_name' => $user->first_name ?? explode(' ', $user->name)[0],
+            'last_name'  => $user->last_name ?? (explode(' ', $user->name)[1] ?? ''),
+            'role'       => $user->role,
+            'password'   => $user->password,  // Use existing hashed password
+            'token'      => $token,
+            'type'       => 'staff_admin',
+            'accept_url' => $this->canonicalFrontendUrl() . '/accept-invitation?token=' . $token,
+        ];
+
+        try {
+            Mail::mailer($this->resolveMailer())
+                ->to($user->email)
+                ->send(new \App\Mail\StaffAdminInvitation($invitationData));
+        } catch (\Throwable $e) {
+            Log::error('Resend invitation email failed', [
+                'recipient'       => $user->email,
+                'exception_class' => get_class($e),
+                'error'           => $e->getMessage(),
+            ]);
+            return $this->errorResponse($this->mapMailErrorToMessage($e), 500);
+        }
+
+        // Update user with new token and timestamps
+        try {
+            $user->update([
+                'invitation_token' => $token,
+                'invitation_sent_at' => now(),
+                'invitation_expires_at' => $expiresAt,
+            ]);
+
+            // Update cache with new token
+            cache()->put('invitation_' . $token, $invitationData, $expiresAt);
+        } catch (\Exception $e) {
+            Log::error('Failed to update invitation token', [
+                'user_id' => $userId,
+                'error' => $e->getMessage(),
+            ]);
+            return $this->errorResponse('Failed to update invitation. Please try again.', 500);
+        }
+
+        Log::info('Staff/admin invitation resent', [
+            'recipient' => $user->email,
+            'user_id'   => $userId,
+            'sent_by'   => auth()->id(),
+        ]);
+
+        return $this->successResponse([
+            'message' => 'Invitation resent to ' . $user->email,
+        ], 'Invitation resent successfully');
     }
 
     /**
