@@ -454,7 +454,17 @@ const MemberServicesPage = () => {
                           </span>
                         </div>
                       )}
-                      {['pending', 'approved'].includes(request.status) && request.service_fee_payment?.status !== 'verified' && !request.service_fee_payment?.paid_at && (
+                      {['pending', 'approved'].includes(request.status) && (() => {
+                        // Pending (not yet approved) → always allow cancellation
+                        if (request.status === 'pending') return true;
+                        // Approved: only allow cancel when the service fee is truly unpaid
+                        const p = request.service_fee_payment;
+                        if (!p) return false; // can't determine status safely → hide
+                        if (p.status === 'verified' || p.status === 'rejected') return false;
+                        if (p.paid_at) return false; // waiting for verification
+                        if (p.verification_decision === 'under_investigation') return false; // under review
+                        return true; // genuinely unpaid
+                      })() && (
                         <div style={{ marginTop: '12px', textAlign: 'right' }}>
                           <button
                             onClick={() => handleCancelRequest(request.id)}

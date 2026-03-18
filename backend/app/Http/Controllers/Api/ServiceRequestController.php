@@ -14,7 +14,7 @@ class ServiceRequestController extends Controller
      */
     public function index(Request $request)
     {
-        $query = ServiceRequest::with(['user:id,name,email', 'processor:id,name', 'serviceFeePayment:id,service_request_id,status,paid_at']);
+        $query = ServiceRequest::with(['user:id,name,email', 'processor:id,name', 'serviceFeePayment:id,service_request_id,status,paid_at,verification_decision']);
 
         // For members, only show their own requests
         if (auth()->user()->role === 'member') {
