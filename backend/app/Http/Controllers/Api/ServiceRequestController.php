@@ -215,9 +215,9 @@ class ServiceRequestController extends Controller
             return response()->json(['success' => false, 'message' => 'Unauthorized'], 403);
         }
 
-        // Can only cancel pending requests
-        if ($serviceRequest->status !== 'pending') {
-            return response()->json(['success' => false, 'message' => 'Only pending requests can be cancelled.'], 422);
+        // Can only cancel pending or approved requests (not yet paid)
+        if (!in_array($serviceRequest->status, ['pending', 'approved'])) {
+            return response()->json(['success' => false, 'message' => 'Only pending or approved requests can be cancelled.'], 422);
         }
 
         // Safety: block cancel if a verified/paid payment already exists

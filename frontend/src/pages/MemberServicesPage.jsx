@@ -454,7 +454,7 @@ const MemberServicesPage = () => {
                           </span>
                         </div>
                       )}
-                      {request.status === 'pending' && (
+                      {['pending', 'approved'].includes(request.status) && request.service_fee_payment?.status !== 'verified' && !request.service_fee_payment?.paid_at && (
                         <div style={{ marginTop: '12px', textAlign: 'right' }}>
                           <button
                             onClick={() => handleCancelRequest(request.id)}
