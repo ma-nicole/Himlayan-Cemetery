@@ -60,7 +60,8 @@ const PaymentManagementPage = () => {
 
   const handleOpenModal = (item) => {
     setSelectedItem(item);
-    setFormData({ status: '', notes: item.notes || '' });
+    // For verified payments the decision is locked; pre-fill status so UI reflects it
+    setFormData({ status: item.status === 'verified' ? 'verified' : '', notes: item.notes || '' });
     setFormError('');
     setValidationErrors({});
     setShowModal(true);
@@ -69,11 +70,14 @@ const PaymentManagementPage = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     const newErrors = {};
+    const isAlreadyVerified = selectedItem?.status === 'verified';
 
-    // Validate status
-    const statusValidation = validateRequired(formData.status, 'Verification decision');
-    if (!statusValidation.valid) {
-      newErrors.status = statusValidation.error;
+    // Only require a decision for pending payments; verified ones are locked
+    if (!isAlreadyVerified) {
+      const statusValidation = validateRequired(formData.status, 'Verification decision');
+      if (!statusValidation.valid) {
+        newErrors.status = statusValidation.error;
+      }
     }
 
     // Validate notes if provided
@@ -84,7 +88,6 @@ const PaymentManagementPage = () => {
       }
     }
 
-    // If there are validation errors, show them
     if (Object.keys(newErrors).length > 0) {
       setValidationErrors(newErrors);
       return;
@@ -92,7 +95,9 @@ const PaymentManagementPage = () => {
 
     setFormError('');
     try {
-      await api.post(`/payments/${selectedItem.id}/verify`, formData);
+      // For verified payments only send notes (decision is immutable)
+      const payload = isAlreadyVerified ? { notes: formData.notes } : formData;
+      await api.post(`/payments/${selectedItem.id}/verify`, payload);
       setShowModal(false);
       loadPayments();
       loadStats();
@@ -206,8 +211,8 @@ const PaymentManagementPage = () => {
                         <td>{new Date(item.created_at).toLocaleDateString()}</td>
                         <td>
                           <div className="action-buttons">
-                            {item.status === 'pending' && (
-                              <button className="btn-edit" onClick={() => handleOpenModal(item)} title="Verify">
+                            {(item.status === 'pending' || item.status === 'verified') && (
+                              <button className="btn-edit" onClick={() => handleOpenModal(item)} title={item.status === 'verified' ? 'Edit Notes' : 'Verify'}>
                                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
                               </button>
                             )}
@@ -238,7 +243,7 @@ const PaymentManagementPage = () => {
               <button className="modal-close" onClick={() => setShowModal(false)}>
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
               </button>
-              <h2>Verify Payment</h2>
+              <h2>{selectedItem?.status === 'verified' ? 'Edit Payment Notes' : 'Verify Payment'}</h2>
               {formError && <div className="form-error">{formError}</div>}
               
               <div className="request-details">
@@ -251,38 +256,45 @@ const PaymentManagementPage = () => {
               </div>
 
               <form onSubmit={handleSubmit}>
-                <div className="form-group">
-                  <label>Verification Decision *</label>
-                  {!selectedItem?.payment_method && (
-                    <div style={{ marginBottom: '10px', padding: '8px 12px', background: '#fef9c3', border: '1px solid #fde047', borderRadius: '6px', fontSize: '0.85rem', color: '#854d0e' }}>
-                      ⚠️ This payment has not been paid yet. Verification is not allowed — you may only reject it.
-                    </div>
-                  )}
-                  <select 
-                    value={formData.status} 
-                    onChange={(e) => {
-                      setFormData({...formData, status: e.target.value});
-                      if (validationErrors.status) {
-                        setValidationErrors(prev => {
-                          const newErrors = { ...prev };
-                          delete newErrors.status;
-                          return newErrors;
-                        });
-                      }
-                    }} 
-                    className={validationErrors.status ? 'error' : ''}
-                    required
-                  >
-                    <option value="">Select...</option>
-                    {selectedItem?.payment_method && (
-                      <option value="verified">Verify Payment</option>
+                {selectedItem?.status === 'verified' ? (
+                  /* Verified — decision locked, hint shown */
+                  <div style={{ marginBottom: '14px', padding: '10px 14px', background: '#eff6ff', border: '1px solid #93c5fd', borderRadius: '6px', fontSize: '0.85rem', color: '#1e40af' }}>
+                    ℹ️ This payment has already been verified. The verification decision can no longer be changed. Only notes can be updated.
+                  </div>
+                ) : (
+                  <div className="form-group">
+                    <label>Verification Decision *</label>
+                    {!selectedItem?.payment_method && (
+                      <div style={{ marginBottom: '10px', padding: '8px 12px', background: '#fef9c3', border: '1px solid #fde047', borderRadius: '6px', fontSize: '0.85rem', color: '#854d0e' }}>
+                        ⚠️ This payment has not been paid yet. Verification is not allowed — you may only reject it.
+                      </div>
                     )}
-                    <option value="rejected">Reject Payment</option>
-                  </select>
-                  {validationErrors.status && (
-                    <small className="error-message">{validationErrors.status}</small>
-                  )}
-                </div>
+                    <select
+                      value={formData.status}
+                      onChange={(e) => {
+                        setFormData({...formData, status: e.target.value});
+                        if (validationErrors.status) {
+                          setValidationErrors(prev => {
+                            const newErrors = { ...prev };
+                            delete newErrors.status;
+                            return newErrors;
+                          });
+                        }
+                      }}
+                      className={validationErrors.status ? 'error' : ''}
+                      required
+                    >
+                      <option value="">Select...</option>
+                      {selectedItem?.payment_method && (
+                        <option value="verified">Verify Payment</option>
+                      )}
+                      <option value="rejected">Reject Payment</option>
+                    </select>
+                    {validationErrors.status && (
+                      <small className="error-message">{validationErrors.status}</small>
+                    )}
+                  </div>
+                )}
                 <div className="form-group">
                   <label>Notes</label>
                   <textarea 

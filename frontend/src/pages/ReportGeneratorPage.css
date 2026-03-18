@@ -277,6 +277,16 @@
   white-space: nowrap;
 }
 
+.report-table .notes-cell {
+  max-width: 220px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: #475569;
+  font-size: 0.82rem;
+  cursor: default;
+}
+
 .report-table .empty-row {
   text-align: center;
   color: #94a3b8;

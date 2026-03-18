@@ -614,9 +614,31 @@ class PaymentController extends Controller
             }
         }
 
+        // If already verified, only allow notes update — decision is locked
+        if ($payment->status === Payment::STATUS_VERIFIED) {
+            if ($request->has('status') && $request->input('status') !== Payment::STATUS_VERIFIED) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'This payment has already been verified. The verification decision can no longer be changed.',
+                ], 422);
+            }
+
+            $validated = $request->validate([
+                'notes' => 'nullable|string|max:1500',
+            ]);
+
+            $payment->update(['notes' => $validated['notes'] ?? $payment->notes]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Payment notes updated successfully.',
+                'data' => $payment->load(['user:id,name,email', 'verifier:id,name']),
+            ]);
+        }
+
         $validated = $request->validate([
             'status' => 'required|in:verified,rejected',
-            'notes' => 'nullable|string',
+            'notes' => 'nullable|string|max:1500',
         ]);
 
         $payment->update([

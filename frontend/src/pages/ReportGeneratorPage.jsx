@@ -97,18 +97,20 @@ const ReportGeneratorPage = () => {
         (p.payment_method || 'N/A').toUpperCase(),
         (p.status || '').charAt(0).toUpperCase() + (p.status || '').slice(1),
         p.created_at ? new Date(p.created_at).toLocaleDateString('en-PH') : '',
+        p.notes ? (p.notes.length > 80 ? p.notes.substring(0, 80) + '...' : p.notes) : '-',
       ]);
 
       autoTable(doc, {
         startY: 45,
-        head: [['ID', 'Member', 'Type', 'Amount', 'Method', 'Status', 'Date']],
+        head: [['ID', 'Member', 'Type', 'Amount', 'Method', 'Status', 'Date', 'Notes']],
         body: tableData,
-        styles: { fontSize: 8, cellPadding: 3 },
+        styles: { fontSize: 7.5, cellPadding: 2.5, overflow: 'linebreak' },
         headStyles: { fillColor: [26, 71, 42], textColor: 255, fontStyle: 'bold' },
         alternateRowStyles: { fillColor: [245, 247, 245] },
         columnStyles: {
-          0: { cellWidth: 15 },
-          3: { halign: 'right' },
+          0: { cellWidth: 12 },
+          3: { halign: 'right', cellWidth: 28 },
+          7: { cellWidth: 55 },
         },
         margin: { left: 14, right: 14 },
       });
@@ -357,6 +359,7 @@ const ReportGeneratorPage = () => {
                         <th>Method</th>
                         <th>Status</th>
                         <th>Date</th>
+                        <th>Notes</th>
                       </tr>
                     ) : (
                       <tr>
@@ -381,6 +384,7 @@ const ReportGeneratorPage = () => {
                           <td>{(p.payment_method || 'N/A').toUpperCase()}</td>
                           <td><span className={`status-badge status-${p.status}`}>{(p.status || '').charAt(0).toUpperCase() + (p.status || '').slice(1)}</span></td>
                           <td>{p.created_at ? new Date(p.created_at).toLocaleDateString('en-PH') : ''}</td>
+                          <td className="notes-cell" title={p.notes || ''}>{p.notes ? (p.notes.length > 60 ? p.notes.substring(0, 60) + '...' : p.notes) : '-'}</td>
                         </tr>
                       ))
                     ) : (
@@ -397,7 +401,7 @@ const ReportGeneratorPage = () => {
                       ))
                     )}
                     {(reportData.data || []).length === 0 && (
-                      <tr><td colSpan="7" className="empty-row">No records found for the selected filters.</td></tr>
+                      <tr><td colSpan={reportType === 'payments' ? 8 : 7} className="empty-row">No records found for the selected filters.</td></tr>
                     )}
                   </tbody>
                 </table>
