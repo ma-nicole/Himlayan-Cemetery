@@ -163,7 +163,7 @@ function App() {
             }
           />
 
-          {/* Member/Visitor Routes */}
+          {/* Member Routes */}
           <Route
             path="/member/dashboard"
             element={

@@ -5,7 +5,7 @@ import { useAuth } from '../../hooks/useAuth';
 /**
  * RoleBasedRedirect - Redirects users to appropriate dashboard based on role
  * - Admin/Staff -> /admin/dashboard
- * - Visitor/Member -> /member/dashboard
+ * - Member -> /member/dashboard
  */
 const RoleBasedRedirect = () => {
   const { user, loading } = useAuth();
@@ -23,7 +23,7 @@ const RoleBasedRedirect = () => {
     return <Navigate to="/admin/dashboard" replace />;
   }
 
-  // Default to member dashboard for visitors and other roles
+  // Default to member dashboard for members and other roles
   return <Navigate to="/member/dashboard" replace />;
 };
 

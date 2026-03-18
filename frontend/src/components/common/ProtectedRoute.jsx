@@ -27,8 +27,8 @@ const ProtectedRoute = ({ children, roles }) => {
 
   // Check role if specified - redirect to appropriate dashboard if not authorized
   if (roles && !hasRole(roles)) {
-    // If visitor tries to access admin pages, redirect to member dashboard
-    if (user?.role === 'visitor') {
+    // If member tries to access admin pages, redirect to member dashboard
+    if (user?.role === 'member') {
       return <Navigate to="/member/dashboard" replace />;
     }
     // Otherwise redirect to main dashboard which will handle role-based redirect

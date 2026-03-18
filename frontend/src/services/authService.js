@@ -4,7 +4,7 @@ const TOKEN_KEY = 'token';
 const USER_KEY = 'user';
 const TOKEN_EXPIRES_AT_KEY = 'token_expires_at';
 
-const DEFAULT_TOKEN_EXPIRY_MINUTES = 120;
+const DEFAULT_TOKEN_EXPIRY_MINUTES = 480;
 
 const getFallbackTokenExpiry = () => {
   const expiresAt = new Date(Date.now() + DEFAULT_TOKEN_EXPIRY_MINUTES * 60 * 1000);
