@@ -11,6 +11,7 @@ import { useAuth } from '../hooks/useAuth';
 const MapPage = () => {
   const { user } = useAuth();
   const isAdmin = user?.role === 'admin';
+  const isStaff = user?.role === 'staff';
 
   const DEFAULT_CEMETERY_CENTER = [14.682462, 121.0530409];
 
@@ -336,8 +337,9 @@ const MapPage = () => {
 
         {/* Details Panel */}
         <div className="map-page-panel">
-          {isAdmin && (
+          {(isAdmin || isStaff) && (
             <div style={{ display: 'flex', gap: '10px', marginBottom: '15px' }}>
+              {isAdmin && (
               <button
                 onClick={handleAddPlotClick}
                 style={{
@@ -367,6 +369,7 @@ const MapPage = () => {
               >
                 + Add Plot
               </button>
+              )}
               <button
                 onClick={handleAddLandmarkClick}
                 style={{

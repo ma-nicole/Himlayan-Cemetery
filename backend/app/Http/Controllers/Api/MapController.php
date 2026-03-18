@@ -149,6 +149,10 @@ class MapController extends Controller
      */
     public function createPlot(Request $request)
     {
+        if (!auth('sanctum')->check() || auth('sanctum')->user()->role !== 'admin') {
+            return $this->errorResponse('Unauthorized. Only administrators can add plots.', 403);
+        }
+
         $validated = $request->validate([
             'section' => 'required|string|max:50',
             'row_number' => 'required|integer|min:1',
