@@ -226,6 +226,11 @@ class ServiceRequestController extends Controller
             return response()->json(['success' => false, 'message' => 'Cannot cancel a paid service request.'], 422);
         }
 
+        // Delete the pending service fee payment so it disappears from Pay Dues and Payment History
+        if ($servicePayment && !$servicePayment->paid_at && $servicePayment->status === Payment::STATUS_PENDING) {
+            $servicePayment->delete();
+        }
+
         $serviceRequest->update(['status' => 'cancelled']);
 
         return response()->json([
