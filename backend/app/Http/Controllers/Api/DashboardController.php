@@ -69,10 +69,23 @@ class DashboardController extends Controller
     }
 
     /**
-     * Build a stable obligation key matching the PaymentController logic.
+     * Build a stable obligation key — must match PaymentController::buildObligationKey exactly.
      */
     private function buildObligationKey($payment): string
     {
+        // Service fees: group by notes text (same request = same notes).
+        // Keeps separate service-fee obligations with the same amount distinct.
+        if ($payment->payment_type === Payment::TYPE_SERVICE_FEE) {
+            $notesKey = $payment->notes
+                ? 'notes:' . md5(trim((string) $payment->notes))
+                : 'payment:' . $payment->id;
+            return implode('|', [
+                'user:' . $payment->user_id,
+                'type:service_fee',
+                $notesKey,
+            ]);
+        }
+
         $plotPart = $payment->plot_id ? 'plot:' . $payment->plot_id : 'plot:none';
         $amountPart = number_format((float) $payment->amount, 2, '.', '');
         return implode('|', [
