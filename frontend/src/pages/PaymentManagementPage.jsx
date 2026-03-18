@@ -113,7 +113,7 @@ const PaymentManagementPage = () => {
   };
 
   const getStatusBadgeClass = (status) => {
-    const classes = { pending: 'badge-pending', verified: 'badge-verified', rejected: 'badge-rejected' };
+    const classes = { pending: 'badge-pending', verified: 'badge-verified', rejected: 'badge-rejected', cancelled: 'badge-cancelled' };
     return classes[status] || 'badge-pending';
   };
 
@@ -202,7 +202,7 @@ const PaymentManagementPage = () => {
                         <td><strong>{formatCurrency(item.amount)}</strong></td>
                         <td>{item.payment_method ? item.payment_method.toUpperCase() : 'Unpaid'}</td>
                         <td><code>{item.reference_number || '-'}</code></td>
-                        <td><span className={`status-badge ${getStatusBadgeClass(item.status)}`}>{item.status}</span></td>
+                        <td><span className={`status-badge ${getStatusBadgeClass(item.status)}`}>{item.status.charAt(0).toUpperCase() + item.status.slice(1)}</span></td>
                         <td>{new Date(item.created_at).toLocaleDateString()}</td>
                         <td>
                           <div className="action-buttons">

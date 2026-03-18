@@ -33,6 +33,7 @@ class Payment extends Model
     const STATUS_PENDING = 'pending';
     const STATUS_VERIFIED = 'verified';
     const STATUS_REJECTED = 'rejected';
+    const STATUS_CANCELLED = 'cancelled';
 
     const TYPE_ANNUAL_MAINTENANCE = 'annual_maintenance';
     const TYPE_QUARTERLY_DUES = 'quarterly_dues';
