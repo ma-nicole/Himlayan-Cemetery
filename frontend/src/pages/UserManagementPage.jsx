@@ -19,7 +19,7 @@ const UserManagementPage = () => {
   const [modalMode, setModalMode] = useState('add');
   const [selectedUser, setSelectedUser] = useState(null);
 
-  const [formData, setFormData] = useState({ firstName: '', lastName: '', email: '', role: 'admin' });
+  const [formData, setFormData] = useState({ firstName: '', middleInitial: '', lastName: '', email: '', role: 'admin' });
   const [validationErrors, setValidationErrors] = useState({});
   const [formError, setFormError] = useState('');
   const [pagination, setPagination] = useState({ currentPage: 1, lastPage: 1, total: 0 });
@@ -75,7 +75,7 @@ const UserManagementPage = () => {
   const handleOpenAdd = () => {
     setModalMode('add');
     setSelectedUser(null);
-    setFormData({ firstName: '', lastName: '', email: '', role: 'admin' });
+    setFormData({ firstName: '', middleInitial: '', lastName: '', email: '', role: 'admin' });
     setFormError('');
     setValidationErrors({});
     setShowModal(true);
@@ -104,6 +104,7 @@ const UserManagementPage = () => {
     try {
       const response = await api.post('/users/staff-invite', {
         first_name: formData.firstName.trim(),
+        middle_initial: formData.middleInitial.trim(),
         last_name: formData.lastName.trim(),
         email: formData.email.trim().toLowerCase(),
         role: formData.role,
@@ -382,7 +383,7 @@ const UserManagementPage = () => {
                 </p>
                 {formError && <div className="form-error">{formError}</div>}
                 <form onSubmit={handleSubmitAdd}>
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0 1rem' }}>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 80px 1fr', gap: '0 1rem' }}>
                     <div className="form-group">
                       <label>First Name *</label>
                       <input
@@ -394,6 +395,17 @@ const UserManagementPage = () => {
                         required
                       />
                       {validationErrors.firstName && <small className="error-message">{validationErrors.firstName}</small>}
+                    </div>
+                    <div className="form-group">
+                      <label>M.I.</label>
+                      <input
+                        type="text"
+                        value={formData.middleInitial}
+                        onChange={(e) => { const val = e.target.value.slice(0, 1).toUpperCase(); setFormData({ ...formData, middleInitial: val }); }}
+                        className={validationErrors.middleInitial ? 'error' : ''}
+                        placeholder="A"
+                        maxLength="1"
+                      />
                     </div>
                     <div className="form-group">
                       <label>Last Name *</label>

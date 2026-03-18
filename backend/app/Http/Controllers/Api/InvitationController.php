@@ -620,11 +620,13 @@ class InvitationController extends Controller
     {
         $validated = $request->validate([
             'first_name' => ['required', 'string', 'min:2', 'max:100', 'regex:/^[\p{L}\s\'\-]+$/u'],
+            'middle_initial' => ['nullable', 'string', 'max:1', 'regex:/^[\p{L}]?$/u'],
             'last_name'  => ['required', 'string', 'min:2', 'max:100', 'regex:/^[\p{L}\s\'\-]+$/u'],
             'email'      => 'required|email:rfc|max:255|unique:users,email',
             'role'       => 'required|in:admin,staff',
         ], [
             'first_name.regex' => 'First name may only contain letters, spaces, apostrophes, and hyphens.',
+            'middle_initial.regex' => 'Middle initial must be a single letter only.',
             'last_name.regex'  => 'Last name may only contain letters, spaces, apostrophes, and hyphens.',
             'email.unique'     => 'An account with this email address already exists.',
             'role.in'          => 'Role must be either Admin or Staff.',
@@ -639,9 +641,10 @@ class InvitationController extends Controller
             return $this->errorResponse($mailConfigError, 500);
         }
 
-        $name        = trim($validated['first_name'] . ' ' . $validated['last_name']);
-        $token       = Str::random(64);
-        $expiresAt   = now()->addDay();
+        $middleInitial = $validated['middle_initial'] ? $validated['middle_initial'] . ' ' : '';
+        $name = trim($validated['first_name'] . ' ' . $middleInitial . $validated['last_name']);
+        $token = Str::random(64);
+        $expiresAt = now()->addDay();
 
         // Generate a cryptographically secure temporary password (never derived from user data).
         // Satisfies: uppercase, lowercase, digit, special char, 12+ chars.
