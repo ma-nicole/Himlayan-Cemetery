@@ -168,6 +168,11 @@ const PayDuesPage = () => {
       return;
     }
 
+    const confirmed = window.confirm(
+      `Are you sure you want to proceed to payment?\n\nAmount: ${formatCurrency(selectedPlot.due_amount)}\nMethod: ${paymentMethod.toUpperCase()}\n\nYou will be redirected to the secure payment gateway.`
+    );
+    if (!confirmed) return;
+
     setLoading(true);
     try {
       // Use the existing pending payment record — do not create a new one.

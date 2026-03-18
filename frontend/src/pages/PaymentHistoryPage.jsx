@@ -54,7 +54,9 @@ const PaymentHistoryPage = () => {
 
   const displayStatus = (item) => {
     const raw = getEffectiveStatus(item);
-    if (raw === 'awaiting_verification') return 'Paid';
+    if (raw === 'unpaid') return 'Unpaid';
+    if (raw === 'awaiting_verification') return 'Waiting';
+    if (raw === 'under_investigation') return 'Pending';
     if (raw === 'verified') return 'Verified';
     if (raw === 'rejected') return 'Rejected';
     return 'Pending';
@@ -62,7 +64,9 @@ const PaymentHistoryPage = () => {
 
   const statusClass = (item) => {
     const raw = getEffectiveStatus(item);
+    if (raw === 'unpaid') return 'unpaid';
     if (raw === 'awaiting_verification') return 'paid';
+    if (raw === 'under_investigation') return 'pending';
     return raw; // pending | verified | rejected
   };
 

@@ -95,6 +95,11 @@
   background: #fee2e2;
 }
 
+.payment-status.unpaid {
+  color: #6b7280;
+  background: #f3f4f6;
+}
+
 .payment-history-meta {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
