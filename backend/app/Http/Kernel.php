@@ -43,5 +43,6 @@ class Kernel extends HttpKernel
         'role' => \App\Http\Middleware\CheckRole::class,
         'recent_auth' => \App\Http\Middleware\EnsureRecentAuthentication::class,
         'sanitize.input' => \App\Http\Middleware\SanitizeInput::class,
+        'must_change_password' => \App\Http\Middleware\EnforcePasswordChange::class,
     ];
 }

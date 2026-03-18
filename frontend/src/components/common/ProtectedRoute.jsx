@@ -1,9 +1,10 @@
 import React from 'react';
-import { Navigate } from 'react-router-dom';
+import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth';
 
 const ProtectedRoute = ({ children, roles }) => {
   const { isAuthenticated, loading, hasRole, user } = useAuth();
+  const location = useLocation();
 
   // Show loading while checking auth
   if (loading) {
@@ -17,6 +18,11 @@ const ProtectedRoute = ({ children, roles }) => {
   // Redirect to login if not authenticated
   if (!isAuthenticated) {
     return <Navigate to="/login" replace />;
+  }
+
+  // Force password change — block every route except /change-password
+  if (user?.must_change_password && location.pathname !== '/change-password') {
+    return <Navigate to="/change-password" replace />;
   }
 
   // Check role if specified - redirect to appropriate dashboard if not authorized

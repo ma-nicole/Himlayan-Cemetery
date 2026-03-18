@@ -288,8 +288,10 @@ class AuthController extends Controller
         
         $user->save();
 
-        // Revoke all tokens to force re-login
-        $user->tokens()->delete();
+        // Revoke all OTHER sessions but keep the current token so the frontend
+        // can call /user immediately after and redirect to the dashboard.
+        $currentTokenId = $request->user()->currentAccessToken()->id;
+        $user->tokens()->where('id', '!=', $currentTokenId)->delete();
 
         SecurityAuditService::log(
             'auth.password_change',
@@ -299,7 +301,15 @@ class AuthController extends Controller
             $user->id
         );
 
-        return $this->successResponse(null, 'Password changed successfully. Please log in again with your new password.');
+        return $this->successResponse([
+            'user' => [
+                'id' => $user->id,
+                'name' => $user->name,
+                'email' => $user->email,
+                'role' => $user->role,
+                'must_change_password' => $user->must_change_password,
+            ],
+        ], 'Password changed successfully');
     }
 
     /**

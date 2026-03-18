@@ -83,7 +83,7 @@ Route::get('/users/by-email', [UserController::class, 'getByEmail']);
 // PROTECTED ROUTES (Authentication Required)
 // ============================================
 
-Route::middleware(['auth:sanctum', 'sanitize.input'])->group(function () {
+Route::middleware(['auth:sanctum', 'sanitize.input', 'must_change_password'])->group(function () {
     
     // Auth Management
     Route::post('/logout', [AuthController::class, 'logout']);

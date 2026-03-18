@@ -6,7 +6,7 @@ import api from '../services/api';
 
 const ChangePasswordPage = () => {
   const navigate = useNavigate();
-  const { user, logout } = useAuth();
+  const { user, logout, refreshUser } = useAuth();
   const [formData, setFormData] = useState({
     currentPassword: '',
     newPassword: '',
@@ -122,10 +122,14 @@ const ChangePasswordPage = () => {
         }
       );
 
-      // Success - redirect to dashboard
-      alert('Password changed successfully! Please log in again with your new password.');
-      logout();
-      navigate('/login');
+      // Refresh user state so must_change_password becomes false, then redirect
+      const updatedUser = await refreshUser();
+      const role = updatedUser?.role || user?.role;
+      if (role === 'admin' || role === 'staff') {
+        navigate('/dashboard');
+      } else {
+        navigate('/member/dashboard');
+      }
     } catch (err) {
       setError(err.response?.data?.message || 'Failed to change password');
     } finally {
