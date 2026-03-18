@@ -37,6 +37,79 @@
   font-weight: 600;
 }
 
+/* ── Filter / Sort bar ─────────────────────────────── */
+.payment-history-filters {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 12px;
+  background: #f8faf9;
+  border: 1px solid #d6e2da;
+  border-radius: 12px;
+  padding: 14px 16px;
+  margin-bottom: 16px;
+}
+
+.phf-group {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 140px;
+}
+
+.phf-group label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #6b7280;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.phf-group select {
+  height: 38px;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  background: #fff;
+  color: #1f2937;
+  font-size: 0.875rem;
+  padding: 0 10px;
+  cursor: pointer;
+  appearance: auto;
+}
+
+.phf-group select:focus {
+  outline: 2px solid #1a472a;
+  border-color: transparent;
+}
+
+.phf-clear {
+  align-self: flex-end;
+  height: 38px;
+  padding: 0 14px;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  background: #fff;
+  color: #6b7280;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.phf-clear:hover {
+  background: #f3f4f6;
+  color: #374151;
+}
+
+.phf-count {
+  align-self: flex-end;
+  margin-left: auto;
+  font-size: 0.83rem;
+  color: #9ca3af;
+  padding-bottom: 8px;
+}
+
+/* ── List ──────────────────────────────────────────── */
 .payment-history-list {
   display: grid;
   grid-template-columns: 1fr;
@@ -142,5 +215,27 @@
 
   .payment-history-meta {
     grid-template-columns: 1fr;
+  }
+
+  .payment-history-filters {
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .phf-group {
+    min-width: 100%;
+  }
+
+  .phf-group select {
+    width: 100%;
+  }
+
+  .phf-clear {
+    width: 100%;
+  }
+
+  .phf-count {
+    margin-left: 0;
+    padding-bottom: 0;
   }
 }

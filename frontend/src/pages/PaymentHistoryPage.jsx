@@ -9,6 +9,9 @@ const PaymentHistoryPage = () => {
   const [payments, setPayments] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [filterStatus, setFilterStatus] = useState('');
+  const [filterType, setFilterType] = useState('');
+  const [sortBy, setSortBy] = useState('date-desc');
 
   useEffect(() => {
     const loadPayments = async () => {
@@ -89,6 +92,37 @@ const PaymentHistoryPage = () => {
     return plotNumber ? `${typeLabel} - Plot ${plotNumber}` : typeLabel;
   };
 
+  const filteredPayments = payments
+    .filter((item) => {
+      if (filterStatus && displayStatus(item) !== filterStatus) return false;
+      if (filterType && item.payment_type !== filterType) return false;
+      return true;
+    })
+    .sort((a, b) => {
+      if (sortBy === 'date-asc') return new Date(a.created_at) - new Date(b.created_at);
+      if (sortBy === 'date-desc') return new Date(b.created_at) - new Date(a.created_at);
+      if (sortBy === 'amount-asc') return Number(a.amount) - Number(b.amount);
+      if (sortBy === 'amount-desc') return Number(b.amount) - Number(a.amount);
+      return 0;
+    });
+
+  const typeOptions = [
+    { value: '', label: 'All Types' },
+    { value: 'annual_maintenance', label: 'Annual Maintenance' },
+    { value: 'quarterly_dues', label: 'Quarterly Dues' },
+    { value: 'plot_purchase', label: 'Plot Purchase' },
+    { value: 'service_fee', label: 'Service Fee' },
+  ];
+
+  const statusOptions = [
+    { value: '', label: 'All Statuses' },
+    { value: 'Unpaid', label: 'Unpaid' },
+    { value: 'Waiting', label: 'Waiting' },
+    { value: 'Pending', label: 'Pending' },
+    { value: 'Verified', label: 'Verified' },
+    { value: 'Rejected', label: 'Rejected' },
+  ];
+
   return (
     <div className="member-dashboard">
       <MemberHeader />
@@ -104,15 +138,75 @@ const PaymentHistoryPage = () => {
             </Link>
           </div>
 
+          {/* Filter / Sort bar */}
+          {!loading && !error && payments.length > 0 && (
+            <div className="payment-history-filters">
+              <div className="phf-group">
+                <label htmlFor="phf-status">Status</label>
+                <select
+                  id="phf-status"
+                  value={filterStatus}
+                  onChange={(e) => setFilterStatus(e.target.value)}
+                >
+                  {statusOptions.map((o) => (
+                    <option key={o.value} value={o.value}>{o.label}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="phf-group">
+                <label htmlFor="phf-type">Type</label>
+                <select
+                  id="phf-type"
+                  value={filterType}
+                  onChange={(e) => setFilterType(e.target.value)}
+                >
+                  {typeOptions.map((o) => (
+                    <option key={o.value} value={o.value}>{o.label}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="phf-group">
+                <label htmlFor="phf-sort">Sort by Date</label>
+                <select
+                  id="phf-sort"
+                  value={sortBy}
+                  onChange={(e) => setSortBy(e.target.value)}
+                >
+                  <option value="date-desc">Newest First</option>
+                  <option value="date-asc">Oldest First</option>
+                  <option value="amount-desc">Amount: High to Low</option>
+                  <option value="amount-asc">Amount: Low to High</option>
+                </select>
+              </div>
+
+              {(filterStatus || filterType || sortBy !== 'date-desc') && (
+                <button
+                  className="phf-clear"
+                  onClick={() => { setFilterStatus(''); setFilterType(''); setSortBy('date-desc'); }}
+                >
+                  Clear
+                </button>
+              )}
+
+              <span className="phf-count">
+                {filteredPayments.length} of {payments.length}
+              </span>
+            </div>
+          )}
+
           {loading ? (
             <div className="payment-history-state">Loading payment history...</div>
           ) : error ? (
             <div className="payment-history-state error">{error}</div>
           ) : payments.length === 0 ? (
             <div className="payment-history-state">No payments found yet.</div>
+          ) : filteredPayments.length === 0 ? (
+            <div className="payment-history-state">No payments match the selected filters.</div>
           ) : (
             <div className="payment-history-list">
-              {payments.map((item) => (
+              {filteredPayments.map((item) => (
                 <article key={item.id} className="payment-history-card">
                   <div className="payment-history-row">
                     <h3>{buildPaymentTitle(item)}</h3>
