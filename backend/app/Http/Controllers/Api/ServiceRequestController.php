@@ -220,8 +220,15 @@ class ServiceRequestController extends Controller
             return response()->json(['success' => false, 'message' => 'Only pending or approved requests can be cancelled.'], 422);
         }
 
+        // Find the associated service fee payment — via relationship OR notes fallback
+        // (notes fallback covers payments created before service_request_id column existed)
+        $servicePayment = $serviceRequest->serviceFeePayment
+            ?? Payment::where('user_id', $serviceRequest->user_id)
+                ->where('payment_type', Payment::TYPE_SERVICE_FEE)
+                ->where('notes', 'like', '%Request #' . $serviceRequest->id . ')')
+                ->first();
+
         // Safety: block cancel if a verified/paid payment already exists
-        $servicePayment = $serviceRequest->serviceFeePayment;
         if ($servicePayment && ($servicePayment->status === Payment::STATUS_VERIFIED || $servicePayment->paid_at)) {
             return response()->json(['success' => false, 'message' => 'Cannot cancel a paid service request.'], 422);
         }

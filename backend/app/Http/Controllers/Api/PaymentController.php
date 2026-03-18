@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Payment;
+use App\Models\ServiceRequest;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
 
@@ -193,6 +194,29 @@ class PaymentController extends Controller
         // restricted to their own records, preventing data leakage.
         if (!in_array(auth()->user()->role, ['admin', 'staff'], true)) {
             $query->where('user_id', auth()->id());
+
+            // Exclude service fee payments for cancelled service requests
+            $cancelledRequestIds = ServiceRequest::where('user_id', auth()->id())
+                ->where('status', 'cancelled')
+                ->pluck('id');
+
+            if ($cancelledRequestIds->isNotEmpty()) {
+                $query->where(function ($q) use ($cancelledRequestIds) {
+                    $q->where('payment_type', '!=', Payment::TYPE_SERVICE_FEE)
+                      ->orWhere(function ($q2) use ($cancelledRequestIds) {
+                          $q2->where('payment_type', Payment::TYPE_SERVICE_FEE)
+                             ->where(function ($q3) use ($cancelledRequestIds) {
+                                 $q3->whereNull('service_request_id')
+                                    ->orWhereNotIn('service_request_id', $cancelledRequestIds);
+                             })
+                             ->where(function ($q4) use ($cancelledRequestIds) {
+                                 foreach ($cancelledRequestIds as $rid) {
+                                     $q4->where('notes', 'not like', '%Request #' . $rid . ')');
+                                 }
+                             });
+                      });
+                });
+            }
         }
 
         // Status filter
@@ -654,8 +678,32 @@ class PaymentController extends Controller
      */
     public function myDues()
     {
+        // Get IDs of service requests that are cancelled — exclude their fee payments
+        $cancelledRequestIds = ServiceRequest::where('user_id', auth()->id())
+            ->where('status', 'cancelled')
+            ->pluck('id');
+
         $payments = Payment::where('user_id', auth()->id())
             ->with('plot:id,plot_number,section')
+            ->where(function ($q) use ($cancelledRequestIds) {
+                // Exclude service_fee payments whose request is cancelled
+                // — covers both relationship-linked and notes-pattern-matched rows
+                $q->where('payment_type', '!=', Payment::TYPE_SERVICE_FEE)
+                  ->orWhere(function ($q2) use ($cancelledRequestIds) {
+                      $q2->where('payment_type', Payment::TYPE_SERVICE_FEE)
+                         ->where(function ($q3) use ($cancelledRequestIds) {
+                             // Exclude via service_request_id if set
+                             $q3->whereNull('service_request_id')
+                                ->orWhereNotIn('service_request_id', $cancelledRequestIds);
+                         })
+                         ->where(function ($q4) use ($cancelledRequestIds) {
+                             // Also exclude via notes pattern for legacy rows
+                             foreach ($cancelledRequestIds as $rid) {
+                                 $q4->where('notes', 'not like', '%Request #' . $rid . ')');
+                             }
+                         });
+                  });
+            })
             ->orderBy('created_at', 'desc')
             ->get();
 
