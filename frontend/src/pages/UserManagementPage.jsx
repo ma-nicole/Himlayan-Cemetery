@@ -14,9 +14,8 @@ const UserManagementPage = () => {
   const [stats, setStats] = useState({});
   const [searchQuery, setSearchQuery] = useState('');
   const [roleFilter, setRoleFilter] = useState('');
-  const [showArchived, setShowArchived] = useState(false);
 
-  // modal modes: 'add' | 'view' | 'confirmArchive' | 'confirmUnarchive'
+  // modal modes: 'add' | 'view'
   const [showModal, setShowModal] = useState(false);
   const [modalMode, setModalMode] = useState('add');
   const [selectedUser, setSelectedUser] = useState(null);
@@ -31,7 +30,7 @@ const UserManagementPage = () => {
   useEffect(() => {
     loadUsers();
     loadStats();
-  }, [searchQuery, roleFilter, showArchived, pagination.currentPage]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [searchQuery, roleFilter, pagination.currentPage]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const loadUsers = async () => {
     setLoading(true);
@@ -39,7 +38,6 @@ const UserManagementPage = () => {
       const params = new URLSearchParams();
       if (searchQuery) params.append('search', searchQuery);
       if (roleFilter) params.append('role', roleFilter);
-      if (showArchived) params.append('archived', '1');
       params.append('page', pagination.currentPage);
       params.append('per_page', 10);
 
@@ -148,28 +146,6 @@ const UserManagementPage = () => {
     setModalMode('view');
     setSelectedUser(user);
     setShowModal(true);
-  };
-
-  // ── Archive / Unarchive ─────────────────────────────────────
-  const handleOpenArchive = (user) => {
-    setModalMode(user.is_archived ? 'confirmUnarchive' : 'confirmArchive');
-    setSelectedUser(user);
-    setFormError('');
-    setShowModal(true);
-  };
-
-  const handleConfirmArchive = async () => {
-    try {
-      const endpoint = selectedUser.is_archived
-        ? `/users/${selectedUser.id}/unarchive`
-        : `/users/${selectedUser.id}/archive`;
-      await api.post(endpoint);
-      handleCloseModal();
-      loadUsers();
-      loadStats();
-    } catch (err) {
-      setFormError(err.response?.data?.message || 'Operation failed.');
-    }
   };
 
   // ── Helpers ─────────────────────────────────────────────────
@@ -289,13 +265,7 @@ const UserManagementPage = () => {
               <option value="member">Member</option>
             </select>
           </div>
-          <button
-            className={`btn-toggle-archived ${showArchived ? 'active' : ''}`}
-            onClick={() => { setShowArchived(!showArchived); setPagination(p => ({ ...p, currentPage: 1 })); }}
-            title={showArchived ? 'Show active users' : 'Show archived users'}
-          >
-            {showArchived ? 'Active Users' : `Archived (${stats.archived || 0})`}
-          </button>
+
         </div>
 
         {/* Users Table */}
@@ -319,10 +289,10 @@ const UserManagementPage = () => {
               </thead>
               <tbody>
                 {users.length > 0 ? users.map((user) => (
-                  <tr key={user.id} className={`${user.is_archived ? 'row-archived' : ''} ${user.is_pending_invitation ? 'row-pending' : ''}`}>
+                  <tr key={user.id} className={user.is_pending_invitation ? 'row-pending' : ''}>
                     <td>
                       <div className="user-cell">
-                        <div className={`user-avatar ${user.is_archived ? 'avatar-archived' : user.is_pending_invitation ? 'avatar-pending' : ''}`}>
+                        <div className={`user-avatar ${user.is_pending_invitation ? 'avatar-pending' : ''}`}>
                           {user.name.charAt(0).toUpperCase()}
                         </div>
                         <span className="user-name">{user.name}</span>
@@ -335,8 +305,8 @@ const UserManagementPage = () => {
                       </span>
                     </td>
                     <td>
-                      <span className={`status-badge ${user.is_pending_invitation ? 'badge-pending' : user.is_archived ? 'badge-archived' : 'badge-active'}`}>
-                        {user.is_pending_invitation ? 'Pending' : (user.is_archived ? 'Archived' : 'Active')}
+                      <span className={`status-badge ${user.is_pending_invitation ? 'badge-pending' : 'badge-active'}`}>
+                        {user.is_pending_invitation ? 'Pending' : 'Active'}
                       </span>
                     </td>
                     <td>{user.is_pending_invitation ? '' : formatDate(user.created_at)}</td>
@@ -359,32 +329,12 @@ const UserManagementPage = () => {
                             )}
                           </button>
                         ) : (
-                          <>
-                            <button className="btn-view" onClick={() => handleOpenView(user)} title="View details">
-                              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
-                                <circle cx="12" cy="12" r="3"/>
-                              </svg>
-                            </button>
-                            {user.id !== currentUser?.id && user.role !== 'admin' && (
-                              <button
-                                className={user.is_archived ? 'btn-unarchive' : 'btn-archive'}
-                                onClick={() => handleOpenArchive(user)}
-                                title={user.is_archived ? 'Restore user' : 'Archive user'}
-                              >
-                                {user.is_archived ? (
-                                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                    <path d="M3 12l9-9 9 9"/><path d="M9 21V12h6v9"/>
-                                  </svg>
-                                ) : (
-                                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                    <polyline points="21 8 21 21 3 21 3 8"/><rect x="1" y="3" width="22" height="5"/>
-                                    <line x1="10" y1="12" x2="14" y2="12"/>
-                                  </svg>
-                                )}
-                              </button>
-                            )}
-                          </>
+                          <button className="btn-view" onClick={() => handleOpenView(user)} title="View details">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                              <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                              <circle cx="12" cy="12" r="3"/>
+                            </svg>
+                          </button>
                         )}
                       </div>
                     </td>
@@ -525,14 +475,9 @@ const UserManagementPage = () => {
                     </div>
                     <div className="view-field">
                       <span className="view-label">Status</span>
-                      <span className={`status-badge ${selectedUser.is_archived ? 'badge-archived' : 'badge-active'}`}>
-                        {selectedUser.is_archived ? 'Archived' : 'Active'}
-                      </span>
+                      <span className="status-badge badge-active">Active</span>
                     </div>
                     <div className="view-field"><span className="view-label">Date Joined</span><span className="view-value">{formatDate(selectedUser.created_at)}</span></div>
-                    {!!selectedUser.is_archived && !!selectedUser.archived_at && (
-                      <div className="view-field"><span className="view-label">Archived On</span><span className="view-value">{formatDate(selectedUser.archived_at)}</span></div>
-                    )}
                   </div>
                 </div>
                 <div className="form-actions">
@@ -541,44 +486,7 @@ const UserManagementPage = () => {
               </>
             )}
 
-            {/* ── Confirm Archive ── */}
-            {modalMode === 'confirmArchive' && selectedUser && (
-              <>
-                <h2>Archive User</h2>
-                {formError && <div className="form-error">{formError}</div>}
-                <div className="confirm-body">
-                  <p>You are about to archive <strong>{selectedUser.name}</strong>.</p>
-                  <ul className="confirm-list">
-                    <li>Their account will be <strong>deactivated</strong> immediately.</li>
-                    <li>They will not be able to log in.</li>
-                    <li>All data is preserved and can be restored at any time.</li>
-                  </ul>
-                </div>
-                <div className="form-actions">
-                  <button type="button" className="btn-cancel" onClick={handleCloseModal}>Cancel</button>
-                  <button type="button" className="btn-archive-confirm" onClick={handleConfirmArchive}>Archive User</button>
-                </div>
-              </>
-            )}
 
-            {/* ── Confirm Unarchive ── */}
-            {modalMode === 'confirmUnarchive' && selectedUser && (
-              <>
-                <h2>Restore User</h2>
-                {formError && <div className="form-error">{formError}</div>}
-                <div className="confirm-body">
-                  <p>You are about to restore <strong>{selectedUser.name}</strong>.</p>
-                  <ul className="confirm-list">
-                    <li>Their account will be <strong>reactivated</strong>.</li>
-                    <li>They will be able to log in again.</li>
-                  </ul>
-                </div>
-                <div className="form-actions">
-                  <button type="button" className="btn-cancel" onClick={handleCloseModal}>Cancel</button>
-                  <button type="button" className="btn-submit" onClick={handleConfirmArchive}>Restore User</button>
-                </div>
-              </>
-            )}
           </div>
         </div>
       )}
