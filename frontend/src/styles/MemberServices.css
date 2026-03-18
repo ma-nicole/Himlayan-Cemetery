@@ -1091,6 +1091,11 @@
   color: #2563eb;
 }
 
+.status-badge.status-cancelled {
+  background: #f3f4f6;
+  color: #6b7280;
+}
+
 .request-body {
   color: #475569;
 }

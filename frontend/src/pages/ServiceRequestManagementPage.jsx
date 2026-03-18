@@ -112,7 +112,7 @@ const ServiceRequestManagementPage = () => {
   };
 
   const getStatusBadgeClass = (status) => {
-    const classes = { pending: 'badge-pending', approved: 'badge-approved', rejected: 'badge-rejected', completed: 'badge-completed' };
+    const classes = { pending: 'badge-pending', approved: 'badge-approved', rejected: 'badge-rejected', completed: 'badge-completed', cancelled: 'badge-cancelled' };
     return classes[status] || 'badge-pending';
   };
 
@@ -161,6 +161,7 @@ const ServiceRequestManagementPage = () => {
                 <option value="approved">Approved</option>
                 <option value="rejected">Rejected</option>
                 <option value="completed">Completed</option>
+                <option value="cancelled">Cancelled</option>
               </select>
             </div>
           </div>
@@ -243,78 +244,108 @@ const ServiceRequestManagementPage = () => {
               </div>
 
               <form onSubmit={handleSubmit}>
-                <div className="form-group">
-                  <label>Status *</label>
-                  <select 
-                    value={formData.status} 
-                    onChange={(e) => {
-                      setFormData({...formData, status: e.target.value});
-                      if (validationErrors.status) {
-                        setValidationErrors(prev => {
-                          const newErrors = { ...prev };
-                          delete newErrors.status;
-                          return newErrors;
-                        });
-                      }
-                    }} 
-                    className={validationErrors.status ? 'error' : ''}
-                    required
-                  >
-                    <option value="pending">Pending</option>
-                    <option value="approved">Approved</option>
-                    <option value="rejected">Rejected</option>
-                    <option value="completed">Completed</option>
-                  </select>
-                  {validationErrors.status && (
-                    <small className="error-message">{validationErrors.status}</small>
-                  )}
-                </div>
-                <div className="form-group">
-                  <label>Admin Notes</label>
-                  <textarea 
-                    rows="3" 
-                    value={formData.admin_notes} 
-                    onChange={(e) => {
-                      setFormData({...formData, admin_notes: e.target.value});
-                      if (validationErrors.admin_notes) {
-                        setValidationErrors(prev => {
-                          const newErrors = { ...prev };
-                          delete newErrors.admin_notes;
-                          return newErrors;
-                        });
-                      }
-                    }} 
-                    className={validationErrors.admin_notes ? 'error' : ''}
-                    placeholder="Add notes about this request..." 
-                  />
-                  {validationErrors.admin_notes && (
-                    <small className="error-message">{validationErrors.admin_notes}</small>
-                  )}
-                </div>
-                {(formData.status === 'approved' || (selectedItem?.status !== 'pending' && selectedItem?.service_fee_amount)) && (
-                  <div className="form-group">
-                    <label>Service Fee (PHP)</label>
-                    <input
-                      type="number"
-                      min="0"
-                      step="0.01"
-                      value={formData.service_fee_amount}
-                      onChange={(e) => setFormData({...formData, service_fee_amount: e.target.value})}
-                      placeholder="e.g. 500.00 — leave blank if no charge"
-                      disabled={selectedItem?.status !== 'pending'}
-                      style={selectedItem?.status !== 'pending' ? { backgroundColor: '#f3f4f6', cursor: 'not-allowed' } : {}}
-                    />
-                    <small style={{ color: '#6b7280', fontSize: '0.8rem' }}>
-                      {selectedItem?.status !== 'pending'
-                        ? 'Service fee is locked once the request is no longer pending.'
-                        : 'A payment due will be created for the member when a fee is set.'}
-                    </small>
-                  </div>
-                )}
-                <div className="form-actions">
-                  <button type="button" className="btn-cancel" onClick={() => setShowModal(false)}>Cancel</button>
-                  <button type="submit" className="btn-submit" disabled={Object.keys(validationErrors).length > 0}>Update Status</button>
-                </div>
+                {(() => {
+                  const isLocked = selectedItem?.status === 'completed' || selectedItem?.status === 'cancelled';
+                  const isPaymentVerified = selectedItem?.service_fee_payment?.status === 'verified';
+                  return (
+                    <>
+                      {isLocked && (
+                        <div style={{ background: '#f3f4f6', border: '1px solid #d1d5db', borderRadius: '8px', padding: '10px 14px', marginBottom: '12px', color: '#6b7280', fontSize: '0.875rem' }}>
+                          {selectedItem?.status === 'completed'
+                            ? 'This request has been completed and can no longer be modified.'
+                            : 'This request was cancelled by the member and can no longer be modified.'}
+                        </div>
+                      )}
+                      {isPaymentVerified && !isLocked && (
+                        <div style={{ background: '#fef9c3', border: '1px solid #fde047', borderRadius: '8px', padding: '10px 14px', marginBottom: '12px', color: '#92400e', fontSize: '0.875rem' }}>
+                          The service fee has been paid and verified. You can only mark this request as completed.
+                        </div>
+                      )}
+                      <div className="form-group">
+                        <label>Status *</label>
+                        <select 
+                          value={formData.status} 
+                          onChange={(e) => {
+                            setFormData({...formData, status: e.target.value});
+                            if (validationErrors.status) {
+                              setValidationErrors(prev => {
+                                const newErrors = { ...prev };
+                                delete newErrors.status;
+                                return newErrors;
+                              });
+                            }
+                          }} 
+                          className={validationErrors.status ? 'error' : ''}
+                          required
+                          disabled={isLocked}
+                        >
+                          {isPaymentVerified ? (
+                            <option value="completed">Completed</option>
+                          ) : (
+                            <>
+                              <option value="pending">Pending</option>
+                              <option value="approved">Approved</option>
+                              <option value="rejected">Rejected</option>
+                              <option value="completed">Completed</option>
+                            </>
+                          )}
+                        </select>
+                        {validationErrors.status && (
+                          <small className="error-message">{validationErrors.status}</small>
+                        )}
+                      </div>
+                      <div className="form-group">
+                        <label>Admin Notes</label>
+                        <textarea 
+                          rows="3" 
+                          value={formData.admin_notes} 
+                          onChange={(e) => {
+                            setFormData({...formData, admin_notes: e.target.value});
+                            if (validationErrors.admin_notes) {
+                              setValidationErrors(prev => {
+                                const newErrors = { ...prev };
+                                delete newErrors.admin_notes;
+                                return newErrors;
+                              });
+                            }
+                          }} 
+                          className={validationErrors.admin_notes ? 'error' : ''}
+                          placeholder="Add notes about this request..." 
+                          disabled={isLocked}
+                        />
+                        {validationErrors.admin_notes && (
+                          <small className="error-message">{validationErrors.admin_notes}</small>
+                        )}
+                      </div>
+                      {(formData.status === 'approved' || (selectedItem?.status !== 'pending' && selectedItem?.service_fee_amount)) && (
+                        <div className="form-group">
+                          <label>Service Fee (PHP)</label>
+                          <input
+                            type="number"
+                            min="0"
+                            step="0.01"
+                            value={formData.service_fee_amount}
+                            onChange={(e) => setFormData({...formData, service_fee_amount: e.target.value})}
+                            placeholder="e.g. 500.00 — leave blank if no charge"
+                            disabled={selectedItem?.status !== 'pending' || isLocked}
+                            style={(selectedItem?.status !== 'pending' || isLocked) ? { backgroundColor: '#f3f4f6', cursor: 'not-allowed' } : {}}
+                          />
+                          <small style={{ color: '#6b7280', fontSize: '0.8rem' }}>
+                            {selectedItem?.status !== 'pending'
+                              ? 'Service fee is locked once the request is no longer pending.'
+                              : 'A payment due will be created for the member when a fee is set.'}
+                          </small>
+                        </div>
+                      )}
+                      <div className="form-actions">
+                        <button type="button" className="btn-cancel" onClick={() => setShowModal(false)}>Cancel</button>
+                        {!isLocked && (
+                          <button type="submit" className="btn-submit" disabled={Object.keys(validationErrors).length > 0}>Update Status</button>
+                        )}
+                      </div>
+                    </>
+                  );
+                })()}
               </form>
             </div>
           </div>

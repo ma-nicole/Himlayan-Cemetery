@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use App\Models\Payment;
 
 class ServiceRequest extends Model
 {
@@ -32,6 +33,12 @@ class ServiceRequest extends Model
     const STATUS_APPROVED = 'approved';
     const STATUS_REJECTED = 'rejected';
     const STATUS_COMPLETED = 'completed';
+    const STATUS_CANCELLED = 'cancelled';
+
+    public function serviceFeePayment()
+    {
+        return $this->hasOne(Payment::class, 'service_request_id');
+    }
 
     public function user()
     {

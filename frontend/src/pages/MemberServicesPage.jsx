@@ -102,6 +102,16 @@ const MemberServicesPage = () => {
     }
   };
 
+  const handleCancelRequest = async (id) => {
+    if (!window.confirm('Are you sure you want to cancel this service request? This cannot be undone.')) return;
+    try {
+      await api.patch(`/service-requests/${id}/cancel`);
+      loadMyRequests();
+    } catch (error) {
+      alert(error.response?.data?.message || 'Failed to cancel request');
+    }
+  };
+
   const handleLogout = async () => {
     await logout();
   };
@@ -442,6 +452,16 @@ const MemberServicesPage = () => {
                           <span style={{ display: 'block', fontSize: '0.82rem', color: '#78716c', marginTop: '4px' }}>
                             A payment due has been added to your <a href="/pay-dues" style={{ color: '#15803d', fontWeight: 600 }}>Pay Dues</a> page.
                           </span>
+                        </div>
+                      )}
+                      {request.status === 'pending' && (
+                        <div style={{ marginTop: '12px', textAlign: 'right' }}>
+                          <button
+                            onClick={() => handleCancelRequest(request.id)}
+                            style={{ padding: '6px 16px', borderRadius: '6px', border: '1px solid #dc2626', background: '#fff', color: '#dc2626', fontSize: '0.85rem', fontWeight: 600, cursor: 'pointer' }}
+                          >
+                            Cancel Request
+                          </button>
                         </div>
                       )}
                     </div>

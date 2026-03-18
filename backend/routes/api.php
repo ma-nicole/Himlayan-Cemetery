@@ -233,6 +233,7 @@ Route::middleware(['auth:sanctum', 'sanitize.input'])->group(function () {
         Route::post('/', [ServiceRequestController::class, 'store']);
         Route::get('/statistics', [ServiceRequestController::class, 'statistics'])->middleware('role:admin,staff');
         Route::get('/{id}', [ServiceRequestController::class, 'show']);
+        Route::patch('/{id}/cancel', [ServiceRequestController::class, 'cancel'])->middleware('role:member');
         
         Route::middleware('role:admin,staff')->group(function () {
             Route::put('/{id}', [ServiceRequestController::class, 'update']);

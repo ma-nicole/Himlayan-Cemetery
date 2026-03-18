@@ -14,7 +14,7 @@ class ServiceRequestController extends Controller
      */
     public function index(Request $request)
     {
-        $query = ServiceRequest::with(['user:id,name,email', 'processor:id,name']);
+        $query = ServiceRequest::with(['user:id,name,email', 'processor:id,name', 'serviceFeePayment:id,service_request_id,status,paid_at']);
 
         // For members, only show their own requests
         if (auth()->user()->role === 'member') {
@@ -127,10 +127,30 @@ class ServiceRequestController extends Controller
         }
 
         $validated = $request->validate([
-            'status' => 'sometimes|required|in:pending,approved,rejected,completed',
+            'status' => 'sometimes|required|in:pending,approved,rejected,completed,cancelled',
             'admin_notes' => 'nullable|string',
             'service_fee_amount' => 'nullable|numeric|min:0',
         ]);
+
+        // Block editing once completed or cancelled
+        if (in_array($serviceRequest->status, ['completed', 'cancelled'])) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Cannot modify a ' . $serviceRequest->status . ' service request.',
+            ], 422);
+        }
+
+        // If payment is verified, can only change status to 'completed'
+        $servicePayment = $serviceRequest->serviceFeePayment;
+        if ($servicePayment && $servicePayment->status === Payment::STATUS_VERIFIED) {
+            $newStatus = $validated['status'] ?? $serviceRequest->status;
+            if ($newStatus !== 'completed') {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'The service fee has been paid and verified. You can only mark this request as completed.',
+                ], 422);
+            }
+        }
 
         if (isset($validated['status']) && $validated['status'] !== $serviceRequest->status) {
             $serviceRequest->processed_by = auth()->id();
@@ -160,6 +180,7 @@ class ServiceRequestController extends Controller
             if (!$alreadyExists) {
                 $serviceLabel = ucwords(str_replace('_', ' ', $serviceRequest->service_type));
                 Payment::create([
+                    'service_request_id' => $serviceRequest->id,
                     'user_id'        => $serviceRequest->user_id,
                     'plot_id'        => null,
                     'amount'         => $feeAmount,
@@ -175,6 +196,42 @@ class ServiceRequestController extends Controller
             'success' => true,
             'message' => 'Service request updated successfully',
             'data' => $serviceRequest->load(['user:id,name,email', 'processor:id,name'])
+        ]);
+    }
+
+    /**
+     * Cancel a service request (member cancels their own pending request)
+     */
+    public function cancel($id)
+    {
+        $serviceRequest = ServiceRequest::find($id);
+
+        if (!$serviceRequest) {
+            return response()->json(['success' => false, 'message' => 'Service request not found'], 404);
+        }
+
+        // Only the owner can cancel
+        if ($serviceRequest->user_id !== auth()->id()) {
+            return response()->json(['success' => false, 'message' => 'Unauthorized'], 403);
+        }
+
+        // Can only cancel pending requests
+        if ($serviceRequest->status !== 'pending') {
+            return response()->json(['success' => false, 'message' => 'Only pending requests can be cancelled.'], 422);
+        }
+
+        // Safety: block cancel if a verified/paid payment already exists
+        $servicePayment = $serviceRequest->serviceFeePayment;
+        if ($servicePayment && ($servicePayment->status === Payment::STATUS_VERIFIED || $servicePayment->paid_at)) {
+            return response()->json(['success' => false, 'message' => 'Cannot cancel a paid service request.'], 422);
+        }
+
+        $serviceRequest->update(['status' => 'cancelled']);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Service request cancelled successfully.',
+            'data'    => $serviceRequest,
         ]);
     }
 
@@ -206,11 +263,12 @@ class ServiceRequestController extends Controller
     public function statistics()
     {
         $stats = [
-            'total' => ServiceRequest::count(),
-            'pending' => ServiceRequest::where('status', 'pending')->count(),
-            'approved' => ServiceRequest::where('status', 'approved')->count(),
+            'total'     => ServiceRequest::count(),
+            'pending'   => ServiceRequest::where('status', 'pending')->count(),
+            'approved'  => ServiceRequest::where('status', 'approved')->count(),
             'completed' => ServiceRequest::where('status', 'completed')->count(),
-            'rejected' => ServiceRequest::where('status', 'rejected')->count(),
+            'rejected'  => ServiceRequest::where('status', 'rejected')->count(),
+            'cancelled' => ServiceRequest::where('status', 'cancelled')->count(),
         ];
 
         return response()->json([

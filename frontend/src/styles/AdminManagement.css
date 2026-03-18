@@ -247,6 +247,7 @@
 .badge-approved { background: #dbeafe; color: #2563eb; }
 .badge-rejected { background: #fee2e2; color: #dc2626; }
 .badge-completed { background: #d1fae5; color: #059669; }
+.badge-cancelled { background: #f3f4f6; color: #6b7280; }
 .badge-verified { background: #d1fae5; color: #059669; }
 .badge-new { background: #dbeafe; color: #2563eb; }
 .badge-read { background: #f1f5f9; color: #64748b; }
