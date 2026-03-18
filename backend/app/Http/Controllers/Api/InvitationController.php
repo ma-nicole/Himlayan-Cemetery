@@ -513,12 +513,46 @@ class InvitationController extends Controller
 
         // Retrieve invitation data from cache
         $invitationData = cache()->get('invitation_' . $token);
-        
+
         if (!$invitationData) {
             return $this->errorResponse('Invalid or expired invitation token', 400);
         }
 
-        // Check if user already exists
+        // Look for a pending user record created when invitation was sent (staff/admin flow).
+        $pendingUser = User::where('email', $invitationData['email'])
+            ->where('invitation_token', $token)
+            ->where('invitation_accepted', false)
+            ->first();
+
+        if ($pendingUser) {
+            // Activate the existing pending record instead of creating a new one.
+            try {
+                $pendingUser->update([
+                    'invitation_accepted' => true,
+                    'invitation_token'    => null,
+                    'must_change_password' => true,
+                ]);
+
+                cache()->forget('invitation_' . $token);
+
+                if (!empty($invitationData['burial_record_id'])) {
+                    cache()->forget('invitation_status_burial_' . $invitationData['burial_record_id']);
+                }
+
+                return $this->successResponse([
+                    'user'    => $pendingUser->fresh(),
+                    'message' => 'Accepted! You may now login',
+                ], 'Account activated successfully');
+            } catch (\Exception $e) {
+                Log::error('Failed to activate invited account', [
+                    'error'   => $e->getMessage(),
+                    'user_id' => $pendingUser->id,
+                ]);
+                return $this->errorResponse('Failed to activate account', 500);
+            }
+        }
+
+        // Fall-through: member invitation flow (no pre-created user record).
         $existingUser = User::where('email', $invitationData['email'])->first();
         if ($existingUser) {
             return $this->errorResponse('Account already exists for this email', 400);
@@ -533,11 +567,11 @@ class InvitationController extends Controller
                 : 'member';
 
             $user = User::create([
-                'email' => $invitationData['email'],
-                'name' => $invitationData['name'],
-                'password' => Hash::make($invitationData['password']),
-                'role' => $role,
-                'invitation_accepted' => true,
+                'email'                => $invitationData['email'],
+                'name'                 => $invitationData['name'],
+                'password'             => Hash::make($invitationData['password']),
+                'role'                 => $role,
+                'invitation_accepted'  => true,
                 'must_change_password' => true,
             ]);
 
@@ -549,13 +583,13 @@ class InvitationController extends Controller
             }
 
             return $this->successResponse([
-                'user' => $user,
-                'message' => 'Accepted! You may now login'
+                'user'    => $user,
+                'message' => 'Accepted! You may now login',
             ], 'Account created successfully');
         } catch (\Exception $e) {
             Log::error('Failed to create account on invitation accept', [
                 'error' => $e->getMessage(),
-                'email' => $invitationData['email']
+                'email' => $invitationData['email'],
             ]);
             return $this->errorResponse('Failed to create account', 500);
         }
