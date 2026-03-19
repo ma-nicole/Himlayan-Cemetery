@@ -7,7 +7,6 @@ import dashboardService from '../services/dashboardService';
 
 // New Components
 import StatCard from '../components/dashboard/StatCard';
-import ActivityFeed from '../components/dashboard/ActivityFeed';
 import CommandPalette from '../components/common/CommandPalette';
 import { SkeletonDashboard } from '../components/common/Skeleton';
 import { DonutChart, BarChart, ProgressRing } from '../components/charts/Charts';
@@ -368,12 +367,6 @@ const EnhancedDashboardPage = () => {
               )}
             </div>
           </div>
-
-          {/* Activity Feed */}
-          <ActivityFeed 
-            activities={activities}
-            maxItems={5}
-          />
         </div>
       </section>
 
