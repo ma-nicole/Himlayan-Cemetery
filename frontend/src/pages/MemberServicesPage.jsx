@@ -182,16 +182,20 @@ const MemberServicesPage = () => {
       category: 'products',
       icon: (
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-          <path d="M12 3v18M5 8l7-5 7 5M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8"/>
+          <rect x="3" y="3" width="18" height="18" rx="2"/>
+          <rect x="7" y="7" width="4" height="4"/>
+          <rect x="13" y="7" width="4" height="4"/>
+          <rect x="7" y="13" width="4" height="4"/>
+          <rect x="13" y="13" width="4" height="4"/>
         </svg>
       ),
-      title: 'Lawn Lots',
-      subtitle: 'Traditional Ground Burial',
-      description: 'Traditional burial lots in well-maintained lawn areas. Various sizes available depending on your family\'s needs.',
-      features: ['Single or Family lots', 'Perpetual care included', 'Well-maintained landscaping', 'Concrete vault ready'],
-      price: 'Starting at ₱150,000',
+      title: 'Pugad Lawin Columbary',
+      subtitle: 'Affordable Crypt Options',
+      description: 'Affordable crypts offer a dignified resting place for loved ones, accommodating full-sized caskets, urns, and bone remains. These secure and serene spaces provide families a meaningful and cost-effective place to honor and remember their deceased.',
+      features: ['Full-sized casket ready', 'Urns & bone remains', 'Secure & serene', 'Cost-effective'],
+      price: 'Contact for pricing',
       popular: false,
-      image: '/Florante-at-Laura-1-scaled.jpg'
+      image: '/Panooran-2.jpg'
     },
     {
       id: 2,
@@ -205,12 +209,12 @@ const MemberServicesPage = () => {
           <rect x="13" y="13" width="4" height="4"/>
         </svg>
       ),
-      title: 'Columbarium Niches',
-      subtitle: 'Modern Cremation Storage',
-      description: 'Modern niches for cremated remains. Climate-controlled and secured 24/7 for your peace of mind.',
-      features: ['Climate-controlled', 'Secured 24/7', 'Multiple sizes', 'Indoor location'],
-      price: 'Starting at ₱80,000',
-      popular: true,
+      title: 'Dambana ng Alaala',
+      subtitle: 'Dignified Resting Place',
+      description: 'Affordable crypts offer a dignified resting place for loved ones, accommodating full-sized caskets, urns, and bone remains. These secure and serene spaces provide families a meaningful and cost-effective place to honor and remember their deceased.',
+      features: ['Full-sized casket ready', 'Urns & bone remains', 'Secure & serene', 'Cost-effective'],
+      price: 'Contact for pricing',
+      popular: false,
       image: '/Panooran-2.jpg'
     },
     {
@@ -218,37 +222,70 @@ const MemberServicesPage = () => {
       category: 'products',
       icon: (
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-          <path d="M3 21h18M5 21V7l7-4 7 4v14M9 21v-6h6v6"/>
-          <rect x="9" y="9" width="2" height="2"/><rect x="13" y="9" width="2" height="2"/>
+          <path d="M12 3v18M5 8l7-5 7 5M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8"/>
         </svg>
       ),
-      title: 'Mausoleum',
-      subtitle: 'Private Family Tombs',
-      description: 'Private family tombs with their own structure. Perfect for large families who want an exclusive memorial.',
-      features: ['Custom designs', 'Multiple vault capacity', 'Exclusive area', 'Premium location'],
-      price: 'Starting at ₱500,000',
+      title: 'Lawn Lots',
+      subtitle: 'Serene Garden Setting',
+      description: 'Lush spaces that offer a serene resting place. Whether by a tree, a pathwalk, or road you will be assured of a tranquil environment.',
+      features: ['By trees or pathwalks', 'Tranquil environment', 'Perpetual care included', 'Well-maintained landscaping'],
+      price: 'Contact for pricing',
       popular: false,
-      image: '/himlayanheritage.jpg'
+      image: '/Florante-at-Laura-1-scaled.jpg'
     },
     {
       id: 4,
       category: 'products',
       icon: (
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-          <circle cx="12" cy="12" r="10"/>
-          <path d="M12 6v6l4 2"/>
+          <path d="M3 21h18M5 21V7l7-4 7 4v14M9 21v-6h6v6"/>
+          <rect x="9" y="9" width="2" height="2"/><rect x="13" y="9" width="2" height="2"/>
         </svg>
       ),
-      title: 'Memorial Terrace',
-      subtitle: 'Elevated Scenic Views',
-      description: 'Elevated memorial area with beautiful views of the entire park. Perfect for those who want a peaceful and serene location.',
-      features: ['Scenic views', 'Peaceful atmosphere', 'Well-maintained', 'Garden setting'],
-      price: 'Starting at ₱200,000',
+      title: 'Memorials',
+      subtitle: 'Manicured Garden Lots',
+      description: 'Manicured garden lots with above-ground niches. The imposing niches serve as reverence to the status and achievements of the interred. Memorial lots has the highest capacity per area in our inventory. Lot varies from 9sqm to 30sqm.',
+      features: ['Above-ground niches', 'Highest capacity per area', '9sqm to 30sqm', 'Manicured garden setting'],
+      price: 'Contact for pricing',
+      popular: true,
+      image: '/himlayanheritage.jpg'
+    },
+    {
+      id: 5,
+      category: 'products',
+      icon: (
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+          <path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/>
+          <polyline points="9 22 9 12 15 12 15 22"/>
+        </svg>
+      ),
+      title: 'Family Estates',
+      subtitle: 'Private Family Mausoleums',
+      description: 'Mausoleums that give you privacy befitting your family. Most plans and layouts are made with provision for washroom and pantry depending on the location. Various sizes available ranging from 40sqm to 100sqm.',
+      features: ['Private mausoleum', 'Washroom & pantry provision', '40sqm to 100sqm', 'Custom layouts'],
+      price: 'Contact for pricing',
       popular: false,
       image: '/Malakas-at-Maganda.jpg'
     },
     {
-      id: 5,
+      id: 6,
+      category: 'products',
+      icon: (
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+          <path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/>
+          <circle cx="12" cy="16" r="3"/>
+        </svg>
+      ),
+      title: 'Terraces',
+      subtitle: 'Premium Custom Mausoleums',
+      description: 'Our largest and premium mausoleums that are tailored for the families\' comfort and requirement. Memorial Terraces also allows them to incorporate their own design and ideas. Lot sizes ranges from 80sqm to 250sqm.',
+      features: ['80sqm to 250sqm', 'Custom design allowed', 'Largest premium lots', 'Tailored for comfort'],
+      price: 'Contact for pricing',
+      popular: false,
+      image: '/himlayanheritage.jpg'
+    },
+    {
+      id: 7,
       category: 'services',
       icon: (
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
@@ -264,7 +301,7 @@ const MemberServicesPage = () => {
       image: '/Teresa-Magbanua-scaled.jpg'
     },
     {
-      id: 6,
+      id: 8,
       category: 'services',
       icon: (
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
