@@ -846,17 +846,18 @@ const MemberServicesPage = () => {
                           const sel = opts.find(o => o.label === requestForm.product_type);
                           if (!sel || !sel.subOptions) return null;
                           return (
-                            <div style={{ marginTop: '12px', padding: '12px', background: '#f9fafb', borderRadius: '8px', border: '1px solid #e5e7eb' }}>
+                            <div style={{ marginTop: '12px', padding: '10px 14px', background: '#f9fafb', borderRadius: '8px', border: '1px solid #e5e7eb' }}>
                               {sel.subOptions.map(sub => (
-                                <label key={sub.label} style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '6px 0', cursor: 'pointer', fontSize: '0.875rem', color: '#374151' }}>
+                                <label key={sub.label} style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '7px 0', cursor: 'pointer', fontSize: '0.875rem', color: '#374151', userSelect: 'none' }}>
                                   <input
                                     type="radio"
                                     name="product_radio"
                                     value={sub.label}
                                     checked={requestForm.product_radio === sub.label}
                                     onChange={() => setRequestForm({ ...requestForm, product_radio: sub.label, product_price: sub.price })}
+                                    style={{ width: '16px', height: '16px', margin: '0', flexShrink: 0, cursor: 'pointer', accentColor: '#1a472a' }}
                                   />
-                                  {sub.label}
+                                  <span>{sub.label}</span>
                                 </label>
                               ))}
                             </div>
