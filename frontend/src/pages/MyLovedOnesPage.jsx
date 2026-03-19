@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
+import { QRCodeSVG } from 'qrcode.react';
 import { useAuth } from '../hooks/useAuth';
 import api from '../services/api';
 import MemberHeader from '../components/common/MemberHeader';
@@ -13,6 +14,10 @@ const MyLovedOnesPage = () => {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [brokenImageRecordIds, setBrokenImageRecordIds] = useState(new Set());
+
+  // QR Modal State
+  const [qrRecord, setQrRecord] = useState(null);
+  const qrModalRef = useRef(null);
   
   // Edit Modal State
   const [editingRecord, setEditingRecord] = useState(null);
@@ -27,6 +32,13 @@ const MyLovedOnesPage = () => {
 
   useEffect(() => {
     fetchRecords();
+  }, []);
+
+  // Close QR modal on Escape key
+  useEffect(() => {
+    const onKey = (e) => { if (e.key === 'Escape') setQrRecord(null); };
+    document.addEventListener('keydown', onKey);
+    return () => document.removeEventListener('keydown', onKey);
   }, []);
 
   const fetchRecords = async () => {
@@ -45,8 +57,14 @@ const MyLovedOnesPage = () => {
     }
   };
 
-  const handleEdit = (record) => {
-    setEditingRecord(record);
+  const getPublicGraveUrl = (record) => {
+    const plotNumber = record.plot?.plot_number;
+    if (!plotNumber) return null;
+    const base = (process.env.REACT_APP_FRONTEND_URL || 'https://himlayangpilipino.com').replace(/\/$/, '');
+    return `${base}/grave/${plotNumber}`;
+  };
+
+  const handleEdit = (record) => {    setEditingRecord(record);
     setFormData({
       deceased_nickname: record.deceased_nickname || '',
       is_publicly_searchable: Boolean(record.is_publicly_searchable),
@@ -235,8 +253,42 @@ const MyLovedOnesPage = () => {
                       </div>
                     </div>
 
-                    <button 
-                      onClick={() => handleEdit(record)}
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginTop: 'auto' }}>
+                      {record.plot?.plot_number && (
+                        <button
+                          onClick={() => setQrRecord(record)}
+                          style={{
+                            width: '100%',
+                            padding: '10px',
+                            backgroundColor: 'white',
+                            color: '#1a472a',
+                            border: '2px solid #1a472a',
+                            borderRadius: '6px',
+                            cursor: 'pointer',
+                            fontWeight: '600',
+                            fontSize: '14px',
+                            transition: 'background-color 0.2s, color 0.2s',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            gap: '8px'
+                          }}
+                          onMouseOver={(e) => { e.currentTarget.style.backgroundColor = '#1a472a'; e.currentTarget.style.color = 'white'; }}
+                          onMouseOut={(e) => { e.currentTarget.style.backgroundColor = 'white'; e.currentTarget.style.color = '#1a472a'; }}
+                        >
+                          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                            <rect x="3" y="3" width="7" height="7"/>
+                            <rect x="14" y="3" width="7" height="7"/>
+                            <rect x="3" y="14" width="7" height="7"/>
+                            <rect x="14" y="14" width="3" height="3"/>
+                            <path d="M17 17h4M17 21h4M21 17v4"/>
+                          </svg>
+                          Show QR Code
+                        </button>
+                      )}
+
+                      <button
+                        onClick={() => handleEdit(record)}
                       style={{ 
                         width: '100%', 
                         padding: '10px', 
@@ -252,9 +304,10 @@ const MyLovedOnesPage = () => {
                       }}
                       onMouseOver={(e) => e.target.style.backgroundColor = '#15803d'}
                       onMouseOut={(e) => e.target.style.backgroundColor = '#1a472a'}
-                    >
-                      Edit Profile
-                    </button>
+                      >
+                        Edit Profile
+                      </button>
+                    </div>
                   </div>
                 </div>
               ))}
@@ -262,6 +315,101 @@ const MyLovedOnesPage = () => {
           )}
         </div>
       </main>
+
+      {/* QR Code Modal */}
+      {qrRecord && (() => {
+        const graveUrl = getPublicGraveUrl(qrRecord);
+        return (
+          <div
+            style={{
+              position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+              backgroundColor: 'rgba(0,0,0,0.55)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              zIndex: 1100, padding: '20px'
+            }}
+            onClick={() => setQrRecord(null)}
+          >
+            <div
+              ref={qrModalRef}
+              style={{
+                backgroundColor: 'white', borderRadius: '16px',
+                padding: '32px 28px', maxWidth: '380px', width: '100%',
+                boxShadow: '0 20px 40px rgba(0,0,0,0.2)',
+                textAlign: 'center', position: 'relative'
+              }}
+              onClick={(e) => e.stopPropagation()}
+            >
+              {/* Close button */}
+              <button
+                onClick={() => setQrRecord(null)}
+                style={{
+                  position: 'absolute', top: '14px', right: '16px',
+                  background: 'none', border: 'none', fontSize: '22px',
+                  cursor: 'pointer', color: '#6b7280', lineHeight: 1
+                }}
+                aria-label="Close"
+              >
+                &times;
+              </button>
+
+              <h3 style={{ margin: '0 0 4px', fontSize: '18px', fontWeight: '700', color: '#111827' }}>
+                {qrRecord.deceased_name}
+              </h3>
+              {qrRecord.deceased_nickname && (
+                <p style={{ margin: '0 0 20px', fontSize: '14px', color: '#6b7280', fontStyle: 'italic' }}>
+                  &ldquo;{qrRecord.deceased_nickname}&rdquo;
+                </p>
+              )}
+
+              {graveUrl ? (
+                <>
+                  <div style={{
+                    display: 'inline-block', padding: '16px',
+                    backgroundColor: '#fff', border: '2px solid #e5e7eb',
+                    borderRadius: '12px', marginBottom: '18px'
+                  }}>
+                    <QRCodeSVG
+                      value={graveUrl}
+                      size={200}
+                      bgColor="#ffffff"
+                      fgColor="#1a472a"
+                      level="M"
+                      includeMargin={false}
+                    />
+                  </div>
+
+                  <p style={{ fontSize: '12px', color: '#9ca3af', margin: '0 0 6px' }}>
+                    Scan to view the memorial profile
+                  </p>
+                  <a
+                    href={graveUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    style={{
+                      display: 'block', fontSize: '12px', color: '#1a472a',
+                      wordBreak: 'break-all', textDecoration: 'underline'
+                    }}
+                  >
+                    {graveUrl}
+                  </a>
+
+                  <p style={{
+                    marginTop: '14px', fontSize: '12px', color: '#9ca3af',
+                    backgroundColor: '#f9fafb', padding: '8px 12px',
+                    borderRadius: '8px', display: 'inline-block'
+                  }}>
+                    Plot: <strong style={{ color: '#374151' }}>{qrRecord.plot?.plot_number}</strong>
+                  </p>
+                </>
+              ) : (
+                <p style={{ color: '#ef4444', fontSize: '14px' }}>
+                  No plot assigned — QR code unavailable.
+                </p>
+              )}
+            </div>
+          </div>
+        );
+      })()}
 
       {/* Edit Modal */}
       {editingRecord && (
