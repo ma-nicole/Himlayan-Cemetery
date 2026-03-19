@@ -265,7 +265,7 @@ const MemberServicesPage = () => {
       features: ['Full-sized casket ready', 'Urns & bone remains', 'Secure & serene', 'Cost-effective'],
       price: 'starting price: ₱70,000',
       popular: false,
-      image: '/Panooran-2.jpg'
+      image: '/hp-columbary.png'
     },
     {
       id: 2,
@@ -285,7 +285,7 @@ const MemberServicesPage = () => {
       features: ['Full-sized casket ready', 'Urns & bone remains', 'Secure & serene', 'Cost-effective'],
       price: 'starting price: ₱70,000',
       popular: false,
-      image: '/Panooran-2.jpg'
+      image: '/hp-columbary.png'
     },
     {
       id: 3,
@@ -301,7 +301,7 @@ const MemberServicesPage = () => {
       features: ['By trees or pathwalks', 'Tranquil environment', 'Perpetual care included', 'Well-maintained landscaping'],
       price: 'starting price: ₱355,000',
       popular: false,
-      image: '/Florante-at-Laura-1-scaled.jpg'
+      image: '/hp-lawn-lots.png'
     },
     {
       id: 4,
@@ -318,7 +318,7 @@ const MemberServicesPage = () => {
       features: ['Above-ground niches', 'Highest capacity per area', '9sqm to 30sqm', 'Manicured garden setting'],
       price: 'starting price: ₱1,200,000',
       popular: true,
-      image: '/himlayanheritage.jpg'
+      image: '/hp-memorials.png'
     },
     {
       id: 5,
@@ -335,7 +335,7 @@ const MemberServicesPage = () => {
       features: ['Private mausoleum', 'Washroom & pantry provision', '40sqm to 100sqm', 'Custom layouts'],
       price: 'starting price: ₱3,200,000',
       popular: false,
-      image: '/Malakas-at-Maganda.jpg'
+      image: '/hp-family-estates.png'
     },
     {
       id: 6,
@@ -352,7 +352,7 @@ const MemberServicesPage = () => {
       features: ['80sqm to 250sqm', 'Custom design allowed', 'Largest premium lots', 'Tailored for comfort'],
       price: 'starting price: ₱8,000,000',
       popular: false,
-      image: '/himlayanheritage.jpg'
+      image: '/hp-terraces.png'
     },
     {
       id: 7,
