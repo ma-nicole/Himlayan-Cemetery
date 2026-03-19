@@ -30,7 +30,7 @@ class FeedbackNotification extends Mailable
     public function envelope(): Envelope
     {
         return new Envelope(
-            subject: 'New Contact Form Submission - ' . ($this->feedback->subject ?? 'No Subject'),
+            subject: 'New Feedback Submission',
         );
     }
 

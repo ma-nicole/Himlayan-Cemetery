@@ -41,11 +41,6 @@
                                         <p style="color: #9ca3af; font-size: 11px; text-transform: uppercase; letter-spacing: 1px; margin: 0 0 8px 0; font-weight: 600;">
                                             Your original message
                                         </p>
-                                        @if($feedback->subject)
-                                        <p style="color: #374151; font-size: 14px; font-weight: 600; margin: 0 0 8px 0;">
-                                            {{ $feedback->subject }}
-                                        </p>
-                                        @endif
                                         <p style="color: #6b7280; font-size: 14px; line-height: 1.6; margin: 0; white-space: pre-wrap;">{{ $feedback->message }}</p>
                                     </td>
                                 </tr>

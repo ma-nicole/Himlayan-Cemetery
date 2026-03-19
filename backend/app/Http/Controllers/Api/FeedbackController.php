@@ -77,7 +77,6 @@ class FeedbackController extends Controller
                 $q->where('name', 'like', "%{$search}%")
                   ->orWhere('email', 'like', "%{$search}%")
                   ->orWhere('phone', 'like', "%{$search}%")
-                  ->orWhere('subject', 'like', "%{$search}%")
                   ->orWhere('message', 'like', "%{$search}%");
             });
         }
@@ -109,7 +108,6 @@ class FeedbackController extends Controller
             'email' => 'required|email|max:255',
             'phone' => 'nullable|string|max:20',
             'phone_country_code' => 'nullable|string|max:5',
-            'subject' => 'nullable|string|max:255',
             'message' => 'required|string',
             'rating' => 'nullable|integer|min:1|max:5',
         ]);
@@ -141,7 +139,6 @@ class FeedbackController extends Controller
                 'email' => $validated['email'],
                 'phone' => $validated['phone'] ?? 'N/A',
                 'phone_country_code' => $validated['phone_country_code'] ?? 'N/A',
-                'subject' => $validated['subject'] ?? 'N/A',
                 'message' => $validated['message'],
                 'rating' => $validated['rating'] ?? 'N/A',
             ]);

@@ -17,7 +17,6 @@ class Feedback extends Model
         'email',
         'phone',
         'phone_country_code',
-        'subject',
         'message',
         'rating',
         'status',

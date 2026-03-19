@@ -24,9 +24,6 @@
         .contact-item a { color: #1a472a; text-decoration: none; }
         .contact-item a:hover { text-decoration: underline; }
         .icon { width: 18px; height: 18px; display: inline-block; }
-        .subject-box { background-color: #fff3cd; border-left: 4px solid #ffc107; padding: 12px 15px; border-radius: 0 8px 8px 0; margin-bottom: 20px; }
-        .subject-label { font-size: 11px; text-transform: uppercase; color: #856404; font-weight: 600; }
-        .subject-text { font-size: 16px; color: #333; margin-top: 3px; }
         .rating-container { margin-bottom: 20px; }
         .stars { font-size: 24px; letter-spacing: 2px; }
         .star-filled { color: #fbbf24; }
@@ -82,14 +79,6 @@
                     @endif
                 </div>
             </div>
-
-            <!-- Subject (if provided) -->
-            @if($feedback->subject)
-            <div class="subject-box">
-                <div class="subject-label">📌 Subject</div>
-                <div class="subject-text">{{ $feedback->subject }}</div>
-            </div>
-            @endif
 
             <!-- Rating Display -->
             @if($feedback->rating)
@@ -155,7 +144,7 @@
                     {{-- Contact Form Tips --}}
                     <li>Thank the member for reaching out</li>
                     <li>Address their inquiry or concern directly</li>
-                    <li>Provide clear information about the {{ $feedback->subject ?? 'topic' }}</li>
+                    <li>Provide clear information about the topic</li>
                     <li>Respond within 24-48 hours</li>
                 @else
                     {{-- Feedback Tips --}}
@@ -179,7 +168,7 @@
         <!-- Action Buttons -->
         <div class="actions">
             <div class="action-buttons">
-                <a href="mailto:{{ $feedback->email }}?subject=Re: {{ $feedback->subject ?? 'Your message to Himlayang Pilipino' }}" class="btn btn-primary">
+                <a href="mailto:{{ $feedback->email }}?subject=Re: Your message to Himlayang Pilipino" class="btn btn-primary">
                     ✉️ Reply via Email
                 </a>
                 @if($feedback->phone)
