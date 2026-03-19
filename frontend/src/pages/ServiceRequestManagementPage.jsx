@@ -238,9 +238,17 @@ const ServiceRequestManagementPage = () => {
               <div className="request-details">
                 <p><strong>Requester:</strong> {selectedItem?.user?.name}</p>
                 <p><strong>Service:</strong> {formatServiceType(selectedItem?.service_type || '')}</p>
+                {selectedItem?.product_type && (
+                  <p><strong>Type:</strong> {selectedItem.product_type}</p>
+                )}
+                {selectedItem?.price_range && (
+                  <p><strong>Price Range:</strong> {selectedItem.price_range}</p>
+                )}
                 <p><strong>Description:</strong> {selectedItem?.description || 'No description provided'}</p>
                 <p><strong>Contact:</strong> {selectedItem?.contact_number || 'N/A'}</p>
-                <p><strong>Preferred Date:</strong> {selectedItem?.preferred_date ? new Date(selectedItem.preferred_date).toLocaleDateString() : 'Not specified'}</p>
+                {selectedItem?.preferred_date && (
+                  <p><strong>Preferred Date:</strong> {new Date(selectedItem.preferred_date).toLocaleDateString()}</p>
+                )}
               </div>
 
               <form onSubmit={handleSubmit}>

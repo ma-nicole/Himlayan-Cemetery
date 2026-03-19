@@ -17,11 +17,15 @@ const MemberServicesPage = () => {
     description: '',
     preferred_date: '',
     contact_number: '',
-    country_code: '+63'
+    country_code: '+63',
+    product_type: '',
+    product_radio: '',
+    product_price: ''
   });
   const [submitting, setSubmitting] = useState(false);
   const [submitSuccess, setSubmitSuccess] = useState(false);
   const [contactError, setContactError] = useState('');
+  const [productTypeError, setProductTypeError] = useState('');
   const [myRequests, setMyRequests] = useState([]);
   const [requestsLoading, setRequestsLoading] = useState(false);
   const [filterStatus, setFilterStatus] = useState('');
@@ -133,14 +137,29 @@ const MemberServicesPage = () => {
 
   const openRequestModal = (service) => {
     setSelectedService(service);
-    setRequestForm({ description: '', preferred_date: '', contact_number: '', country_code: '+63' });
+    setRequestForm({ description: '', preferred_date: '', contact_number: '', country_code: '+63', product_type: '', product_radio: '', product_price: '' });
     setContactError('');
+    setProductTypeError('');
     setSubmitSuccess(false);
     setShowRequestModal(true);
   };
 
   const handleSubmitRequest = async (e) => {
     e.preventDefault();
+
+    // Product-specific validation
+    if (selectedService?.category === 'products') {
+      if (!requestForm.product_type) {
+        setProductTypeError('Please select a type.');
+        return;
+      }
+      const opts = productTypes[selectedService.title] || [];
+      const found = opts.find(o => o.label === requestForm.product_type);
+      if (found?.subOptions && !requestForm.product_radio) {
+        setProductTypeError('Please select an option for this type.');
+        return;
+      }
+    }
 
     // Validate contact number digit length (required)
     const rule = phoneRules[requestForm.country_code] || [6, 15];
@@ -152,20 +171,26 @@ const MemberServicesPage = () => {
     if (len < rule[0] || len > rule[1]) {
       const msg = rule[0] === rule[1]
         ? `Contact number must be exactly ${rule[0]} digits for ${requestForm.country_code}`
-        : `Contact number must be ${rule[0]}–${rule[1]} digits for ${requestForm.country_code}`;
+        : `Contact number must be ${rule[0]}\u2013${rule[1]} digits for ${requestForm.country_code}`;
       setContactError(msg);
       return;
     }
 
     setSubmitting(true);
     try {
-      const fullContactNumber = requestForm.contact_number 
-        ? `${requestForm.country_code} ${requestForm.contact_number}` 
+      const fullContactNumber = requestForm.contact_number
+        ? `${requestForm.country_code} ${requestForm.contact_number}`
         : '';
+      const isProduct = selectedService.category === 'products';
+      const productTypeLabel = isProduct
+        ? requestForm.product_type + (requestForm.product_radio ? ` \u2013 ${requestForm.product_radio}` : '')
+        : undefined;
       await api.post('/service-requests', {
         service_type: selectedService.title.toLowerCase().replace(/\s+/g, '_'),
         description: requestForm.description,
-        preferred_date: requestForm.preferred_date,
+        ...(isProduct
+          ? { product_type: productTypeLabel, price_range: requestForm.product_price }
+          : { preferred_date: requestForm.preferred_date }),
         contact_number: fullContactNumber
       });
       setSubmitSuccess(true);
@@ -174,6 +199,51 @@ const MemberServicesPage = () => {
     } finally {
       setSubmitting(false);
     }
+  };
+
+  const productTypes = {
+    'Pugad Lawin Columbary': [
+      { label: 'Ash Crypt (4 urns)', price: '\u20b170,000 \u2013 \u20b1105,000', subOptions: null }
+    ],
+    'Dambana ng Alaala': [
+      {
+        label: 'Ash Crypt (6 urns)',
+        price: null,
+        subOptions: [
+          { label: 'Premium Exterior', price: '\u20b1135,000 \u2013 \u20b1185,000' },
+          { label: 'Premium Interior', price: '\u20b1125,000 \u2013 \u20b1175,000' }
+        ]
+      },
+      {
+        label: 'Bone Crypt (Single)',
+        price: null,
+        subOptions: [
+          { label: 'Premium Exterior', price: '\u20b170,000 \u2013 \u20b185,000' },
+          { label: 'Premium Interior', price: '\u20b170,000 \u2013 \u20b185,000' }
+        ]
+      },
+      {
+        label: 'Bone Crypt (Multiple) \u2013 Premium',
+        price: '\u20b1165,000 \u2013 \u20b1175,000',
+        subOptions: null
+      }
+    ],
+    'Lawn Lots': [
+      { label: 'Lawn Lot', price: '\u20b1355,000 \u2013 \u20b1424,760', subOptions: null }
+    ],
+    'Memorials': [
+      { label: '4-Lot Inventory', price: '\u20b11,200,000 \u2013 \u20b12,250,000', subOptions: null },
+      { label: '8-Lot Inventory', price: '\u20b12,400,000', subOptions: null }
+    ],
+    'Family Estates': [
+      { label: '8-Lots Premium', price: '\u20b13,200,000', subOptions: null },
+      { label: '16-Lot Inventory', price: '\u20b16,400,000', subOptions: null },
+      { label: '24-Lot Inventory', price: '\u20b19,600,000', subOptions: null },
+      { label: '27-Lot Inventory', price: '\u20b110,800,000', subOptions: null }
+    ],
+    'Terraces': [
+      { label: 'Terrace', price: '\u20b18,000,000 \u2013 \u20b128,000,000', subOptions: null }
+    ]
   };
 
   const services = [
@@ -620,8 +690,7 @@ const MemberServicesPage = () => {
         {/* Services Grid */}
         <section className="services-grid">
           {filteredServices.map((service) => (
-            <div key={service.id} className={`service-card ${service.popular ? 'popular' : ''}`}>
-              {service.popular && <div className="popular-badge">Most Popular</div>}
+            <div key={service.id} className="service-card">
               <div className="service-image" style={{ backgroundImage: `url(${service.image})` }}>
                 <div className="service-icon">{service.icon}</div>
               </div>
@@ -633,7 +702,9 @@ const MemberServicesPage = () => {
                 <p className="service-description">{service.description}</p>
                 <div className="service-footer">
                   <span className="service-price">{service.price}</span>
-                  <button className="inquire-btn" onClick={() => openRequestModal(service)}>Request Service</button>
+                  <button className="inquire-btn" onClick={() => openRequestModal(service)}>
+                    {service.category === 'products' ? 'Request Product' : 'Request Service'}
+                  </button>
                 </div>
               </div>
             </div>
@@ -741,87 +812,189 @@ const MemberServicesPage = () => {
               </div>
             ) : (
               <>
-                <h2>Request: {selectedService?.title}</h2>
+                <h2>{selectedService?.category === 'products' ? 'Request Product' : 'Request'}: {selectedService?.title}</h2>
                 <p className="modal-subtitle">{selectedService?.subtitle}</p>
-                
+
                 <form onSubmit={handleSubmitRequest}>
-                  <div className="form-group">
-                    <label>Preferred Date <span className="required-star">*</span></label>
-                    <input
-                      type="date"
-                      value={requestForm.preferred_date}
-                      onChange={(e) => { e.target.setCustomValidity(''); setRequestForm({...requestForm, preferred_date: e.target.value}); }}
-                      onInvalid={(e) => {
-                        if (e.target.validity.rangeOverflow) {
-                          const [y, m, d] = e.target.max.split('-');
-                          e.target.setCustomValidity(`Please select a date on or before ${m}/${d}/${y}`);
-                        } else {
-                          e.target.setCustomValidity('');
-                        }
-                      }}
-                      min={new Date().toISOString().split('T')[0]}
-                      max={new Date(new Date().setFullYear(new Date().getFullYear() + 1)).toISOString().split('T')[0]}
-                      required
-                    />
-                  </div>
-                  <div className="form-group">
-                    <label>Contact Number <span className="required-star">*</span></label>
-                    <div style={{ display: 'flex', gap: '8px', alignItems: 'flex-start' }}>
-                      <select 
-                        className="form-control"
-                        value={requestForm.country_code}
-                        onChange={(e) => {
-                          setRequestForm({...requestForm, country_code: e.target.value, contact_number: ''});
-                          setContactError('');
-                        }}
-                        style={{ flex: '0 0 100px' }}
-                      >
-                        <option value="+63">🇵🇭 +63</option>
-                        <option value="+1">🇺🇸 +1</option>
-                        <option value="+44">🇬🇧 +44</option>
-                        <option value="+81">🇯🇵 +81</option>
-                        <option value="+82">🇰🇷 +82</option>
-                        <option value="+86">🇨🇳 +86</option>
-                        <option value="+65">🇸🇬 +65</option>
-                        <option value="+60">🇲🇾 +60</option>
-                        <option value="+61">🇦🇺 +61</option>
-                        <option value="+971">🇦🇪 +971</option>
-                        <option value="+966">🇸🇦 +966</option>
-                        <option value="+39">🇮🇹 +39</option>
-                        <option value="+49">🇩🇪 +49</option>
-                        <option value="+33">🇫🇷 +33</option>
-                        <option value="+34">🇪🇸 +34</option>
-                      </select>
-                      <div style={{ flex: '1' }}>
-                        <input
-                          type="tel"
-                          className={`form-control${contactError ? ' error' : ''}`}
-                          value={requestForm.contact_number}
-                          onChange={handleContactChange}
-                          placeholder={`digits only`}
-                          inputMode="numeric"
-                        />
-                        {contactError ? (
-                          <small style={{ color: '#dc2626', fontSize: '0.78rem', marginTop: '4px', display: 'block' }}>
-                            {contactError}
-                          </small>
-                        ) : (
-                          <small style={{ color: '#6b7280', fontSize: '0.78rem', marginTop: '4px', display: 'block' }}>
-                            {phoneHints[requestForm.country_code] || '6–15 digits'}
-                          </small>
+                  {selectedService?.category === 'products' ? (
+                    /* ── PRODUCT FORM ── */
+                    <>
+                      <div className="form-group">
+                        <label>Type <span className="required-star">*</span></label>
+                        <select
+                          className={`form-control${productTypeError ? ' error' : ''}`}
+                          value={requestForm.product_type}
+                          onChange={(e) => {
+                            const label = e.target.value;
+                            const opts = productTypes[selectedService.title] || [];
+                            const found = opts.find(o => o.label === label);
+                            const directPrice = found && !found.subOptions ? found.price : '';
+                            setRequestForm({ ...requestForm, product_type: label, product_radio: '', product_price: directPrice });
+                            setProductTypeError('');
+                          }}
+                        >
+                          <option value="">Select a type…</option>
+                          {(productTypes[selectedService.title] || []).map(opt => (
+                            <option key={opt.label} value={opt.label}>{opt.label}</option>
+                          ))}
+                        </select>
+                        {productTypeError && (
+                          <small style={{ color: '#dc2626', fontSize: '0.78rem', marginTop: '4px', display: 'block' }}>{productTypeError}</small>
+                        )}
+                        {(() => {
+                          const opts = productTypes[selectedService.title] || [];
+                          const sel = opts.find(o => o.label === requestForm.product_type);
+                          if (!sel || !sel.subOptions) return null;
+                          return (
+                            <div style={{ marginTop: '12px', padding: '12px', background: '#f9fafb', borderRadius: '8px', border: '1px solid #e5e7eb' }}>
+                              {sel.subOptions.map(sub => (
+                                <label key={sub.label} style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '6px 0', cursor: 'pointer', fontSize: '0.875rem', color: '#374151' }}>
+                                  <input
+                                    type="radio"
+                                    name="product_radio"
+                                    value={sub.label}
+                                    checked={requestForm.product_radio === sub.label}
+                                    onChange={() => setRequestForm({ ...requestForm, product_radio: sub.label, product_price: sub.price })}
+                                  />
+                                  {sub.label}
+                                </label>
+                              ))}
+                            </div>
+                          );
+                        })()}
+                        {requestForm.product_price && (
+                          <div style={{ marginTop: '8px', padding: '8px 12px', background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: '6px', fontSize: '0.85rem', color: '#166534', fontWeight: '600' }}>
+                            Price Range: {requestForm.product_price}
+                          </div>
                         )}
                       </div>
-                    </div>
-                  </div>
-                  <div className="form-group">
-                    <label>Additional Details</label>
-                    <textarea
-                      rows="4"
-                      value={requestForm.description}
-                      onChange={(e) => setRequestForm({...requestForm, description: e.target.value})}
-                      placeholder="Tell us more about your requirements..."
-                    />
-                  </div>
+                      <div className="form-group">
+                        <label>Contact Number <span className="required-star">*</span></label>
+                        <div style={{ display: 'flex', gap: '8px', alignItems: 'flex-start' }}>
+                          <select
+                            className="form-control"
+                            value={requestForm.country_code}
+                            onChange={(e) => { setRequestForm({...requestForm, country_code: e.target.value, contact_number: ''}); setContactError(''); }}
+                            style={{ flex: '0 0 100px' }}
+                          >
+                            <option value="+63">🇵🇭 +63</option>
+                            <option value="+1">🇺🇸 +1</option>
+                            <option value="+44">🇬🇧 +44</option>
+                            <option value="+81">🇯🇵 +81</option>
+                            <option value="+82">🇰🇷 +82</option>
+                            <option value="+86">🇨🇳 +86</option>
+                            <option value="+65">🇸🇬 +65</option>
+                            <option value="+60">🇲🇾 +60</option>
+                            <option value="+61">🇦🇺 +61</option>
+                            <option value="+971">🇦🇪 +971</option>
+                            <option value="+966">🇸🇦 +966</option>
+                            <option value="+39">🇮🇹 +39</option>
+                            <option value="+49">🇩🇪 +49</option>
+                            <option value="+33">🇫🇷 +33</option>
+                            <option value="+34">🇪🇸 +34</option>
+                          </select>
+                          <div style={{ flex: '1' }}>
+                            <input
+                              type="tel"
+                              className={`form-control${contactError ? ' error' : ''}`}
+                              value={requestForm.contact_number}
+                              onChange={handleContactChange}
+                              placeholder="digits only"
+                              inputMode="numeric"
+                            />
+                            {contactError ? (
+                              <small style={{ color: '#dc2626', fontSize: '0.78rem', marginTop: '4px', display: 'block' }}>{contactError}</small>
+                            ) : (
+                              <small style={{ color: '#6b7280', fontSize: '0.78rem', marginTop: '4px', display: 'block' }}>{phoneHints[requestForm.country_code] || '6–15 digits'}</small>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                      <div className="form-group">
+                        <label>Additional Details</label>
+                        <textarea
+                          rows="4"
+                          value={requestForm.description}
+                          onChange={(e) => setRequestForm({...requestForm, description: e.target.value})}
+                          placeholder="Tell us more about your requirements..."
+                        />
+                      </div>
+                    </>
+                  ) : (
+                    /* ── SERVICE FORM ── */
+                    <>
+                      <div className="form-group">
+                        <label>Preferred Date <span className="required-star">*</span></label>
+                        <input
+                          type="date"
+                          value={requestForm.preferred_date}
+                          onChange={(e) => { e.target.setCustomValidity(''); setRequestForm({...requestForm, preferred_date: e.target.value}); }}
+                          onInvalid={(e) => {
+                            if (e.target.validity.rangeOverflow) {
+                              const [y, m, d] = e.target.max.split('-');
+                              e.target.setCustomValidity(`Please select a date on or before ${m}/${d}/${y}`);
+                            } else {
+                              e.target.setCustomValidity('');
+                            }
+                          }}
+                          min={new Date().toISOString().split('T')[0]}
+                          max={new Date(new Date().setFullYear(new Date().getFullYear() + 1)).toISOString().split('T')[0]}
+                          required
+                        />
+                      </div>
+                      <div className="form-group">
+                        <label>Contact Number <span className="required-star">*</span></label>
+                        <div style={{ display: 'flex', gap: '8px', alignItems: 'flex-start' }}>
+                          <select
+                            className="form-control"
+                            value={requestForm.country_code}
+                            onChange={(e) => { setRequestForm({...requestForm, country_code: e.target.value, contact_number: ''}); setContactError(''); }}
+                            style={{ flex: '0 0 100px' }}
+                          >
+                            <option value="+63">🇵🇭 +63</option>
+                            <option value="+1">🇺🇸 +1</option>
+                            <option value="+44">🇬🇧 +44</option>
+                            <option value="+81">🇯🇵 +81</option>
+                            <option value="+82">🇰🇷 +82</option>
+                            <option value="+86">🇨🇳 +86</option>
+                            <option value="+65">🇸🇬 +65</option>
+                            <option value="+60">🇲🇾 +60</option>
+                            <option value="+61">🇦🇺 +61</option>
+                            <option value="+971">🇦🇪 +971</option>
+                            <option value="+966">🇸🇦 +966</option>
+                            <option value="+39">🇮🇹 +39</option>
+                            <option value="+49">🇩🇪 +49</option>
+                            <option value="+33">🇫🇷 +33</option>
+                            <option value="+34">🇪🇸 +34</option>
+                          </select>
+                          <div style={{ flex: '1' }}>
+                            <input
+                              type="tel"
+                              className={`form-control${contactError ? ' error' : ''}`}
+                              value={requestForm.contact_number}
+                              onChange={handleContactChange}
+                              placeholder="digits only"
+                              inputMode="numeric"
+                            />
+                            {contactError ? (
+                              <small style={{ color: '#dc2626', fontSize: '0.78rem', marginTop: '4px', display: 'block' }}>{contactError}</small>
+                            ) : (
+                              <small style={{ color: '#6b7280', fontSize: '0.78rem', marginTop: '4px', display: 'block' }}>{phoneHints[requestForm.country_code] || '6–15 digits'}</small>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                      <div className="form-group">
+                        <label>Additional Details</label>
+                        <textarea
+                          rows="4"
+                          value={requestForm.description}
+                          onChange={(e) => setRequestForm({...requestForm, description: e.target.value})}
+                          placeholder="Tell us more about your requirements..."
+                        />
+                      </div>
+                    </>
+                  )}
                   <div className="form-actions">
                     <button type="button" className="btn-cancel" onClick={() => setShowRequestModal(false)}>Cancel</button>
                     <button type="submit" className="btn-submit" disabled={submitting}>
