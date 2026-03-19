@@ -368,7 +368,7 @@ const MemberServicesPage = () => {
       features: [],
       price: 'Contact for pricing',
       popular: false,
-      image: '/Teresa-Magbanua-scaled.jpg'
+      image: '/hp-internment.jpg'
     },
     {
       id: 8,
@@ -384,7 +384,7 @@ const MemberServicesPage = () => {
       features: [],
       price: 'Contact for pricing',
       popular: false,
-      image: '/Gabriela-Silang-scaled.jpg'
+      image: '/hp-cremation.jpg'
     },
     {
       id: 9,
@@ -400,7 +400,7 @@ const MemberServicesPage = () => {
       features: [],
       price: 'Contact for pricing',
       popular: false,
-      image: '/Teresa-Magbanua-scaled.jpg'
+      image: '/hp-funeral-chapels.jpg'
     },
     {
       id: 10,
@@ -417,7 +417,7 @@ const MemberServicesPage = () => {
       features: [],
       price: 'Contact for pricing',
       popular: true,
-      image: '/Gabriela-Silang-scaled.jpg'
+      image: '/hp-packages.jpg'
     }
   ];
 
