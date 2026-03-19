@@ -1,7 +1,7 @@
 /**
  * Shared photo URL resolution utility.
  *
- * Normalises whatever the API returns for deceased_photo_url:
+ * Normalises whatever the API returns for deceased_photo_url or avatar:
  *  - relative path  → backendBaseUrl/storage/<path>
  *  - full URL with /api/storage→ strip /api prefix
  *  - localhost URL  → rewrite host to backendBaseUrl
@@ -56,3 +56,14 @@ export const resolvePhotoUrl = (photoValue, updatedAt = null) => {
 
   return resolvedUrl;
 };
+
+/**
+ * Resolve a user avatar URL. Same logic as resolvePhotoUrl.
+ * Convenience alias so pages dealing with user avatars can import by name.
+ *
+ * @param {string|null|undefined} avatarValue
+ * @param {string|null|undefined} updatedAt
+ * @returns {string|null}
+ */
+export const resolveAvatarUrl = (avatarValue, updatedAt = null) =>
+  resolvePhotoUrl(avatarValue, updatedAt);

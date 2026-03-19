@@ -11,6 +11,7 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import api from '../services/api'; // API service for making HTTP requests
+import { resolvePhotoUrl } from '../utils/imageHelpers';
 import '../styles/MemberSearch.css'; // Reusing member search styles
 
 const PublicSearchPage = () => {
@@ -164,9 +165,9 @@ const PublicSearchPage = () => {
                     <div key={result.id} className="result-card">
                       {/* Avatar icon for the deceased person */}
                       <div className="result-avatar">
-                        {result.deceased_photo_url ? (
+                        {resolvePhotoUrl(result.deceased_photo_url, result.updated_at) ? (
                           <img 
-                            src={result.deceased_photo_url} 
+                            src={resolvePhotoUrl(result.deceased_photo_url, result.updated_at)} 
                             alt={result.deceased_name}
                             style={{ 
                               width: '100%', 

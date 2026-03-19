@@ -87,7 +87,7 @@ const PublicGravePage = () => {
         <div className="grave-profile-header">
           {(profile.deceased_photo_url || profile.photo_url) && (
             <img
-              src={resolvePhotoUrl(profile.deceased_photo_url || profile.photo_url)}
+              src={resolvePhotoUrl(profile.deceased_photo_url || profile.photo_url, profile.updated_at)}
               alt={profile.deceased_name}
               style={{
                 width: '120px',

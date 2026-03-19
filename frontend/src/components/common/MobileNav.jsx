@@ -1,4 +1,5 @@
 import React from 'react';
+import { resolveAvatarUrl } from '../../utils/imageHelpers';
 import './MobileNav.css';
 
 const MobileNav = ({ 
@@ -48,9 +49,9 @@ const MobileNav = ({
         {user && (
           <div className="mobile-nav-user">
             <div className="user-avatar">
-              {user.avatar ? (
+              {resolveAvatarUrl(user.avatar, user.updated_at) ? (
                 <img
-                  src={user.avatar}
+                  src={resolveAvatarUrl(user.avatar, user.updated_at)}
                   alt="Profile"
                   className="user-avatar-image"
                   onError={(e) => {
@@ -62,7 +63,7 @@ const MobileNav = ({
               ) : null}
               <span
                 className="user-avatar-fallback"
-                style={{ display: user.avatar ? 'none' : 'flex' }}
+                style={{ display: resolveAvatarUrl(user.avatar) ? 'none' : 'flex' }}
               >
                 {user.name?.charAt(0).toUpperCase() || user.email?.charAt(0).toUpperCase()}
               </span>

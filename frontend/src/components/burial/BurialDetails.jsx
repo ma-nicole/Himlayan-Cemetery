@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { sendInvitation, resendInvitation, getInvitationStatus } from '../../services/invitationService';
+import { resolvePhotoUrl } from '../../utils/imageHelpers';
 
 const BurialDetails = ({ burial, qrData, onClose, onGenerateQR }) => {
   const [invitationStatus, setInvitationStatus] = useState(null);
@@ -162,7 +163,7 @@ const BurialDetails = ({ burial, qrData, onClose, onGenerateQR }) => {
                   boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
                 }}>
                   <img 
-                    src={burial.deceased_photo_url.startsWith('http') ? burial.deceased_photo_url : `${process.env.REACT_APP_API_URL || 'https://himlayangpilipino.com/api'}/storage/${burial.deceased_photo_url}`}
+                    src={resolvePhotoUrl(burial.deceased_photo_url, burial.updated_at)}
                     alt={burial.deceased_name}
                     style={{
                       width: '100%',

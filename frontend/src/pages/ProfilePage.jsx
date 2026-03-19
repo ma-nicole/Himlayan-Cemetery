@@ -6,6 +6,7 @@ import { useAuth } from '../hooks/useAuth';
 import { useToast } from '../context/ToastContext';
 import api from '../services/api';
 import { validateName, validateEmail, validatePhone, validateAddress } from '../utils/formValidator';
+import { resolveAvatarUrl } from '../utils/imageHelpers';
 import './ProfilePage.css';
 
 const ProfilePage = () => {
@@ -242,9 +243,9 @@ const ProfilePage = () => {
           <div className="profile-avatar">
             {formData.avatarPreview ? (
               <img src={formData.avatarPreview} alt="Avatar" className="avatar-image" />
-            ) : user?.avatar ? (
+            ) : resolveAvatarUrl(user?.avatar, user?.updated_at) ? (
               <img 
-                src={user.avatar} 
+                src={resolveAvatarUrl(user?.avatar, user?.updated_at)} 
                 alt="Avatar" 
                 className="avatar-image" 
                 onError={(e) => {
@@ -253,8 +254,8 @@ const ProfilePage = () => {
                 }} 
               />
             ) : null}
-            {!formData.avatarPreview && !user?.avatar && (
-              <span className="avatar-text" style={{ display: formData.avatarPreview || user?.avatar ? 'none' : 'flex' }}>
+            {!formData.avatarPreview && !resolveAvatarUrl(user?.avatar) && (
+              <span className="avatar-text" style={{ display: formData.avatarPreview || resolveAvatarUrl(user?.avatar) ? 'none' : 'flex' }}>
                 {formData.name.charAt(0).toUpperCase()}
               </span>
             )}

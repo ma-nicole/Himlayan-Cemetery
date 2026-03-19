@@ -7,10 +7,34 @@ use App\Services\ValidationRules;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
 
 class UserController extends Controller
 {
+    /**
+     * Resolve avatar path to a full URL (mirrors AuthController::buildAvatarUrl).
+     */
+    private function buildAvatarUrl(?string $avatarPath): ?string
+    {
+        if (!$avatarPath || trim($avatarPath) === '') {
+            return null;
+        }
+
+        $avatarPath = trim($avatarPath);
+
+        if (preg_match('/^https?:\/\//i', $avatarPath)) {
+            return preg_replace('/^http:\/\//i', 'https://', $avatarPath);
+        }
+
+        $normalized = ltrim(str_replace('\\', '/', $avatarPath), '/');
+        if (str_starts_with($normalized, 'storage/')) {
+            $normalized = substr($normalized, strlen('storage/'));
+        }
+
+        return Storage::disk('public')->url($normalized);
+    }
+
     /**
      * Display a listing of all users including pending invited users
      */
@@ -355,10 +379,14 @@ class UserController extends Controller
 
         $user->save();
 
+        // Return user data with normalized avatar URL
+        $userData = $user->toArray();
+        $userData['avatar'] = $this->buildAvatarUrl($user->avatar);
+
         return response()->json([
             'success' => true,
             'message' => 'Profile updated successfully',
-            'data' => $user
+            'data' => $userData
         ]);
     }
 }

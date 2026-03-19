@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import api from '../services/api'; // For making search API requests
 import { validateName, validateEmail, validateTextArea, validatePhone } from '../utils/formValidator';
+import { resolvePhotoUrl } from '../utils/imageHelpers';
 
 const LandingPage = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -475,9 +476,9 @@ const LandingPage = () => {
                       <div key={result.id} className="landing-result-card">
                         <div className="result-card-header">
                           <div className="result-avatar-icon">
-                            {result.deceased_photo_url ? (
+                            {resolvePhotoUrl(result.deceased_photo_url, result.updated_at) ? (
                               <img 
-                                src={result.deceased_photo_url} 
+                                src={resolvePhotoUrl(result.deceased_photo_url, result.updated_at)} 
                                 alt={result.deceased_name}
                                 style={{ 
                                   width: '100%', 

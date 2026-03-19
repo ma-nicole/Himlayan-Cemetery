@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth';
 import MobileNav, { HamburgerButton } from './MobileNav';
+import { resolveAvatarUrl } from '../../utils/imageHelpers';
 import './MemberHeader.css';
 
 const MemberHeader = () => {
@@ -108,9 +109,9 @@ const MemberHeader = () => {
             className="member-user-avatar"
             title="Edit Profile"
           >
-            {user?.avatar ? (
+            {resolveAvatarUrl(user?.avatar, user?.updated_at) ? (
               <img 
-                src={user.avatar} 
+                src={resolveAvatarUrl(user?.avatar, user?.updated_at)} 
                 alt="Profile" 
                 className="avatar-image"
                 onError={(e) => {
@@ -121,7 +122,7 @@ const MemberHeader = () => {
             ) : null}
             <span 
               className="avatar-initials"
-              style={{ display: user?.avatar ? 'none' : 'flex' }}
+              style={{ display: resolveAvatarUrl(user?.avatar, user?.updated_at) ? 'none' : 'flex' }}
             >
               {user?.name?.charAt(0).toUpperCase()}
             </span>

@@ -82,6 +82,7 @@ class PublicController extends Controller
             'obituary' => $record->obituary,
             'photo_url' => $record->photo_url,
             'deceased_photo_url' => $this->buildDeceasedPhotoUrl($record->deceased_photo_url),
+            'updated_at' => $record->updated_at?->toISOString(),
             'location' => [
                 'plot_number' => $plot->plot_number,
                 'section' => $plot->section,
@@ -153,6 +154,7 @@ class PublicController extends Controller
                     'id' => $record->id,
                     'deceased_name' => $record->deceased_name,
                     'deceased_photo_url' => $this->buildDeceasedPhotoUrl($record->deceased_photo_url),
+                    'updated_at' => $record->updated_at?->toISOString(),
                     'birth_date' => $record->birth_date?->format('Y-m-d'),
                     'death_date' => $record->death_date?->format('Y-m-d'),
                     'plot' => $record->plot ? [

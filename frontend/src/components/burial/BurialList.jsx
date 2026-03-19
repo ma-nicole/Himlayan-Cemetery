@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useAuth } from '../../hooks/useAuth';
+import { resolvePhotoUrl } from '../../utils/imageHelpers';
 
 const BurialList = ({ records, onView, onEdit, onDelete, onGenerateQR, onSort, sortField, sortOrder }) => {
   const { isAdmin } = useAuth();
@@ -80,7 +81,7 @@ const BurialList = ({ records, onView, onEdit, onDelete, onGenerateQR, onSort, s
                       flexShrink: 0
                     }}>
                       <img 
-                        src={record.deceased_photo_url.startsWith('http') ? record.deceased_photo_url : `${process.env.REACT_APP_API_URL || 'https://himlayangpilipino.com/api'}/storage/${record.deceased_photo_url}`}
+                        src={resolvePhotoUrl(record.deceased_photo_url, record.updated_at)}
                         alt={record.deceased_name}
                         style={{
                           width: '100%',

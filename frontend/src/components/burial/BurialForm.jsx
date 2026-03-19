@@ -3,6 +3,7 @@ import plotService from '../../services/plotService';
 import { getInvitationStatus } from '../../services/invitationService';
 import userService from '../../services/userService';
 import { validateName, validateEmail, validatePhone, validateDate, validateBirthDate, validateDeathDate, validateBurialDate } from '../../utils/formValidator';
+import { resolvePhotoUrl } from '../../utils/imageHelpers';
 
 const BurialForm = ({ burial, onSubmit, onCancel }) => {
   const [formData, setFormData] = useState({
@@ -152,7 +153,7 @@ const BurialForm = ({ burial, onSubmit, onCancel }) => {
 
       // Set photo preview if exists
       if (burial.deceased_photo_url) {
-        setPhotoPreview(burial.deceased_photo_url);
+        setPhotoPreview(resolvePhotoUrl(burial.deceased_photo_url, burial.updated_at));
       }
     }
   }, [burial]);
