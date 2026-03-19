@@ -76,6 +76,11 @@ class ServiceRequestController extends Controller
             'contact_number' => 'required|string|max:20',
         ]);
 
+        // Product requests never have a preferred date — ignore whatever was sent.
+        if ($isProduct) {
+            $validated['preferred_date'] = null;
+        }
+
         $serviceRequest = ServiceRequest::create([
             ...$validated,
             'user_id' => auth()->id(),
