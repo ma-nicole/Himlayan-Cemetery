@@ -39,7 +39,9 @@ class UserController extends Controller
 
         // Route through the backend API file-serving endpoint to avoid
         // relying on the /storage symlink in public_html.
-        return rtrim(config('app.url'), '/') . '/api/file/' . $normalized;
+        // Strip any /api suffix from APP_URL so the result is always domain.com/api/file/...
+        $baseUrl = rtrim(preg_replace('#/api/?$#i', '', rtrim(config('app.url'), '/')), '/');
+        return $baseUrl . '/api/file/' . $normalized;
     }
 
     /**

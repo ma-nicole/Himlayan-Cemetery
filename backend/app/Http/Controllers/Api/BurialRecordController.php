@@ -36,15 +36,18 @@ class BurialRecordController extends Controller
         // Relative path: strip leading slash and any 'storage/' prefix,
         // then route through the backend API file-serving endpoint to avoid
         // relying on the /storage symlink in public_html.
+        // Strip any /api suffix from APP_URL so the result is always domain.com/api/file/...
+        // (guards against APP_URL = https://domain.com/api which would produce /api/api/).
         $relative = ltrim($photoPath, '/');
         $relative = preg_replace('#^storage/#i', '', $relative);
 
-        return rtrim(config('app.url'), '/') . '/api/file/' . $relative;
+        $baseUrl = rtrim(preg_replace('#/api/?$#i', '', rtrim(config('app.url'), '/')), '/');
+        return $baseUrl . '/api/file/' . $relative;
     }
 
     /**
      * Safely delete a photo file from storage.
-     * Accepts both relative storage keys and full URLs.
+     * Accepts relative storage keys, /storage/ URLs, and /api/file/ URLs.
      */
     private function deletePhotoFile(?string $photoPath): void
     {
@@ -57,8 +60,10 @@ class BurialRecordController extends Controller
             $parsed = parse_url($photoPath);
             $key = ltrim($parsed['path'] ?? '', '/');
         }
-        // Strip any 'storage/' prefix to get the Storage disk key
-        $key = ltrim(preg_replace('#^storage/#i', '', $key), '/');
+        // Strip routing prefixes to get the bare Storage disk key:
+        //   storage/deceased_photos/x.jpg    → deceased_photos/x.jpg
+        //   api/file/deceased_photos/x.jpg   → deceased_photos/x.jpg
+        $key = ltrim(preg_replace('#^(api/file/|storage/)#i', '', $key), '/');
 
         if ($key && Storage::disk('public')->exists($key)) {
             Storage::disk('public')->delete($key);
