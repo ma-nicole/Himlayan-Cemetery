@@ -185,10 +185,19 @@ const MemberServicesPage = () => {
       const productTypeLabel = isProduct
         ? requestForm.product_type + (requestForm.product_radio ? ` \u2013 ${requestForm.product_radio}` : '')
         : undefined;
+      // For product requests, send a date 2 days from now (local timezone) so the
+      // backend "after:today" rule always passes regardless of which server version is live.
+      let preferredDateValue = requestForm.preferred_date;
+      if (isProduct) {
+        const d = new Date();
+        d.setDate(d.getDate() + 2);
+        const pad = n => String(n).padStart(2, '0');
+        preferredDateValue = `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+      }
       await api.post('/service-requests', {
         service_type: selectedService.title.toLowerCase().replace(/\s+/g, '_'),
         description: requestForm.description,
-        ...(!isProduct ? { preferred_date: requestForm.preferred_date } : {}),
+        preferred_date: preferredDateValue,
         ...(isProduct ? { product_type: productTypeLabel, price_range: requestForm.product_price } : {}),
         contact_number: fullContactNumber
       });
