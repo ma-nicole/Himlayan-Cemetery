@@ -70,7 +70,7 @@ class ServiceRequestController extends Controller
             'product_type' => 'nullable|string|max:255',
             'price_range' => 'nullable|string|max:100',
             'description' => 'nullable|string',
-            'preferred_date' => 'nullable|date|after:today',
+            'preferred_date' => 'sometimes|nullable|date|after:today',
             'contact_number' => 'required|string|max:20',
         ]);
 
