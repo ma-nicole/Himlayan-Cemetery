@@ -599,16 +599,6 @@ const MemberServicesPage = () => {
                   <span className="service-subtitle">{service.subtitle}</span>
                 </div>
                 <p className="service-description">{service.description}</p>
-                <ul className="service-features">
-                  {service.features.map((feature, idx) => (
-                    <li key={idx}>
-                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                        <polyline points="20 6 9 17 4 12"/>
-                      </svg>
-                      {feature}
-                    </li>
-                  ))}
-                </ul>
                 <div className="service-footer">
                   <span className="service-price">{service.price}</span>
                   <button className="inquire-btn" onClick={() => openRequestModal(service)}>Request Service</button>
