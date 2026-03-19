@@ -289,14 +289,14 @@ const MemberServicesPage = () => {
       category: 'services',
       icon: (
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-          <path d="M18 2H6a2 2 0 00-2 2v16l8-4 8 4V4a2 2 0 00-2-2z"/>
+          <path d="M12 3v18M5 8l7-5 7 5M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8"/>
         </svg>
       ),
-      title: 'Chapel Services',
-      subtitle: 'Memorial Masses & Events',
-      description: 'Our chapel is available for memorial masses, prayer services, and other religious ceremonies.',
-      features: ['Air-conditioned', '100+ seating capacity', 'Audio-visual system', 'Parking available'],
-      price: 'Starting at ₱5,000/event',
+      title: 'Internment',
+      subtitle: 'Compassionate Interment Services',
+      description: 'Experience compassionate interments with our services. We ensure a respectful and serene final resting place for your loved ones, providing personalized care and support during this difficult time.',
+      features: [],
+      price: 'Contact for pricing',
       popular: false,
       image: '/Teresa-Magbanua-scaled.jpg'
     },
@@ -305,15 +305,47 @@ const MemberServicesPage = () => {
       category: 'services',
       icon: (
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+          <path d="M17 3a2.828 2.828 0 114 4L7.5 20.5 2 22l1.5-5.5L17 3z"/>
+        </svg>
+      ),
+      title: 'Cremation',
+      subtitle: 'Dignified Cremation Process',
+      description: 'Our cremation process is done in a dignified manner and as solemn as possible. We can help you hold ceremonies appropriate to your religious beliefs and needs.',
+      features: [],
+      price: 'Contact for pricing',
+      popular: false,
+      image: '/Gabriela-Silang-scaled.jpg'
+    },
+    {
+      id: 9,
+      category: 'services',
+      icon: (
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+          <path d="M18 2H6a2 2 0 00-2 2v16l8-4 8 4V4a2 2 0 00-2-2z"/>
+        </svg>
+      ),
+      title: 'Funeral Chapels',
+      subtitle: 'Flexible Chapel Spaces',
+      description: 'We have made our chapels flexible to address your every need. Our chapels can accommodate 30 to 200 people, depending on the number of people expected to pay their respects.',
+      features: [],
+      price: 'Contact for pricing',
+      popular: false,
+      image: '/Teresa-Magbanua-scaled.jpg'
+    },
+    {
+      id: 10,
+      category: 'services',
+      icon: (
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
           <rect x="1" y="3" width="15" height="13" rx="2"/>
           <path d="M16 8h4l3 3v5a2 2 0 01-2 2h-1M16 16H8M5.5 19.5a2.5 2.5 0 100-5 2.5 2.5 0 000 5zM18.5 19.5a2.5 2.5 0 100-5 2.5 2.5 0 000 5z"/>
         </svg>
       ),
-      title: 'Burial Coordination',
-      subtitle: 'Complete Assistance',
-      description: 'Complete and organized burial assistance from start to finish. One call and we\'ll take care of everything.',
-      features: ['Funeral home coordination', 'Equipment rental', 'Staff assistance', 'Documentation help'],
-      price: 'Starting at ₱15,000',
+      title: 'Packages',
+      subtitle: 'Care & Compassion Packages',
+      description: 'Designed with care and compassion, our packages ensure that your loved one is honored with dignity and respect. We have thoughtfully prepared packages for cremation, chapel viewing, and everything in between. Families can choose which suits their needs.',
+      features: [],
+      price: 'Contact for pricing',
       popular: true,
       image: '/Gabriela-Silang-scaled.jpg'
     }
