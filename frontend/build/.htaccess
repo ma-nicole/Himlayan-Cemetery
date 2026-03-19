@@ -1,0 +1,21 @@
+Options +FollowSymLinks
+RewriteEngine On
+
+# Block direct access to the storage config
+RewriteRule ^\.storage_config$ - [F,L]
+
+# API requests pass through to Laravel
+RewriteCond %{REQUEST_URI} ^/api(/|$) [NC]
+RewriteRule ^ - [L]
+
+# Storage files are served via PHP proxy (bypasses symlink issues)
+RewriteCond %{REQUEST_URI} ^/storage/
+RewriteRule ^storage/(.*)$ /storage.php?file=$1 [QSA,L]
+
+# Existing files/directories are served directly
+RewriteCond %{REQUEST_FILENAME} -f [OR]
+RewriteCond %{REQUEST_FILENAME} -d
+RewriteRule ^ - [L]
+
+# Everything else falls back to the React SPA
+RewriteRule . /index.html [L]

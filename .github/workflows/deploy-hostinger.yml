@@ -232,10 +232,11 @@ jobs:
               cat > "$FRONTEND_PUBLIC_PATH/.htaccess" <<'HTEOF'
             Options +FollowSymLinks
             RewriteEngine On
+            RewriteRule ^\.storage_config$ - [F,L]
             RewriteCond %{REQUEST_URI} ^/api(/|$) [NC]
             RewriteRule ^ - [L]
-            RewriteCond %{REQUEST_URI} ^/storage(/|$) [NC]
-            RewriteRule ^ - [L]
+            RewriteCond %{REQUEST_URI} ^/storage/
+            RewriteRule ^storage/(.*)$ /storage.php?file=$1 [QSA,L]
             RewriteCond %{REQUEST_FILENAME} -f [OR]
             RewriteCond %{REQUEST_FILENAME} -d
             RewriteRule ^ - [L]
@@ -283,6 +284,9 @@ jobs:
                 ln -sf "$STORAGE_TARGET" "$STORAGE_LINK"
                 echo "Storage symlink (re)created: $STORAGE_LINK -> $STORAGE_TARGET"
               fi
+
+              printf '%s' "$STORAGE_TARGET" > "$FRONTEND_PUBLIC_PATH/.storage_config"
+              echo "Storage config written: $FRONTEND_PUBLIC_PATH/.storage_config"
             fi
 
             echo "Backend and frontend deployment completed"
