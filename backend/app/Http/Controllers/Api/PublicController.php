@@ -35,7 +35,7 @@ class PublicController extends Controller
 
         // Route through the backend API file-serving endpoint to avoid
         // relying on the /storage symlink in public_html.
-        return rtrim(config('app.url'), '/') . '/file/' . $relative;
+        return rtrim(config('app.url'), '/') . '/api/file/' . $relative;
     }
 
     /**

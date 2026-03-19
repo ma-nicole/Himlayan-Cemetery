@@ -39,7 +39,7 @@ class BurialRecordController extends Controller
         $relative = ltrim($photoPath, '/');
         $relative = preg_replace('#^storage/#i', '', $relative);
 
-        return rtrim(config('app.url'), '/') . '/file/' . $relative;
+        return rtrim(config('app.url'), '/') . '/api/file/' . $relative;
     }
 
     /**

@@ -53,6 +53,9 @@ export const resolvePhotoUrl = (photoValue, updatedAt = null) => {
       // If it already uses /api/file/, keep it as-is.
       if (/\/api\/file\//i.test(photoValue)) {
         resolvedUrl = photoValue;
+      } else if (/\/file\//i.test(photoValue) && !/\/storage\//i.test(photoValue)) {
+        // Bare /file/ URL (missing /api prefix from a known bug) — insert /api.
+        resolvedUrl = photoValue.replace(/\/file\//i, '/api/file/');
       } else {
         // Legacy /storage/ or /api/storage/ URL — rewrite to /api/file/.
         const normalized = photoValue
