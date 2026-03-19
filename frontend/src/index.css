@@ -1548,7 +1548,8 @@ body {
 }
 
 .landing-nav.nav-transparent {
-  background: transparent;
+  background: rgba(26, 71, 42, 0.72);
+  backdrop-filter: blur(8px);
   box-shadow: none;
 }
 

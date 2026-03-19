@@ -393,7 +393,7 @@ const MemberDashboardPage = () => {
                   <div className="loading-spinner"></div>
                   <p>Loading announcements...</p>
                 </div>
-              ) : announcements.map((announcement) => (
+              ) : announcements.slice(0, 3).map((announcement) => (
                 <div key={announcement.id} className={`announcement-card-pro ${announcement.type}`}>
                   <div className="announcement-indicator"></div>
                   <div className="announcement-content">

@@ -701,6 +701,7 @@ const MemberServicesPage = () => {
                       value={requestForm.preferred_date}
                       onChange={(e) => setRequestForm({...requestForm, preferred_date: e.target.value})}
                       min={new Date().toISOString().split('T')[0]}
+                      max={new Date(new Date().setFullYear(new Date().getFullYear() + 1)).toISOString().split('T')[0]}
                       required
                     />
                   </div>
