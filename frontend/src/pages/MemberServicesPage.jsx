@@ -285,8 +285,8 @@ const MemberServicesPage = () => {
   const faqs = [
     {
       id: 1,
-      question: 'How much is one memorial lot/crypt?',
-      answer: 'You may contact our sales agents or call us at (02) 8928-7857 or (02) 8927-9671 to 75 loc 204 to inquire on the price of our memorial lots/crypts.'
+      question: 'Do you still offer plans?',
+      answer: 'No, Himlayang Pilipino Plans, a subsidiary of Himlayang Pilipino, Inc. is currently only servicing our existing plan holders. We are not offering any new plans.u may contact our sales agents or call us at (02) 8928-7857 or (02) 8927-9671 to 75 loc 204 to inquire on the price of our memorial lots/crypts.'
     },
     {
       id: 2,
