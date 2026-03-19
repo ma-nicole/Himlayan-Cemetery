@@ -65,12 +65,14 @@ class ServiceRequestController extends Controller
      */
     public function store(Request $request)
     {
+        $isProduct = $request->filled('product_type');
+
         $validated = $request->validate([
             'service_type' => 'required|string|max:100',
             'product_type' => 'nullable|string|max:255',
             'price_range' => 'nullable|string|max:100',
             'description' => 'nullable|string',
-            'preferred_date' => 'sometimes|nullable|date|after:today',
+            'preferred_date' => $isProduct ? 'nullable' : 'required|date|after:today',
             'contact_number' => 'required|string|max:20',
         ]);
 
