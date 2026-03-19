@@ -85,7 +85,7 @@ const PublicGravePage = () => {
 
       <div className="grave-profile">
         <div className="grave-profile-header">
-          {(profile.deceased_photo_url || profile.photo_url) && (
+          {resolvePhotoUrl(profile.deceased_photo_url || profile.photo_url, profile.updated_at) ? (
             <img
               src={resolvePhotoUrl(profile.deceased_photo_url || profile.photo_url, profile.updated_at)}
               alt={profile.deceased_name}
@@ -97,9 +97,29 @@ const PublicGravePage = () => {
                 border: '4px solid white',
                 marginBottom: '15px',
               }}
-              onError={(e) => { e.target.style.display = 'none'; }}
+              onError={(e) => {
+                e.target.style.display = 'none';
+                const fallback = e.target.nextElementSibling;
+                if (fallback) fallback.style.display = 'flex';
+              }}
             />
-          )}
+          ) : null}
+          <div style={{
+            display: resolvePhotoUrl(profile.deceased_photo_url || profile.photo_url, profile.updated_at) ? 'none' : 'flex',
+            width: '120px',
+            height: '120px',
+            borderRadius: '50%',
+            backgroundColor: 'rgba(255,255,255,0.2)',
+            border: '4px solid white',
+            marginBottom: '15px',
+            alignItems: 'center',
+            justifyContent: 'center',
+            fontSize: '3rem',
+            fontWeight: 700,
+            color: 'white',
+          }}>
+            {profile.deceased_name?.charAt(0).toUpperCase()}
+          </div>
           <h1>{profile.deceased_name}</h1>
           <p style={{ fontSize: '1.2rem', opacity: 0.8 }}>
             {profile.birth_date} — {profile.death_date}
