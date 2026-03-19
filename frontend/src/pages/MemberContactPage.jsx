@@ -21,7 +21,6 @@ const MemberContactPage = () => {
     email: user?.email || '',
     phone_country_code: '+63',
     phone: '',
-    subject: '',
     message: '',
   });
 
@@ -152,7 +151,6 @@ const MemberContactPage = () => {
       email: user?.email || '',
       phone_country_code: '+63',
       phone: '',
-      subject: '',
       message: '',
     });
     setRating(0);
@@ -290,18 +288,6 @@ const MemberContactPage = () => {
                     )}
                   </small>
                 )}
-              </div>
-
-              <div className="form-group">
-                <label className="form-label">Subject</label>
-                <input
-                  type="text"
-                  name="subject"
-                  value={formData.subject}
-                  onChange={handleChange}
-                  className="form-input"
-                  placeholder="What is your feedback about?"
-                />
               </div>
 
               <div className="form-group">
