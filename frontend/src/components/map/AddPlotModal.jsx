@@ -114,9 +114,6 @@ const AddPlotModal = ({ isOpen, onClose, onPlotAdded, center, selectedCoordinate
       newErrors.column_number = 'Column number is required';
     }
 
-    if (!formData.notes || !formData.notes.trim()) {
-      newErrors.notes = 'Notes is required';
-    }
 
     if (!formData.latitude && formData.latitude !== 0) {
       newErrors.latitude = 'Latitude is required';

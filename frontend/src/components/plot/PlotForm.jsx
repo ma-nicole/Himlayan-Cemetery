@@ -118,9 +118,6 @@ const PlotForm = ({ plot, onSubmit, onCancel }) => {
       newErrors.column_number = 'Column number is required';
     }
 
-    if (!formData.notes || !formData.notes.trim()) {
-      newErrors.notes = 'Notes is required';
-    }
 
     // Validate latitude - accept decimal numbers between -90 and 90
     if (!formData.latitude && formData.latitude !== 0) {

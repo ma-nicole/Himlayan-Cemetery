@@ -75,13 +75,12 @@ class PlotController extends Controller
             'latitude' => 'required|numeric|between:' . self::HIMS_LAT_MIN . ',' . self::HIMS_LAT_MAX,
             'longitude' => 'required|numeric|between:' . self::HIMS_LNG_MIN . ',' . self::HIMS_LNG_MAX,
             'status' => ['required', Rule::in(['available', 'occupied', 'reserved', 'maintenance'])],
-            'notes' => 'required|string',
+            'notes' => 'nullable|string',
         ], [
             'section.required' => 'Section is required.',
             'row_number.required' => 'Row number is required.',
             'column_number.required' => 'Column number is required.',
             'status.required' => 'Status is required.',
-            'notes.required' => 'Notes is required.',
             'latitude.between' => 'Latitude must be inside Himlayang Pilipino Memorial Park area.',
             'longitude.between' => 'Longitude must be inside Himlayang Pilipino Memorial Park area.',
         ]);
