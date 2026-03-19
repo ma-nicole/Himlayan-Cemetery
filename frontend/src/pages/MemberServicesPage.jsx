@@ -699,7 +699,15 @@ const MemberServicesPage = () => {
                     <input
                       type="date"
                       value={requestForm.preferred_date}
-                      onChange={(e) => setRequestForm({...requestForm, preferred_date: e.target.value})}
+                      onChange={(e) => { e.target.setCustomValidity(''); setRequestForm({...requestForm, preferred_date: e.target.value}); }}
+                      onInvalid={(e) => {
+                        if (e.target.validity.rangeOverflow) {
+                          const [y, m, d] = e.target.max.split('-');
+                          e.target.setCustomValidity(`Please select a date on or before ${m}/${d}/${y}`);
+                        } else {
+                          e.target.setCustomValidity('');
+                        }
+                      }}
                       min={new Date().toISOString().split('T')[0]}
                       max={new Date(new Date().setFullYear(new Date().getFullYear() + 1)).toISOString().split('T')[0]}
                       required
