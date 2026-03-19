@@ -77,8 +77,11 @@ class SocialAuthController extends Controller
                 'id' => $user->id,
                 'name' => $user->name,
                 'email' => $user->email,
+                'phone' => $user->phone,
+                'address' => $user->address,
                 'role' => $user->role,
                 'avatar' => $user->avatar,
+                'updated_at' => $user->updated_at?->toISOString(),
             ])));
 
         } catch (\Exception $e) {

@@ -146,8 +146,12 @@ class AuthController extends Controller
                 'id' => $user->id,
                 'name' => $user->name,
                 'email' => $user->email,
+                'phone' => $user->phone,
+                'address' => $user->address,
+                'avatar' => $this->buildAvatarUrl($user->avatar),
                 'role' => $user->role,
                 'must_change_password' => $user->must_change_password,
+                'updated_at' => $user->updated_at?->toISOString(),
             ],
             'token' => $token,
             'token_type' => 'Bearer',
@@ -202,6 +206,7 @@ class AuthController extends Controller
             'avatar' => $this->buildAvatarUrl($user->avatar),
             'role' => $user->role,
             'must_change_password' => $user->must_change_password,
+            'updated_at' => $user->updated_at?->toISOString(),
         ], 'User retrieved successfully');
     }
 

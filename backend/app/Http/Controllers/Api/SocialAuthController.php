@@ -6,11 +6,26 @@ use App\Http\Controllers\Controller;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Laravel\Socialite\Facades\Socialite;
 
 class SocialAuthController extends Controller
 {
+    private function buildSocialAvatarUrl(?string $avatarPath): ?string
+    {
+        if (!$avatarPath || trim($avatarPath) === '') return null;
+        $avatarPath = trim($avatarPath);
+        if (preg_match('/^https?:\/\//i', $avatarPath)) {
+            return preg_replace('/^http:\/\//i', 'https://', $avatarPath);
+        }
+        $normalized = ltrim(str_replace('\\', '/', $avatarPath), '/');
+        if (str_starts_with($normalized, 'storage/')) {
+            $normalized = substr($normalized, strlen('storage/'));
+        }
+        return Storage::disk('public')->url($normalized);
+    }
+
     /**
      * Redirect to OAuth provider
      * 
@@ -96,8 +111,11 @@ class SocialAuthController extends Controller
                     'id' => $user->id,
                     'name' => $user->name,
                     'email' => $user->email,
+                    'phone' => $user->phone,
+                    'address' => $user->address,
                     'role' => $user->role,
-                    'avatar' => $user->avatar,
+                    'avatar' => $this->buildSocialAvatarUrl($user->avatar),
+                    'updated_at' => $user->updated_at?->toISOString(),
                 ]),
             ]));
 

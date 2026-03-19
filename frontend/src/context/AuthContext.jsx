@@ -29,26 +29,19 @@ export const AuthProvider = ({ children }) => {
     initAuth();
   }, []);
 
+  // Persist user to localStorage whenever React state changes
+  useEffect(() => {
+    if (user) {
+      localStorage.setItem('user', JSON.stringify(user));
+    }
+  }, [user]);
+
   // Login function
   const login = useCallback(async (email, password) => {
     try {
       const response = await authService.login(email, password);
       if (response.success) {
         setUser(response.data.user);
-        
-        // Fetch fresh user data immediately after login to ensure all fields
-        // (including avatar) are properly stored in localStorage
-        setTimeout(async () => {
-          try {
-            const freshResponse = await authService.getCurrentUser();
-            if (freshResponse.success && freshResponse.data) {
-              setUser(freshResponse.data);
-            }
-          } catch (error) {
-            console.error('Failed to fetch fresh user data after login:', error);
-          }
-        }, 100);
-        
         return { success: true };
       }
       return { success: false, message: response.message };
