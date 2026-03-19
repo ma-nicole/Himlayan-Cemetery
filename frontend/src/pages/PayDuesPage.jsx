@@ -244,7 +244,7 @@ const PayDuesPage = () => {
           {isVerifying && (
             <div className="payment-verifying-banner">
               <span className="payment-verifying-spinner" />
-              <span>Verifying your payment&hellip; please refresh your browser.</span>
+              <span>Submitting Payment&hellip; please refresh your browser.</span>
             </div>
           )}
 
@@ -352,7 +352,7 @@ const PayDuesPage = () => {
                   <div style={{ textAlign: 'center', padding: '20px', background: selectedPlot.status === 'under_investigation' ? '#fffbeb' : '#f0fdf4', borderRadius: '8px', border: `1px solid ${selectedPlot.status === 'under_investigation' ? '#fde68a' : '#bbf7d0'}` }}>
                     {isVerifying ? (
                       <>
-                        <p style={{ color: '#15803d', fontWeight: 600, marginBottom: 4 }}>⏳ Verifying Payment…</p>
+                        <p style={{ color: '#15803d', fontWeight: 600, marginBottom: 4 }}>⏳ Submitting Payment…</p>
                         <p style={{ color: '#166534', fontSize: '0.875rem', margin: 0 }}>Please refresh your browser to confirm your payment.</p>
                       </>
                     ) : selectedPlot.status === 'under_investigation' ? (
