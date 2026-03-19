@@ -933,16 +933,16 @@
   flex-shrink: 0;
 }
 
-.announcement-card-pro.important .announcement-indicator {
+.announcement-card-pro.urgent .announcement-indicator {
   background: linear-gradient(180deg, #ef4444 0%, #dc2626 100%);
+}
+
+.announcement-card-pro.warning .announcement-indicator {
+  background: linear-gradient(180deg, #f59e0b 0%, #d97706 100%);
 }
 
 .announcement-card-pro.info .announcement-indicator {
   background: linear-gradient(180deg, #3b82f6 0%, #2563eb 100%);
-}
-
-.announcement-card-pro.success .announcement-indicator {
-  background: linear-gradient(180deg, #22c55e 0%, #16a34a 100%);
 }
 
 .announcement-content h4 {
@@ -1553,19 +1553,19 @@
   transform: translateY(-2px);
 }
 
-.announcement-card-full.important {
+.announcement-card-full.urgent {
   border-left-color: #dc2626;
   background: linear-gradient(to right, rgba(220, 38, 38, 0.02), white);
 }
 
-.announcement-card-full.update {
-  border-left-color: #2563eb;
-  background: linear-gradient(to right, rgba(37, 99, 235, 0.02), white);
+.announcement-card-full.warning {
+  border-left-color: #d97706;
+  background: linear-gradient(to right, rgba(217, 119, 6, 0.02), white);
 }
 
 .announcement-card-full.info {
-  border-left-color: #7c3aed;
-  background: linear-gradient(to right, rgba(124, 58, 237, 0.02), white);
+  border-left-color: #2563eb;
+  background: linear-gradient(to right, rgba(37, 99, 235, 0.02), white);
 }
 
 .announcement-header-row {
