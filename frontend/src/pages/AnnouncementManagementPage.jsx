@@ -145,7 +145,7 @@ const AnnouncementManagementPage = () => {
   };
 
   const getTypeBadgeClass = (type) => {
-    const classes = { info: 'badge-info', warning: 'badge-warning', success: 'badge-success', urgent: 'badge-urgent' };
+    const classes = { info: 'badge-info', warning: 'badge-warning', urgent: 'badge-urgent' };
     return classes[type] || 'badge-info';
   };
 
@@ -190,7 +190,6 @@ const AnnouncementManagementPage = () => {
                 <option value="">All Types</option>
                 <option value="info">Info</option>
                 <option value="warning">Warning</option>
-                <option value="success">Success</option>
                 <option value="urgent">Urgent</option>
               </select>
             </div>
@@ -307,7 +306,6 @@ const AnnouncementManagementPage = () => {
                     <select value={formData.type} onChange={(e) => setFormData({...formData, type: e.target.value})}>
                       <option value="info">Info</option>
                       <option value="warning">Warning</option>
-                      <option value="success">Success</option>
                       <option value="urgent">Urgent</option>
                     </select>
                   </div>

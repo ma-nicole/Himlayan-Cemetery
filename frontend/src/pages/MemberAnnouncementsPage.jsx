@@ -35,14 +35,14 @@ const MemberAnnouncementsPage = () => {
           title: 'Cemetery Open for All Saints Day',
           content: 'Oct 31 - Nov 2: Open 24 hours for visitors.',
           date: '2025-10-25',
-          type: 'important'
+          type: 'urgent'
         },
         {
           id: 2,
           title: 'New Online Payment System Available',
           content: 'You can now pay memorial dues online through our website.',
           date: '2025-09-15',
-          type: 'update'
+          type: 'warning'
         },
         {
           id: 3,
@@ -97,16 +97,16 @@ const MemberAnnouncementsPage = () => {
               All Updates
             </button>
             <button 
-              className={`filter-btn ${selectedFilter === 'important' ? 'active' : ''}`}
-              onClick={() => setSelectedFilter('important')}
+              className={`filter-btn ${selectedFilter === 'urgent' ? 'active' : ''}`}
+              onClick={() => setSelectedFilter('urgent')}
             >
-              Important
+              Urgent
             </button>
             <button 
-              className={`filter-btn ${selectedFilter === 'update' ? 'active' : ''}`}
-              onClick={() => setSelectedFilter('update')}
+              className={`filter-btn ${selectedFilter === 'warning' ? 'active' : ''}`}
+              onClick={() => setSelectedFilter('warning')}
             >
-              Updates
+              Warning
             </button>
             <button 
               className={`filter-btn ${selectedFilter === 'info' ? 'active' : ''}`}
