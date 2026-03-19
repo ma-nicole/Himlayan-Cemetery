@@ -197,7 +197,7 @@ const ServiceRequestManagementPage = () => {
                           </div>
                         </td>
                         <td><strong>{formatServiceType(item.service_type)}</strong></td>
-                        <td>{item.preferred_date ? new Date(item.preferred_date).toLocaleDateString() : '-'}</td>
+                        <td>{item.product_type ? '-' : (item.preferred_date ? new Date(item.preferred_date).toLocaleDateString() : '-')}</td>
                         <td><span className={`status-badge ${getStatusBadgeClass(item.status)}`}>{item.status}</span></td>
                         <td>{new Date(item.created_at).toLocaleDateString()}</td>
                         <td>
@@ -246,7 +246,7 @@ const ServiceRequestManagementPage = () => {
                 )}
                 <p><strong>Description:</strong> {selectedItem?.description || 'No description provided'}</p>
                 <p><strong>Contact:</strong> {selectedItem?.contact_number || 'N/A'}</p>
-                {selectedItem?.preferred_date && (
+                {selectedItem?.preferred_date && !selectedItem?.product_type && (
                   <p><strong>Preferred Date:</strong> {new Date(selectedItem.preferred_date).toLocaleDateString()}</p>
                 )}
               </div>
