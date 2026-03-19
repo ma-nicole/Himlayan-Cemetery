@@ -185,15 +185,10 @@ const MemberServicesPage = () => {
       const productTypeLabel = isProduct
         ? requestForm.product_type + (requestForm.product_radio ? ` \u2013 ${requestForm.product_radio}` : '')
         : undefined;
-      // Products don't have a preferred date — send tomorrow as a fallback so any
-      // backend validation rule (required or nullable) always passes.
-      const tomorrow = new Date();
-      tomorrow.setDate(tomorrow.getDate() + 1);
-      const dummyDate = tomorrow.toISOString().split('T')[0];
       await api.post('/service-requests', {
         service_type: selectedService.title.toLowerCase().replace(/\s+/g, '_'),
         description: requestForm.description,
-        preferred_date: isProduct ? dummyDate : requestForm.preferred_date,
+        ...(!isProduct ? { preferred_date: requestForm.preferred_date } : {}),
         ...(isProduct ? { product_type: productTypeLabel, price_range: requestForm.product_price } : {}),
         contact_number: fullContactNumber
       });
