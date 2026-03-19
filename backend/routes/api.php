@@ -64,13 +64,20 @@ Route::get('/system/maintenance-status', [SystemMaintenanceController::class, 's
 // so image URLs never depend on the /storage symlink or .htaccess rules.
 Route::get('/file/{path}', [StorageController::class, 'serve'])->where('path', '.+');
 
-// Temporary diagnostic endpoint – remove after debugging invitation URLs
+// Temporary diagnostic endpoint – remove after debugging
 Route::get('/debug/urls', function () {
+    $disk = \Illuminate\Support\Facades\Storage::disk('public');
+    $testFile = 'avatars'; // check if avatars directory exists
     return response()->json([
-        'FRONTEND_URL_env' => env('FRONTEND_URL'),
-        'FRONTEND_URL_config' => config('app.frontend_url'),
-        'APP_URL_env' => env('APP_URL'),
-        'APP_URL_config' => config('app.url'),
+        'FRONTEND_URL_env'   => env('FRONTEND_URL'),
+        'FRONTEND_URL_config'=> config('app.frontend_url'),
+        'APP_URL_env'        => env('APP_URL'),
+        'APP_URL_config'     => config('app.url'),
+        'storage_root'       => $disk->path(''),
+        'avatars_dir_exists' => $disk->exists('avatars'),
+        'sample_files'       => $disk->exists('avatars') ? array_slice($disk->files('avatars'), 0, 3) : [],
+        'deceased_photo_dir' => $disk->exists('deceased_photos'),
+        'deceased_files'     => $disk->exists('deceased_photos') ? array_slice($disk->files('deceased_photos'), 0, 3) : [],
     ]);
 });
 

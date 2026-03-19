@@ -23,33 +23,25 @@ class AuthController extends Controller
      */
     private function buildAvatarUrl(?string $avatarPath): ?string
     {
-        if (!$avatarPath || trim($avatarPath) === '') {
-            return null;
-        }
+        if (!$avatarPath || trim($avatarPath) === '') return null;
 
         $avatarPath = trim($avatarPath);
 
-        // External social avatar (Google, Facebook, etc.):
-        // preserve as-is but force HTTPS to avoid mixed-content blocking.
+        // External social auth avatar (Google, Facebook, Apple) — return as-is with HTTPS.
+        // These are external CDN URLs, not files stored in our storage disk.
         if (preg_match('/^https?:\/\//i', $avatarPath)) {
-            if (preg_match('#^https?://(localhost|127\.0\.0\.1)(:\d+)?(/.*)?$#i', $avatarPath, $m)) {
-                $avatarPath = ltrim($m[3] ?? '', '/');
-                // Fall through to local path handling
-            } else {
-                return preg_replace('/^http:\/\//i', 'https://', $avatarPath);
+            // If it's a URL to OUR storage (any env), extract the relative path.
+            if (preg_match('#/(api/file|storage)/(.+?)(?:\?.*)?$#i', $avatarPath, $m)) {
+                return $m[2];
             }
+            // Truly external URL: preserve it, force HTTPS.
+            return preg_replace('/^http:\/\//i', 'https://', $avatarPath);
         }
 
+        // Local relative path — strip any legacy prefixes and return as-is.
         $normalized = ltrim(str_replace('\\', '/', $avatarPath), '/');
-        if (str_starts_with($normalized, 'storage/')) {
-            $normalized = substr($normalized, strlen('storage/'));
-        }
-
-        // Route through the backend API file-serving endpoint to avoid
-        // relying on the /storage symlink in public_html.
-        // Strip any /api suffix from APP_URL so the result is always domain.com/api/file/...
-        $baseUrl = rtrim(preg_replace('#/api/?$#i', '', rtrim(config('app.url'), '/')), '/');
-        return $baseUrl . '/api/file/' . $normalized;
+        $normalized = preg_replace('#^(storage/|api/file/)#i', '', $normalized);
+        return $normalized ?: null;
     }
 
     /**

@@ -16,28 +16,18 @@ class PublicController extends Controller
      */
     private function buildDeceasedPhotoUrl(?string $photoPath): ?string
     {
-        if (!$photoPath) {
+        if (!$photoPath) return null;
+
+        if (filter_var($photoPath, FILTER_VALIDATE_URL)) {
+            if (preg_match('#/(api/file|storage)/(.+?)(?:\?.*)?$#i', $photoPath, $m)) {
+                return $m[2];
+            }
             return null;
         }
 
-        if (filter_var($photoPath, FILTER_VALIDATE_URL)) {
-            if (preg_match('#^https?://(localhost|127\.0\.0\.1)(:\d+)?(/.*)?$#i', $photoPath, $m)) {
-                $photoPath = ltrim($m[3] ?? '', '/');
-                // Fall through to relative path handling below
-            } else {
-                // Already a production URL — return as-is
-                return $photoPath;
-            }
-        }
-
-        $relative = ltrim($photoPath, '/');
-        $relative = preg_replace('#^storage/#i', '', $relative);
-
-        // Route through the backend API file-serving endpoint to avoid
-        // relying on the /storage symlink in public_html.
-        // Strip any /api suffix from APP_URL so the result is always domain.com/api/file/...
-        $baseUrl = rtrim(preg_replace('#/api/?$#i', '', rtrim(config('app.url'), '/')), '/');
-        return $baseUrl . '/api/file/' . $relative;
+        $relative = ltrim(str_replace('\\', '/', $photoPath), '/');
+        $relative = preg_replace('#^(storage/|api/file/)#i', '', $relative);
+        return $relative ?: null;
     }
 
     /**

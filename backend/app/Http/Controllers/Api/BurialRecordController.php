@@ -17,32 +17,23 @@ class BurialRecordController extends Controller
      */
     private function buildDeceasedPhotoUrl(?string $photoPath): ?string
     {
-        if (!$photoPath) {
+        if (!$photoPath) return null;
+
+        // If it's already a full URL, extract just the relative file path.
+        // The frontend is responsible for constructing the final URL using its
+        // configured API base URL, so we always return a plain relative path.
+        if (filter_var($photoPath, FILTER_VALIDATE_URL)) {
+            if (preg_match('#/(api/file|storage)/(.+?)(?:\?.*)?$#i', $photoPath, $m)) {
+                return $m[2];
+            }
+            // External URL that is not a stored file — return null
             return null;
         }
 
-        // Already a full URL
-        if (filter_var($photoPath, FILTER_VALIDATE_URL)) {
-            // Normalize local dev URLs (localhost / 127.0.0.1) → extract relative path
-            if (preg_match('#^https?://(localhost|127\.0\.0\.1)(:\d+)?(/.*)?$#i', $photoPath, $m)) {
-                $photoPath = ltrim($m[3] ?? '', '/');
-                // Fall through to relative path handling below
-            } else {
-                // Already a production URL — return as-is
-                return $photoPath;
-            }
-        }
-
-        // Relative path: strip leading slash and any 'storage/' prefix,
-        // then route through the backend API file-serving endpoint to avoid
-        // relying on the /storage symlink in public_html.
-        // Strip any /api suffix from APP_URL so the result is always domain.com/api/file/...
-        // (guards against APP_URL = https://domain.com/api which would produce /api/api/).
-        $relative = ltrim($photoPath, '/');
-        $relative = preg_replace('#^storage/#i', '', $relative);
-
-        $baseUrl = rtrim(preg_replace('#/api/?$#i', '', rtrim(config('app.url'), '/')), '/');
-        return $baseUrl . '/api/file/' . $relative;
+        // Relative path: strip any legacy prefixes
+        $relative = ltrim(str_replace('\\', '/', $photoPath), '/');
+        $relative = preg_replace('#^(storage/|api/file/)#i', '', $relative);
+        return $relative ?: null;
     }
 
     /**

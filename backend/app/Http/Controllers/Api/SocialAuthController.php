@@ -16,23 +16,17 @@ class SocialAuthController extends Controller
     {
         if (!$avatarPath || trim($avatarPath) === '') return null;
         $avatarPath = trim($avatarPath);
-        // External social avatar — preserve as-is, force HTTPS
         if (preg_match('/^https?:\/\//i', $avatarPath)) {
-            if (!preg_match('#^https?://(localhost|127\.0\.0\.1)(:\d+)?#i', $avatarPath)) {
-                return preg_replace('/^http:\/\//i', 'https://', $avatarPath);
+            // Our own storage URL — extract relative path
+            if (preg_match('#/(api/file|storage)/(.+?)(?:\?.*)?$#i', $avatarPath, $m)) {
+                return $m[2];
             }
-            // localhost URL — fall through to local path handling
-            $avatarPath = ltrim(parse_url($avatarPath, PHP_URL_PATH) ?? '', '/');
+            // True external social CDN URL (Google, Facebook, etc.) — keep as-is
+            return preg_replace('/^http:\/\//i', 'https://', $avatarPath);
         }
         $normalized = ltrim(str_replace('\\', '/', $avatarPath), '/');
-        if (str_starts_with($normalized, 'storage/')) {
-            $normalized = substr($normalized, strlen('storage/'));
-        }
-        // Route through the backend API file-serving endpoint to avoid
-        // relying on the /storage symlink in public_html.
-        // Strip any /api suffix from APP_URL so the result is always domain.com/api/file/...
-        $baseUrl = rtrim(preg_replace('#/api/?$#i', '', rtrim(config('app.url'), '/')), '/');
-        return $baseUrl . '/api/file/' . $normalized;
+        $normalized = preg_replace('#^(storage/|api/file/)#i', '', $normalized);
+        return $normalized ?: null;
     }
 
     /**
