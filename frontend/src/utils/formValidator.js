@@ -65,7 +65,7 @@ export const validateName = (name, fieldName = 'Name', minLength = 2, maxLength 
   }
 
   // Check for SQL injection attempts
-  if (/['";\\]|--|\/\*|\*\/|xp_|sp_|exec|execute|drop|delete|insert|update|select/.test(trimmed.toLowerCase())) {
+  if (/['";\.\\]|--|\/\*|\*\/|xp_|sp_|\bexec\b|\bexecute\b|\bdrop\b|\bdelete\b|\binsert\b|\bupdate\b|\bselect\b/.test(trimmed.toLowerCase())) {
     return { valid: false, error: `${fieldName} contains invalid characters` };
   }
 
@@ -238,7 +238,7 @@ export const validateTextArea = (text, fieldName = 'Text', minLength = 1, maxLen
   }
 
   // Check for SQL injection attempts
-  if (/--|\/\*|\*\/|xp_|sp_|exec|execute|drop|delete|insert|update|select/.test(trimmed.toLowerCase())) {
+  if (/--|\/\*|\*\/|xp_|sp_|\bexec\b|\bexecute\b|\bdrop\b|\bdelete\b|\binsert\b|\bupdate\b|\bselect\b/.test(trimmed.toLowerCase())) {
     return { valid: false, error: `${fieldName} contains invalid characters` };
   }
 
@@ -448,7 +448,7 @@ export const validateAddress = (address, fieldName = 'Address', minLength = 5, m
   }
 
   // Check for SQL injection attempts
-  if (/--|\/\*|\*\/|xp_|sp_|exec|execute|drop|delete|insert|update|select/.test(trimmed.toLowerCase())) {
+  if (/--|\/\*|\*\/|xp_|sp_|\bexec\b|\bexecute\b|\bdrop\b|\bdelete\b|\binsert\b|\bupdate\b|\bselect\b/.test(trimmed.toLowerCase())) {
     return { valid: false, error: `${fieldName} contains invalid characters` };
   }
 
