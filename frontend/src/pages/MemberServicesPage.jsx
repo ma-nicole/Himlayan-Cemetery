@@ -285,33 +285,33 @@ const MemberServicesPage = () => {
   const faqs = [
     {
       id: 1,
-      question: 'How do I reserve a lot?',
-      answer: 'Visit our office or call (02) 8921-6947. You\'ll need a valid ID and initial payment (usually 20% down payment). You can also inquire online and we\'ll call you back.'
+      question: 'How much is one memorial lot/crypt?',
+      answer: 'You may contact our sales agents or call us at (02) 8928-7857 or (02) 8927-9671 to 75 loc 204 to inquire on the price of our memorial lots/crypts.'
     },
     {
       id: 2,
-      question: 'Do you have installment payment plans?',
-      answer: 'Yes, we have flexible payment plans up to 5 years to pay. You can pay monthly, quarterly, or yearly. Zero interest on 1-year payment plans.'
+      question: 'Where is Himlayang Pilipino Memorial Park located?',
+      answer: 'Himlayang Pilipino Memorial Park is located at Himlayan Rd., Brgy. Pasong Tamo, Quezon City. Meanwhile, our Head Office is located at Triumph Building, 1610 Quezon Avenue, Brgy. South Triangle, Quezon City.'
     },
     {
       id: 3,
-      question: 'What is included in perpetual care?',
-      answer: 'It includes regular maintenance of lawn and landscaping, 24/7 security, upkeep of roads and pathways, and general beautification of the memorial park. This is lifetime with no additional fees.'
+      question: 'Are you open for visits?',
+      answer: 'Yes, Himlayang Pilipino Memorial Park is open to visitors daily, from 7am to 5pm.'
     },
     {
       id: 4,
-      question: 'Can I visit anytime?',
-      answer: 'The park is open daily from 6:00 AM to 6:00 PM. During All Saints Day (Oct 31 - Nov 2), we are open 24 hours. Security and staff are always on duty.'
+      question: 'Are there still available lots and crypts?',
+      answer: 'Yes, there are various lots and crypts available as we continuously expand our inventory to accommodate our clients\' needs.'
     },
     {
       id: 5,
-      question: 'Is the lot transferable?',
-      answer: 'Yes, lot ownership can be transferred to immediate family members. There is only a minimal processing fee. Coordinate with our office for requirements.'
+      question: 'What are the requirements for buying a lot/crypt?',
+      answer: 'The purchaser needs to be of legal age and can fill-up and sign the contract on Philippine soil. You may reach out to our sales agents, who are stationed at the park and at the head office to assist you.'
     },
     {
       id: 6,
-      question: 'Are there discounts for senior citizens?',
-      answer: 'Yes, there is a 5% discount for senior citizens and PWDs. There are also special rates for group purchases and referral discounts.'
+      question: 'Can we sell our lot?',
+      answer: 'You may choose to sell your lots personally or through our Paki-Benta service wherein we will sell clients\' lots/crypts as part of our inventory. Kindly coordinate with the SRDP at (02)8927-9671 to 75 loc 242 for the requirements in transferring ownership.'
     }
   ];
 
