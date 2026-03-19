@@ -138,7 +138,6 @@ const ReportGeneratorPage = () => {
       const tableData = (reportData.data || []).map(f => [
         f.id,
         f.user?.name || 'N/A',
-        f.subject || '',
         (f.message || '').substring(0, 80) + ((f.message || '').length > 80 ? '...' : ''),
         f.rating ? `${f.rating}/5` : 'N/A',
         (f.status || '').charAt(0).toUpperCase() + (f.status || '').slice(1),
@@ -147,14 +146,14 @@ const ReportGeneratorPage = () => {
 
       autoTable(doc, {
         startY: 45,
-        head: [['ID', 'Member', 'Subject', 'Message', 'Rating', 'Status', 'Date']],
+        head: [['ID', 'Member', 'Message', 'Rating', 'Status', 'Date']],
         body: tableData,
         styles: { fontSize: 8, cellPadding: 3 },
         headStyles: { fillColor: [26, 71, 42], textColor: 255, fontStyle: 'bold' },
         alternateRowStyles: { fillColor: [245, 247, 245] },
         columnStyles: {
           0: { cellWidth: 15 },
-          3: { cellWidth: 70 },
+          2: { cellWidth: 70 },
         },
         margin: { left: 14, right: 14 },
       });
@@ -365,7 +364,6 @@ const ReportGeneratorPage = () => {
                       <tr>
                         <th>ID</th>
                         <th>Member</th>
-                        <th>Subject</th>
                         <th>Message</th>
                         <th>Rating</th>
                         <th>Status</th>
@@ -392,7 +390,6 @@ const ReportGeneratorPage = () => {
                         <tr key={f.id}>
                           <td>{f.id}</td>
                           <td>{f.user?.name || 'N/A'}</td>
-                          <td>{f.subject || ''}</td>
                           <td className="message-cell">{(f.message || '').substring(0, 80)}{(f.message || '').length > 80 ? '...' : ''}</td>
                           <td>{f.rating ? `${f.rating}/5` : 'N/A'}</td>
                           <td><span className={`status-badge status-${f.status}`}>{(f.status || '').charAt(0).toUpperCase() + (f.status || '').slice(1)}</span></td>

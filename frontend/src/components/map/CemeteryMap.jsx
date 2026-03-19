@@ -157,6 +157,16 @@ const CemeteryMap = ({ markers, center, zoom, onMarkerClick, onMapClick }) => {
           streetViewControl: false,
           fullscreenControl: true,
           mapTypeControl: true,
+          minZoom: 16,
+          restriction: {
+            latLngBounds: {
+              north: 14.691,
+              south: 14.673,
+              east: 121.059,
+              west: 121.047,
+            },
+            strictBounds: false,
+          },
         }}
         onClick={(e) => {
           if (onMapClick) {

@@ -171,7 +171,6 @@ const FeedbackManagementPage = () => {
                 <thead>
                   <tr>
                     <th>From</th>
-                    <th>Subject</th>
                     <th>Rating</th>
                     <th>Status</th>
                     <th>Date</th>
@@ -180,7 +179,7 @@ const FeedbackManagementPage = () => {
                 </thead>
                 <tbody>
                   {feedbacks.length === 0 ? (
-                    <tr><td colSpan="6" className="empty-state">No feedback found</td></tr>
+                    <tr><td colSpan="5" className="empty-state">No feedback found</td></tr>
                   ) : (
                     feedbacks.map(item => (
                       <tr key={item.id}>
@@ -198,7 +197,6 @@ const FeedbackManagementPage = () => {
                             </div>
                           </div>
                         </td>
-                        <td><strong>{item.subject || 'No subject'}</strong></td>
                         <td>{renderStars(item.rating)}</td>
                         <td><span className={`status-badge ${getStatusBadgeClass(item.status)}`}>{item.status}</span></td>
                         <td>{new Date(item.created_at).toLocaleDateString()}</td>
@@ -250,7 +248,6 @@ const FeedbackManagementPage = () => {
                   </div>
                   <div className="feedback-rating">{renderStars(selectedItem?.rating)}</div>
                 </div>
-                <div className="feedback-subject">{selectedItem?.subject || 'No subject'}</div>
                 <div className="feedback-message">{selectedItem?.message}</div>
                 <div className="feedback-date">Submitted: {new Date(selectedItem?.created_at).toLocaleString()}</div>
               </div>

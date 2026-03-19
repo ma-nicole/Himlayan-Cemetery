@@ -202,15 +202,7 @@ const PlotsPage = () => {
               >
                 Previous
               </button>
-              {[...Array(pagination.last_page)].map((_, i) => (
-                <button
-                  key={i + 1}
-                  className={pagination.current_page === i + 1 ? 'active' : ''}
-                  onClick={() => handlePageChange(i + 1)}
-                >
-                  {i + 1}
-                </button>
-              ))}
+              <span>Page {pagination.current_page} of {pagination.last_page}</span>
               <button
                 disabled={pagination.current_page === pagination.last_page}
                 onClick={() => handlePageChange(pagination.current_page + 1)}

@@ -213,17 +213,13 @@ const BurialRecordsPage = () => {
           {pagination.last_page > 1 && (
             <div className="pagination">
               <button
-                className="btn"
                 disabled={pagination.current_page === 1}
                 onClick={() => loadRecords(pagination.current_page - 1)}
               >
                 Previous
               </button>
-              <span style={{ padding: '0 12px', fontSize: '0.75rem' }}>
-                Page {pagination.current_page} of {pagination.last_page}
-              </span>
+              <span>Page {pagination.current_page} of {pagination.last_page}</span>
               <button
-                className="btn"
                 disabled={pagination.current_page === pagination.last_page}
                 onClick={() => loadRecords(pagination.current_page + 1)}
               >
