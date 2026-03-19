@@ -104,7 +104,7 @@ const AnnouncementManagementPage = () => {
 
     // Validate content length
     if (formData.content.trim()) {
-      const textAreaValidation = validateTextArea(formData.content, { minLength: 10, maxLength: 5000 });
+      const textAreaValidation = validateTextArea(formData.content, 'Content', 10, 5000);
       if (!textAreaValidation.valid) {
         newErrors.content = textAreaValidation.error;
       }
