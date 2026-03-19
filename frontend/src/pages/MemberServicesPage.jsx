@@ -193,7 +193,7 @@ const MemberServicesPage = () => {
       subtitle: 'Affordable Crypt Options',
       description: 'Affordable crypts offer a dignified resting place for loved ones, accommodating full-sized caskets, urns, and bone remains. These secure and serene spaces provide families a meaningful and cost-effective place to honor and remember their deceased.',
       features: ['Full-sized casket ready', 'Urns & bone remains', 'Secure & serene', 'Cost-effective'],
-      price: 'Contact for pricing',
+      price: 'starting price: ₱70,000',
       popular: false,
       image: '/Panooran-2.jpg'
     },
@@ -213,7 +213,7 @@ const MemberServicesPage = () => {
       subtitle: 'Dignified Resting Place',
       description: 'Affordable crypts offer a dignified resting place for loved ones, accommodating full-sized caskets, urns, and bone remains. These secure and serene spaces provide families a meaningful and cost-effective place to honor and remember their deceased.',
       features: ['Full-sized casket ready', 'Urns & bone remains', 'Secure & serene', 'Cost-effective'],
-      price: 'Contact for pricing',
+      price: 'starting price: ₱70,000',
       popular: false,
       image: '/Panooran-2.jpg'
     },
@@ -229,7 +229,7 @@ const MemberServicesPage = () => {
       subtitle: 'Serene Garden Setting',
       description: 'Lush spaces that offer a serene resting place. Whether by a tree, a pathwalk, or road you will be assured of a tranquil environment.',
       features: ['By trees or pathwalks', 'Tranquil environment', 'Perpetual care included', 'Well-maintained landscaping'],
-      price: 'Contact for pricing',
+      price: 'starting price: ₱355,000',
       popular: false,
       image: '/Florante-at-Laura-1-scaled.jpg'
     },
@@ -246,7 +246,7 @@ const MemberServicesPage = () => {
       subtitle: 'Manicured Garden Lots',
       description: 'Manicured garden lots with above-ground niches. The imposing niches serve as reverence to the status and achievements of the interred. Memorial lots has the highest capacity per area in our inventory. Lot varies from 9sqm to 30sqm.',
       features: ['Above-ground niches', 'Highest capacity per area', '9sqm to 30sqm', 'Manicured garden setting'],
-      price: 'Contact for pricing',
+      price: 'starting price: ₱1,200,000',
       popular: true,
       image: '/himlayanheritage.jpg'
     },
@@ -263,7 +263,7 @@ const MemberServicesPage = () => {
       subtitle: 'Private Family Mausoleums',
       description: 'Mausoleums that give you privacy befitting your family. Most plans and layouts are made with provision for washroom and pantry depending on the location. Various sizes available ranging from 40sqm to 100sqm.',
       features: ['Private mausoleum', 'Washroom & pantry provision', '40sqm to 100sqm', 'Custom layouts'],
-      price: 'Contact for pricing',
+      price: 'starting price: ₱3,200,000',
       popular: false,
       image: '/Malakas-at-Maganda.jpg'
     },
@@ -280,7 +280,7 @@ const MemberServicesPage = () => {
       subtitle: 'Premium Custom Mausoleums',
       description: 'Our largest and premium mausoleums that are tailored for the families\' comfort and requirement. Memorial Terraces also allows them to incorporate their own design and ideas. Lot sizes ranges from 80sqm to 250sqm.',
       features: ['80sqm to 250sqm', 'Custom design allowed', 'Largest premium lots', 'Tailored for comfort'],
-      price: 'Contact for pricing',
+      price: 'starting price: ₱8,000,000',
       popular: false,
       image: '/himlayanheritage.jpg'
     },
