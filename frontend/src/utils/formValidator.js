@@ -237,11 +237,6 @@ export const validateTextArea = (text, fieldName = 'Text', minLength = 1, maxLen
     return { valid: false, error: `${fieldName} contains invalid content` };
   }
 
-  // Check for SQL injection attempts
-  if (/--|\/\*|\*\/|xp_|sp_|\bexec\b|\bexecute\b|\bdrop\b|\bdelete\b|\binsert\b|\bupdate\b|\bselect\b/.test(trimmed.toLowerCase())) {
-    return { valid: false, error: `${fieldName} contains invalid characters` };
-  }
-
   return { valid: true };
 };
 
@@ -445,11 +440,6 @@ export const validateAddress = (address, fieldName = 'Address', minLength = 5, m
 
   if (trimmed.length > maxLength) {
     return { valid: false, error: `${fieldName} cannot exceed ${maxLength} characters` };
-  }
-
-  // Check for SQL injection attempts
-  if (/--|\/\*|\*\/|xp_|sp_|\bexec\b|\bexecute\b|\bdrop\b|\bdelete\b|\binsert\b|\bupdate\b|\bselect\b/.test(trimmed.toLowerCase())) {
-    return { valid: false, error: `${fieldName} contains invalid characters` };
   }
 
   return { valid: true };
