@@ -5,7 +5,6 @@ import MemberFooter from '../components/common/MemberFooter';
 import { useAuth } from '../hooks/useAuth';
 import { useToast } from '../context/ToastContext';
 import api from '../services/api';
-import { validateName, validateEmail, validatePhone, validateAddress } from '../utils/formValidator';
 import { resolveAvatarUrl } from '../utils/imageHelpers';
 import './ProfilePage.css';
 
@@ -13,85 +12,18 @@ const ProfilePage = () => {
   const { user, refreshUser } = useAuth();
   const toast = useToast();
   const navigate = useNavigate();
-  const [isEditing, setIsEditing] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [validationErrors, setValidationErrors] = useState({});
   const fileInputRef = React.useRef(null);
   
-  const [formData, setFormData] = useState({
-    name: '',
-    email: '',
-    phone: '',
-    phone_country_code: '+63',
-    address: '',
-    avatarPreview: null,
-    avatarFile: null,
-  });
-
-  const getPhoneRequirements = (countryCode) => {
-    const requirements = {
-      '+63': { digits: 10, country: 'Philippines' },
-      '+1': { digits: 10, country: 'USA/Canada' },
-      '+44': { digits: 10, country: 'UK' },
-      '+61': { digits: 9, country: 'Australia' },
-      '+81': { digits: 10, country: 'Japan' },
-      '+82': { digits: 10, country: 'South Korea' },
-      '+86': { digits: 11, country: 'China' },
-      '+65': { digits: 8, country: 'Singapore' },
-      '+60': { digits: 10, country: 'Malaysia' },
-      '+971': { digits: 9, country: 'UAE' }
-    };
-    return requirements[countryCode] || { digits: 10, country: 'Selected Country' };
-  };
+  const [avatarPreview, setAvatarPreview] = useState(null);
+  const [avatarFile, setAvatarFile] = useState(null);
 
   useEffect(() => {
     if (user) {
-      setFormData({
-        name: user.name || 'Juan Dela Cruz',
-        email: user.email || 'juan.delacruz@example.com',
-        phone: user.phone || '9123456789',
-        phone_country_code: '+63',
-        address: user.address || 'Quezon City, Philippines',
-        avatarPreview: user.avatar ? user.avatar : null,
-        avatarFile: null,
-      });
+      setAvatarPreview(null);
+      setAvatarFile(null);
     }
   }, [user]);
-
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    
-    // Handle phone number input - only allow digits and enforce length limit
-    if (name === 'phone') {
-      const digitsOnly = value.replace(/\D/g, '');
-      const maxLength = getPhoneRequirements(formData.phone_country_code).digits;
-      setFormData(prev => ({ 
-        ...prev, 
-        [name]: digitsOnly.slice(0, maxLength)
-      }));
-    } else if (name === 'phone_country_code') {
-      // Handle country code changes - clear phone if it exceeds new country's limit
-      const currentPhone = formData.phone;
-      const newMaxLength = getPhoneRequirements(value).digits;
-      
-      setFormData(prev => ({
-        ...prev,
-        [name]: value,
-        phone: currentPhone.length > newMaxLength ? '' : currentPhone
-      }));
-    } else {
-      setFormData(prev => ({ ...prev, [name]: value }));
-    }
-    
-    // Clear validation error for this field when user starts correcting it
-    if (validationErrors[name]) {
-      setValidationErrors(prev => {
-        const newErrors = { ...prev };
-        delete newErrors[name];
-        return newErrors;
-      });
-    }
-  };
 
   const handleAvatarChange = (e) => {
     const file = e.target.files?.[0];
@@ -113,11 +45,8 @@ const ProfilePage = () => {
     // Create preview
     const reader = new FileReader();
     reader.onloadend = () => {
-      setFormData(prev => ({
-        ...prev,
-        avatarPreview: reader.result,
-        avatarFile: file,
-      }));
+      setAvatarPreview(reader.result);
+      setAvatarFile(file);
     };
     reader.readAsDataURL(file);
   };
@@ -126,105 +55,37 @@ const ProfilePage = () => {
     fileInputRef.current?.click();
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    const newErrors = {};
-
-    // Validate name
-    if (!formData.name.trim()) {
-      newErrors.name = 'Full name is required';
-    } else {
-      const nameValidation = validateName(formData.name);
-      if (!nameValidation.valid) {
-        newErrors.name = nameValidation.error;
-      }
-    }
-
-    // Validate email
-    if (!formData.email.trim()) {
-      newErrors.email = 'Email is required';
-    } else {
-      const emailValidation = validateEmail(formData.email);
-      if (!emailValidation.valid) {
-        newErrors.email = emailValidation.error;
-      }
-    }
-
-    // Validate phone if provided
-    if (formData.phone.trim()) {
-      const phoneValidation = validatePhone(formData.phone);
-      if (!phoneValidation.valid) {
-        newErrors.phone = phoneValidation.error;
-      }
-    }
-
-    // Validate address if provided
-    if (formData.address.trim()) {
-      const addressValidation = validateAddress(formData.address);
-      if (!addressValidation.valid) {
-        newErrors.address = addressValidation.error;
-      }
-    }
-
-    // If there are validation errors, show them
-    if (Object.keys(newErrors).length > 0) {
-      setValidationErrors(newErrors);
-      return;
-    }
-
+  const handleSavePhoto = async () => {
+    if (!avatarFile) return;
     setLoading(true);
-    
     try {
-      // Create FormData for multipart file upload
       const formDataToSend = new FormData();
-      formDataToSend.append('name', formData.name);
-      formDataToSend.append('email', formData.email);
-      formDataToSend.append('phone', formData.phone);
-      formDataToSend.append('address', formData.address);
-      
-      // Only append avatar if a new one was selected
-      if (formData.avatarFile) {
-        formDataToSend.append('avatar', formData.avatarFile);
+      formDataToSend.append('avatar', avatarFile);
+      // Keep existing profile fields unchanged
+      if (user) {
+        formDataToSend.append('name', user.name || '');
+        formDataToSend.append('email', user.email || '');
+        formDataToSend.append('phone', user.phone || '');
+        formDataToSend.append('address', user.address || '');
       }
-
       const response = await api.post('/profile/update', formDataToSend);
-
       if (response.data.success) {
-        toast?.success('Profile updated successfully!');
-        setIsEditing(false);
-        // Refresh user data from server to get updated avatar and other fields
-        const updatedUser = await refreshUser();
-        if (updatedUser && updatedUser.avatar) {
-          setFormData(prev => ({
-            ...prev,
-            avatarPreview: updatedUser.avatar
-          }));
-        }
+        toast?.success('Profile photo updated!');
+        setAvatarFile(null);
+        await refreshUser();
+        setAvatarPreview(null);
       }
     } catch (error) {
-      console.error('Error updating profile:', error);
-      const errorMsg = error.response?.data?.message || 'Failed to update profile. Please try again.';
-      toast?.error(errorMsg);
+      console.error('Error updating photo:', error);
+      toast?.error(error.response?.data?.message || 'Failed to update photo. Please try again.');
     } finally {
       setLoading(false);
     }
   };
 
-  const handleCancel = () => {
-    setIsEditing(false);
-    // Reset form to original values
-    if (user) {
-      setFormData({
-        name: user.name || 'Juan Dela Cruz',
-        email: user.email || 'juan.delacruz@example.com',
-        phone: user.phone || '9123456789',
-        phone_country_code: '+63',
-        address: user.address || 'Quezon City, Philippines',
-        avatarPreview: user.avatar ? user.avatar : null,
-        avatarFile: null,
-      });
-    }
-    // Reset file input
+  const handleCancelPhoto = () => {
+    setAvatarPreview(null);
+    setAvatarFile(null);
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
     }
@@ -241,8 +102,8 @@ const ProfilePage = () => {
 
         <div className="profile-card">
           <div className="profile-avatar">
-            {formData.avatarPreview ? (
-              <img src={formData.avatarPreview} alt="Avatar" className="avatar-image" />
+            {avatarPreview ? (
+              <img src={avatarPreview} alt="Avatar" className="avatar-image" />
             ) : resolveAvatarUrl(user?.avatar, user?.updated_at) ? (
               <img 
                 src={resolveAvatarUrl(user?.avatar, user?.updated_at)} 
@@ -250,193 +111,78 @@ const ProfilePage = () => {
                 className="avatar-image" 
                 onError={(e) => {
                   e.target.style.display = 'none';
-                  e.target.nextElementSibling.style.display = 'flex';
+                  e.target.nextElementSibling?.style && (e.target.nextElementSibling.style.display = 'flex');
                 }} 
               />
             ) : null}
-            {!formData.avatarPreview && !resolveAvatarUrl(user?.avatar) && (
-              <span className="avatar-text" style={{ display: formData.avatarPreview || resolveAvatarUrl(user?.avatar) ? 'none' : 'flex' }}>
-                {formData.name.charAt(0).toUpperCase()}
+            {!avatarPreview && !resolveAvatarUrl(user?.avatar) && (
+              <span className="avatar-text">
+                {(user?.name || 'U').charAt(0).toUpperCase()}
               </span>
             )}
-            {isEditing && (
-              <>
-                <button 
-                  type="button"
-                  className="avatar-edit" 
-                  title="Change photo"
-                  onClick={handleAvatarClick}
-                >
-                  Edit
-                </button>
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  accept="image/png,image/jpeg"
-                  onChange={handleAvatarChange}
-                  style={{ display: 'none' }}
-                  aria-label="Upload avatar"
-                />
-              </>
-            )}
+            <button 
+              type="button"
+              className="avatar-edit" 
+              title="Change photo"
+              onClick={handleAvatarClick}
+            >
+              Edit
+            </button>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/png,image/jpeg"
+              onChange={handleAvatarChange}
+              style={{ display: 'none' }}
+              aria-label="Upload avatar"
+            />
           </div>
 
-          <form onSubmit={handleSubmit} className="profile-form">
+          <div className="profile-form">
             <div className="form-group">
               <label className="form-label">Full Name</label>
-              {isEditing ? (
-                <>
-                  <input
-                    type="text"
-                    name="name"
-                    value={formData.name}
-                    onChange={handleChange}
-                    className={`form-input ${validationErrors.name ? 'error' : ''}`}
-                    required
-                  />
-                  {validationErrors.name && (
-                    <small className="error-message">{validationErrors.name}</small>
-                  )}
-                </>
-              ) : (
-                <p className="form-value">{formData.name}</p>
-              )}
+              <p className="form-value">{user?.name || '—'}</p>
             </div>
 
             <div className="form-group">
               <label className="form-label">Email</label>
-              {isEditing ? (
-                <>
-                  <input
-                    type="email"
-                    name="email"
-                    value={formData.email}
-                    onChange={handleChange}
-                    className={`form-input ${validationErrors.email ? 'error' : ''}`}
-                    required
-                  />
-                  {validationErrors.email && (
-                    <small className="error-message">{validationErrors.email}</small>
-                  )}
-                </>
-              ) : (
-                <p className="form-value">{formData.email}</p>
-              )}
+              <p className="form-value">{user?.email || '—'}</p>
             </div>
 
             <div className="form-group">
               <label className="form-label">Contact Number</label>
-              {isEditing ? (
-                <>
-                  <div style={{ display: 'flex', gap: '8px', alignItems: 'flex-start' }}>
-                    <select
-                      name="phone_country_code"
-                      className="form-input form-select"
-                      value={formData.phone_country_code}
-                      onChange={handleChange}
-                      style={{ 
-                        flex: '0 0 120px',
-                        padding: '0.875rem 1rem'
-                      }}
-                    >
-                      <option value="+63">🇵🇭 +63</option>
-                      <option value="+1">🇺🇸 +1</option>
-                      <option value="+44">🇬🇧 +44</option>
-                      <option value="+61">🇦🇺 +61</option>
-                      <option value="+81">🇯🇵 +81</option>
-                      <option value="+82">🇰🇷 +82</option>
-                      <option value="+86">🇨🇳 +86</option>
-                      <option value="+65">🇸🇬 +65</option>
-                      <option value="+60">🇲🇾 +60</option>
-                      <option value="+971">🇦🇪 +971</option>
-                    </select>
-                    <input
-                      type="tel"
-                      name="phone"
-                      className={`form-input ${validationErrors.phone ? 'error' : ''}`}
-                      value={formData.phone}
-                      onChange={handleChange}
-                      placeholder="e.g., 9123456789"
-                      style={{ flex: '1', borderColor: validationErrors.phone ? '#ef4444' : undefined }}
-                      title={`Please enter exactly ${getPhoneRequirements(formData.phone_country_code).digits} digits for ${getPhoneRequirements(formData.phone_country_code).country}`}
-                    />
-                  </div>
-                  {validationErrors.phone && (
-                    <small style={{ color: '#ef4444', marginTop: '4px', display: 'block' }}>
-                      {validationErrors.phone}
-                    </small>
-                  )}
-                  {!validationErrors.phone && (
-                    <small style={{ color: '#666', display: 'block', marginTop: '0.5rem' }}>
-                      {formData.phone ? (
-                        formData.phone.length === getPhoneRequirements(formData.phone_country_code).digits
-                          ? '✓ Valid'
-                          : `Enter exactly ${getPhoneRequirements(formData.phone_country_code).digits} digits for ${getPhoneRequirements(formData.phone_country_code).country}`
-                      ) : (
-                        `Optional - Enter exactly ${getPhoneRequirements(formData.phone_country_code).digits} digits for ${getPhoneRequirements(formData.phone_country_code).country}`
-                      )}
-                    </small>
-                  )}
-                </>
-              ) : (
-                <p className="form-value">{formData.phone_country_code} {formData.phone}</p>
-              )}
+              <p className="form-value">
+                {user?.phone ? `+63 ${user.phone}` : '—'}
+              </p>
             </div>
 
             <div className="form-group">
               <label className="form-label">Address</label>
-              {isEditing ? (
-                <>
-                  <textarea
-                    name="address"
-                    value={formData.address}
-                    onChange={handleChange}
-                    className={`form-input form-textarea ${validationErrors.address ? 'error' : ''}`}
-                    rows={2}
-                  />
-                  {validationErrors.address && (
-                    <small className="error-message">{validationErrors.address}</small>
-                  )}
-                </>
-              ) : (
-                <p className="form-value">{formData.address}</p>
-              )}
+              <p className="form-value">{user?.address || '—'}</p>
             </div>
 
-            <div className="form-actions">
-              {isEditing ? (
-                <>
-                  <button 
-                    type="button" 
-                    className="btn btn-secondary"
-                    onClick={handleCancel}
-                    disabled={loading}
-                  >
-                    Cancel
-                  </button>
-                  <button 
-                    type="submit" 
-                    className="btn btn-primary"
-                    disabled={loading || Object.keys(validationErrors).length > 0}
-                  >
-                    {loading ? 'Saving...' : 'Save Changes'}
-                  </button>
-                </>
-              ) : (
-                <>
-                  <button 
-                    type="button" 
-                    className="btn btn-outline"
-                    onClick={() => setIsEditing(true)}
-                  >
-                    Edit Profile
-                  </button>
-                </>
-              )}
-            </div>
-          </form>
+            {avatarFile && (
+              <div className="form-actions">
+                <button 
+                  type="button" 
+                  className="btn btn-secondary"
+                  onClick={handleCancelPhoto}
+                  disabled={loading}
+                >
+                  Cancel
+                </button>
+                <button 
+                  type="button" 
+                  className="btn btn-primary"
+                  onClick={handleSavePhoto}
+                  disabled={loading}
+                >
+                  {loading ? 'Saving...' : 'Save Photo'}
+                </button>
+              </div>
+            )}
+          </div>
         </div>
-
         {/* Additional Profile Sections */}
         <div className="profile-sections">
           <div className="profile-section">
