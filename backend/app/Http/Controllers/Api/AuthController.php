@@ -23,28 +23,31 @@ class AuthController extends Controller
      */
     private function buildAvatarUrl(?string $avatarPath): ?string
     {
-        if (!$avatarPath) {
+        if (!$avatarPath || trim($avatarPath) === '') {
             return null;
         }
 
         $avatarPath = trim($avatarPath);
 
-        if ($avatarPath === '') {
-            return null;
-        }
-
-        // Preserve external URLs but force https to avoid mixed-content blocking on mobile.
+        // External social avatar (Google, Facebook, etc.):
+        // preserve as-is but force HTTPS to avoid mixed-content blocking.
         if (preg_match('/^https?:\/\//i', $avatarPath)) {
-            return preg_replace('/^http:\/\//i', 'https://', $avatarPath);
+            if (preg_match('#^https?://(localhost|127\.0\.0\.1)(:\d+)?(/.*)?$#i', $avatarPath, $m)) {
+                $avatarPath = ltrim($m[3] ?? '', '/');
+                // Fall through to local path handling
+            } else {
+                return preg_replace('/^http:\/\//i', 'https://', $avatarPath);
+            }
         }
 
         $normalized = ltrim(str_replace('\\', '/', $avatarPath), '/');
-
         if (str_starts_with($normalized, 'storage/')) {
             $normalized = substr($normalized, strlen('storage/'));
         }
 
-        return Storage::disk('public')->url($normalized);
+        // Route through the backend API file-serving endpoint to avoid
+        // relying on the /storage symlink in public_html.
+        return rtrim(config('app.url'), '/') . '/file/' . $normalized;
     }
 
     /**

@@ -16,14 +16,21 @@ class SocialAuthController extends Controller
     {
         if (!$avatarPath || trim($avatarPath) === '') return null;
         $avatarPath = trim($avatarPath);
+        // External social avatar — preserve as-is, force HTTPS
         if (preg_match('/^https?:\/\//i', $avatarPath)) {
-            return preg_replace('/^http:\/\//i', 'https://', $avatarPath);
+            if (!preg_match('#^https?://(localhost|127\.0\.0\.1)(:\d+)?#i', $avatarPath)) {
+                return preg_replace('/^http:\/\//i', 'https://', $avatarPath);
+            }
+            // localhost URL — fall through to local path handling
+            $avatarPath = ltrim(parse_url($avatarPath, PHP_URL_PATH) ?? '', '/');
         }
         $normalized = ltrim(str_replace('\\', '/', $avatarPath), '/');
         if (str_starts_with($normalized, 'storage/')) {
             $normalized = substr($normalized, strlen('storage/'));
         }
-        return Storage::disk('public')->url($normalized);
+        // Route through the backend API file-serving endpoint to avoid
+        // relying on the /storage symlink in public_html.
+        return rtrim(config('app.url'), '/') . '/file/' . $normalized;
     }
 
     /**

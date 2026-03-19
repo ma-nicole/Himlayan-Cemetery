@@ -18,12 +18,25 @@ export const AuthProvider = ({ children }) => {
 
   // Initialize auth state
   useEffect(() => {
-    const initAuth = () => {
+    const initAuth = async () => {
       const storedUser = authService.getUser();
       if (storedUser && authService.isAuthenticated()) {
+        // Show stored user immediately so the UI isn't blocked
         setUser(storedUser);
+        setLoading(false);
+        // Background-refresh from the server to get the latest avatar, phone, etc.
+        // This fixes the case where localStorage was cached before the avatar was set.
+        try {
+          const response = await authService.getCurrentUser();
+          if (response.success && response.data) {
+            setUser(response.data);
+          }
+        } catch {
+          // Silently ignore — we already have usable cached data
+        }
+      } else {
+        setLoading(false);
       }
-      setLoading(false);
     };
 
     initAuth();

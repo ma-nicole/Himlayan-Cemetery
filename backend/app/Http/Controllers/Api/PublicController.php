@@ -25,14 +25,17 @@ class PublicController extends Controller
                 $photoPath = ltrim($m[3] ?? '', '/');
                 // Fall through to relative path handling below
             } else {
-                return preg_replace('#(/api)/storage/#i', '/storage/', $photoPath);
+                // Already a production URL — return as-is
+                return $photoPath;
             }
         }
 
         $relative = ltrim($photoPath, '/');
         $relative = preg_replace('#^storage/#i', '', $relative);
 
-        return Storage::disk('public')->url($relative);
+        // Route through the backend API file-serving endpoint to avoid
+        // relying on the /storage symlink in public_html.
+        return rtrim(config('app.url'), '/') . '/file/' . $relative;
     }
 
     /**

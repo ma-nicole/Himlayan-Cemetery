@@ -104,21 +104,26 @@ const ProfilePage = () => {
           <div className="profile-avatar">
             {avatarPreview ? (
               <img src={avatarPreview} alt="Avatar" className="avatar-image" />
-            ) : resolveAvatarUrl(user?.avatar, user?.updated_at) ? (
-              <img 
-                src={resolveAvatarUrl(user?.avatar, user?.updated_at)} 
-                alt="Avatar" 
-                className="avatar-image" 
-                onError={(e) => {
-                  e.target.style.display = 'none';
-                  e.target.nextElementSibling?.style && (e.target.nextElementSibling.style.display = 'flex');
-                }} 
-              />
-            ) : null}
-            {!avatarPreview && !resolveAvatarUrl(user?.avatar) && (
-              <span className="avatar-text">
-                {(user?.name || 'U').charAt(0).toUpperCase()}
-              </span>
+            ) : (
+              <>
+                <img
+                  src={resolveAvatarUrl(user?.avatar, user?.updated_at) || ''}
+                  alt="Avatar"
+                  className="avatar-image"
+                  style={{ display: resolveAvatarUrl(user?.avatar, user?.updated_at) ? 'block' : 'none' }}
+                  onError={(e) => {
+                    e.target.style.display = 'none';
+                    const fallback = e.target.nextElementSibling;
+                    if (fallback) fallback.style.display = 'flex';
+                  }}
+                />
+                <span
+                  className="avatar-text"
+                  style={{ display: resolveAvatarUrl(user?.avatar, user?.updated_at) ? 'none' : 'flex' }}
+                >
+                  {(user?.name || 'U').charAt(0).toUpperCase()}
+                </span>
+              </>
             )}
             <button 
               type="button"

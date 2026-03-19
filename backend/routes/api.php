@@ -20,6 +20,7 @@ use App\Http\Controllers\Api\SystemMaintenanceController;
 use App\Http\Controllers\Auth\SocialAuthController;
 use App\Http\Controllers\Api\InvitationController;
 use App\Http\Controllers\Api\PaymentWebhookController;
+use App\Http\Controllers\Api\StorageController;
 
 /*
 |--------------------------------------------------------------------------
@@ -58,6 +59,10 @@ Route::get('/announcements', [AnnouncementController::class, 'index']);
 
 // System maintenance status (public so frontend can show maintenance screen)
 Route::get('/system/maintenance-status', [SystemMaintenanceController::class, 'status']);
+
+// Storage file serving — serves files directly from backend storage disk,
+// so image URLs never depend on the /storage symlink or .htaccess rules.
+Route::get('/file/{path}', [StorageController::class, 'serve'])->where('path', '.+');
 
 // Temporary diagnostic endpoint – remove after debugging invitation URLs
 Route::get('/debug/urls', function () {

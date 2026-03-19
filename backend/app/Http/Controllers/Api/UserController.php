@@ -24,7 +24,12 @@ class UserController extends Controller
         $avatarPath = trim($avatarPath);
 
         if (preg_match('/^https?:\/\//i', $avatarPath)) {
-            return preg_replace('/^http:\/\//i', 'https://', $avatarPath);
+            if (preg_match('#^https?://(localhost|127\.0\.0\.1)(:\d+)?(/.*)?$#i', $avatarPath, $m)) {
+                $avatarPath = ltrim($m[3] ?? '', '/');
+                // Fall through to local path handling
+            } else {
+                return preg_replace('/^http:\/\//i', 'https://', $avatarPath);
+            }
         }
 
         $normalized = ltrim(str_replace('\\', '/', $avatarPath), '/');
@@ -32,7 +37,9 @@ class UserController extends Controller
             $normalized = substr($normalized, strlen('storage/'));
         }
 
-        return Storage::disk('public')->url($normalized);
+        // Route through the backend API file-serving endpoint to avoid
+        // relying on the /storage symlink in public_html.
+        return rtrim(config('app.url'), '/') . '/file/' . $normalized;
     }
 
     /**

@@ -1,19 +1,30 @@
 /**
  * Shared photo URL resolution utility.
  *
- * Normalises whatever the API returns for deceased_photo_url or avatar:
- *  - relative path  → backendBaseUrl/storage/<path>
- *  - full URL with /api/storage→ strip /api prefix
- *  - localhost URL  → rewrite host to backendBaseUrl
- * Also appends a cache-busting query param from `updatedAt` so browsers
- * always refresh after an upload without forcing a hard reload.
+ * All stored photos are served through the backend Laravel API route
+ * GET /api/file/{path} (StorageController::serve), which reads directly
+ * from disk — no symlink, no .htaccess tricks required. This works the
+ * same on desktop, mobile, and every browser.
+ *
+ * Handles these input shapes:
+ *  - relative path  (e.g. "deceased_photos/photo.jpg")
+ *  - legacy full storage URL  (e.g. "https://host/storage/deceased_photos/photo.jpg")
+ *  - new API file URL  (e.g. "https://host/api/file/deceased_photos/photo.jpg")
+ *  - localhost dev URL
+ *
+ * Also appends a cache-busting query param from `updatedAt`.
  */
 
-const rawApiUrl = process.env.REACT_APP_API_URL || 'https://himlayangpilipino.com/api';
-export const backendBaseUrl = rawApiUrl.replace(/\/api\/?$/, '').replace(/\/$/, '');
+const rawApiUrl = (process.env.REACT_APP_API_URL || 'https://himlayangpilipino.com/api').replace(/\/?$/, '');
+export const backendBaseUrl = rawApiUrl.replace(/\/api$/, '');
 
 /**
- * Resolve a photo value to a fully-qualified, cache-busted URL.
+ * Build the /api/file/ URL for a given relative storage path.
+ */
+const toFileApiUrl = (relative) => `${rawApiUrl}/file/${relative.replace(/^\/+/, '')}`;
+
+/**
+ * Resolve a photo value to a fully-qualified, cache-busted /api/file/ URL.
  *
  * @param {string|null|undefined} photoValue  The raw value from the API.
  * @param {string|null|undefined} updatedAt   ISO date string used for cache-busting.
@@ -25,28 +36,38 @@ export const resolvePhotoUrl = (photoValue, updatedAt = null) => {
   let resolvedUrl;
 
   if (/^https?:\/\//i.test(photoValue)) {
-    // Full URL already — but may have wrong host or path prefix.
+    // Full URL: could be a new /api/file/ URL, legacy /storage/ URL, or localhost.
     if (/^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?\//i.test(photoValue)) {
-      // Rewrite localhost URLs to the real backend host.
+      // Dev localhost URL — extract relative path and route through API.
       try {
         const url = new URL(photoValue);
         let path = url.pathname.replace(/^\/+/, '').replace(/^api\//i, '');
-        if (!path.startsWith('storage/')) path = 'storage/' + path;
-        resolvedUrl = `${backendBaseUrl}/${path}`;
+        // Strip 'storage/' prefix if present
+        path = path.replace(/^storage\//i, '');
+        resolvedUrl = toFileApiUrl(path);
       } catch {
         return null;
       }
     } else {
-      // Production URL: strip any accidental /api/storage/ prefix.
-      resolvedUrl = photoValue.replace(/\/api\/storage\//i, '/storage/');
+      // Production URL.
+      // If it already uses /api/file/, keep it as-is.
+      if (/\/api\/file\//i.test(photoValue)) {
+        resolvedUrl = photoValue;
+      } else {
+        // Legacy /storage/ or /api/storage/ URL — rewrite to /api/file/.
+        const normalized = photoValue
+          .replace(/\/api\/storage\//i, '/storage/')   // fix /api/storage/ first
+          .replace(/\/storage\//i, '/api/file/');       // then turn /storage/ into /api/file/
+        resolvedUrl = normalized;
+      }
     }
   } else {
-    // Relative path — prepend backend base + /storage/.
-    const normalized = String(photoValue).replace(/^\/+/, '').replace(/^api\//i, '');
-    const storagePath = normalized.startsWith('storage/')
-      ? normalized
-      : `storage/${normalized}`;
-    resolvedUrl = `${backendBaseUrl}/${storagePath}`;
+    // Relative path — route through API.
+    const relative = String(photoValue)
+      .replace(/^\/+/, '')
+      .replace(/^api\//i, '')
+      .replace(/^storage\//i, '');
+    resolvedUrl = toFileApiUrl(relative);
   }
 
   if (resolvedUrl && updatedAt) {
