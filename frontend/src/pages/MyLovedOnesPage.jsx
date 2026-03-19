@@ -17,6 +17,7 @@ const MyLovedOnesPage = () => {
 
   // QR Modal State
   const [qrRecord, setQrRecord] = useState(null);
+  const [qrNotGenerated, setQrNotGenerated] = useState(null); // record whose QR hasn't been generated yet
   const qrModalRef = useRef(null);
   
   // Edit Modal State
@@ -36,7 +37,12 @@ const MyLovedOnesPage = () => {
 
   // Close QR modal on Escape key
   useEffect(() => {
-    const onKey = (e) => { if (e.key === 'Escape') setQrRecord(null); };
+    const onKey = (e) => {
+      if (e.key === 'Escape') {
+        setQrRecord(null);
+        setQrNotGenerated(null);
+      }
+    };
     document.addEventListener('keydown', onKey);
     return () => document.removeEventListener('keydown', onKey);
   }, []);
@@ -256,7 +262,13 @@ const MyLovedOnesPage = () => {
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginTop: 'auto' }}>
                       {record.plot?.plot_number && (
                         <button
-                          onClick={() => setQrRecord(record)}
+                          onClick={() => {
+                            if (record.qr_code) {
+                              setQrRecord(record);
+                            } else {
+                              setQrNotGenerated(record);
+                            }
+                          }}
                           style={{
                             width: '100%',
                             padding: '10px',
@@ -410,6 +422,75 @@ const MyLovedOnesPage = () => {
           </div>
         );
       })()}
+
+      {/* QR Not Yet Generated Modal */}
+      {qrNotGenerated && (
+        <div
+          style={{
+            position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+            backgroundColor: 'rgba(0,0,0,0.55)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            zIndex: 1100, padding: '20px'
+          }}
+          onClick={() => setQrNotGenerated(null)}
+        >
+          <div
+            style={{
+              backgroundColor: 'white', borderRadius: '16px',
+              padding: '36px 28px', maxWidth: '380px', width: '100%',
+              boxShadow: '0 20px 40px rgba(0,0,0,0.2)',
+              textAlign: 'center', position: 'relative'
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <button
+              onClick={() => setQrNotGenerated(null)}
+              style={{
+                position: 'absolute', top: '14px', right: '16px',
+                background: 'none', border: 'none', fontSize: '22px',
+                cursor: 'pointer', color: '#6b7280', lineHeight: 1
+              }}
+              aria-label="Close"
+            >
+              &times;
+            </button>
+
+            {/* QR icon placeholder */}
+            <div style={{
+              width: '72px', height: '72px', borderRadius: '50%',
+              backgroundColor: '#f3f4f6', display: 'flex', alignItems: 'center',
+              justifyContent: 'center', margin: '0 auto 16px'
+            }}>
+              <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" strokeWidth="1.5">
+                <rect x="3" y="3" width="7" height="7"/>
+                <rect x="14" y="3" width="7" height="7"/>
+                <rect x="3" y="14" width="7" height="7"/>
+                <rect x="14" y="14" width="3" height="3"/>
+                <path d="M17 17h4M17 21h4M21 17v4"/>
+              </svg>
+            </div>
+
+            <h3 style={{ margin: '0 0 8px', fontSize: '17px', fontWeight: '700', color: '#111827' }}>
+              QR Code Not Yet Generated
+            </h3>
+            <p style={{ margin: '0 0 20px', fontSize: '14px', color: '#6b7280', lineHeight: 1.6 }}>
+              The QR code for <strong style={{ color: '#111827' }}>{qrNotGenerated.deceased_name}</strong> has not been generated yet.
+              Please contact a staff member or admin for QR code generation.
+            </p>
+
+            <button
+              onClick={() => setQrNotGenerated(null)}
+              style={{
+                padding: '10px 28px', backgroundColor: '#1a472a', color: 'white',
+                border: 'none', borderRadius: '8px', cursor: 'pointer',
+                fontWeight: '600', fontSize: '14px'
+              }}
+            >
+              OK
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Edit Modal */}
       {editingRecord && (
