@@ -60,7 +60,8 @@ const ServiceRequestManagementPage = () => {
 
   const handleOpenModal = (item) => {
     setSelectedItem(item);
-    setFormData({ status: item.status, admin_notes: item.admin_notes || '', service_fee_amount: item.service_fee_amount || '' });
+    const isPaymentVerified = item.service_fee_payment?.status === 'verified';
+    setFormData({ status: isPaymentVerified ? 'completed' : item.status, admin_notes: item.admin_notes || '', service_fee_amount: item.service_fee_amount || '' });
     setFormError('');
     setValidationErrors({});
     setShowModal(true);
