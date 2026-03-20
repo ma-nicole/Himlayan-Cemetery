@@ -108,7 +108,7 @@ const PlotsPage = () => {
     }
 
     try {
-      await plotService.archive(id);
+      await plotService.delete(id);
       setSuccess('Plot archived successfully');
       handlePageChange(pagination.current_page);
       setTimeout(() => setSuccess(''), 3000);

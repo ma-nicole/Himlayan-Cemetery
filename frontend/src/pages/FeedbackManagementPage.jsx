@@ -205,7 +205,7 @@ const FeedbackManagementPage = () => {
                             <button className="btn-edit" onClick={() => handleOpenModal(item)} title="View & Respond">
                               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
                             </button>
-                            <button className="btn-archive" onClick={() => handleDelete(item.id)} title="Archive">
+                            <button className="btn-delete" onClick={() => handleDelete(item.id)} title="Archive">
                               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 8v13H3V8M1 3h22v5H1zM10 12h4"/></svg>
                             </button>
                           </div>

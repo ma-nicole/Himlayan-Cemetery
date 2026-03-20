@@ -308,7 +308,8 @@ class InvitationController extends Controller
             'name' => $fullName,
             'password' => $password,
             'token' => $token,
-            'accept_url' => $this->canonicalFrontendUrl() . '/accept-invitation?token=' . $token
+            'accept_url' => $this->canonicalFrontendUrl() . '/accept-invitation?token=' . $token,
+            'phone' => $burialRecord->contact_phone,
         ];
 
         $expiresAt = now()->addDay();
@@ -429,7 +430,8 @@ class InvitationController extends Controller
             'name' => $fullName,
             'password' => $password,
             'token' => $token,
-            'accept_url' => $this->canonicalFrontendUrl() . '/accept-invitation?token=' . $token
+            'accept_url' => $this->canonicalFrontendUrl() . '/accept-invitation?token=' . $token,
+            'phone' => $burialRecord->contact_phone,
         ];
 
         $expiresAt = now()->addDay();
@@ -571,6 +573,7 @@ class InvitationController extends Controller
                 'name'                 => $invitationData['name'],
                 'password'             => Hash::make($invitationData['password']),
                 'role'                 => $role,
+                'phone'                => $invitationData['phone'] ?? null,
                 'invitation_accepted'  => true,
                 'must_change_password' => true,
             ]);
