@@ -43,11 +43,12 @@
 
 .bar.animate {
   animation: barGrow 0.6s ease forwards;
-  height: 0 !important;
+  height: 0;
 }
 
 @keyframes barGrow {
-  to { height: var(--target-height, 100%); }
+  from { height: 0; }
+  to { height: var(--target-height); }
 }
 
 .bar-primary { background: var(--color-primary-500, #1a472a); }

@@ -24,6 +24,7 @@ export const BarChart = ({
                 className={`bar bar-${color} ${animate ? 'animate' : ''}`}
                 style={{
                   height: `${(item.value / maxValue) * 100}%`,
+                  '--target-height': `${(item.value / maxValue) * 100}%`,
                   animationDelay: animate ? `${index * 0.1}s` : '0s',
                 }}
               />
