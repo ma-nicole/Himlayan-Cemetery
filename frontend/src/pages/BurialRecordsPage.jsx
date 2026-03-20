@@ -25,12 +25,13 @@ const BurialRecordsPage = () => {
   const [sortField, setSortField] = useState('death_date');
   const [sortOrder, setSortOrder] = useState('desc');
 
-  const loadRecords = useCallback(async (page = 1) => {
+  const loadRecords = useCallback(async (page = 1, searchVal = '') => {
     try {
       setLoading(true);
+      setError('');
       const response = await burialService.getAll({ 
         page, 
-        search: search || undefined,
+        search: searchVal || undefined,
         per_page: 5,
         sort_by: sortField,
         sort_order: sortOrder
@@ -47,19 +48,15 @@ const BurialRecordsPage = () => {
     } finally {
       setLoading(false);
     }
-  }, [search, sortField, sortOrder]);
-
-  useEffect(() => {
-    loadRecords();
-  }, [loadRecords]);
-
-  useEffect(() => {
-    loadRecords(1);
   }, [sortField, sortOrder]);
+
+  useEffect(() => {
+    loadRecords(1, search);
+  }, [loadRecords]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleSearch = (e) => {
     e.preventDefault();
-    loadRecords(1);
+    loadRecords(1, search);
   };
 
   const handleSort = (field) => {
@@ -99,7 +96,7 @@ const BurialRecordsPage = () => {
         setSuccess('Burial record created successfully');
       }
       setShowForm(false);
-      loadRecords(pagination.current_page);
+      loadRecords(pagination.current_page, search);
       setTimeout(() => setSuccess(''), 3000);
     } catch (err) {
       throw err;
@@ -114,7 +111,7 @@ const BurialRecordsPage = () => {
     try {
       await burialService.archive(id);
       setSuccess('Burial record archived successfully');
-      loadRecords(pagination.current_page);
+      loadRecords(pagination.current_page, search);
       setTimeout(() => setSuccess(''), 3000);
     } catch (err) {
       setError('Failed to archive burial record');
@@ -129,7 +126,7 @@ const BurialRecordsPage = () => {
       if (response.success) {
         setQrData(response.data);
         setSuccess('QR code generated successfully');
-        loadRecords(pagination.current_page); // Reload to show updated QR status
+        loadRecords(pagination.current_page, search); // Reload to show updated QR status
         setTimeout(() => setSuccess(''), 3000);
       }
     } catch (err) {
@@ -163,7 +160,7 @@ const BurialRecordsPage = () => {
           <button 
             type="button" 
             className="btn" 
-            onClick={() => { setSearch(''); loadRecords(1); }}
+            onClick={() => { setSearch(''); loadRecords(1, ''); }}
           >
             Clear
           </button>
@@ -227,14 +224,14 @@ const BurialRecordsPage = () => {
             <div className="pagination">
               <button
                 disabled={pagination.current_page === 1}
-                onClick={() => loadRecords(pagination.current_page - 1)}
+                onClick={() => loadRecords(pagination.current_page - 1, search)}
               >
                 Previous
               </button>
               <span>Page {pagination.current_page} of {pagination.last_page}</span>
               <button
                 disabled={pagination.current_page === pagination.last_page}
-                onClick={() => loadRecords(pagination.current_page + 1)}
+                onClick={() => loadRecords(pagination.current_page + 1, search)}
               >
                 Next
               </button>
