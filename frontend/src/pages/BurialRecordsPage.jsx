@@ -175,7 +175,11 @@ const BurialRecordsPage = () => {
         <label style={{ fontSize: '0.8rem', fontWeight: '500' }}>Sort by:</label>
         <select 
           value={sortField} 
-          onChange={(e) => setSortField(e.target.value)}
+          onChange={(e) => {
+            const field = e.target.value;
+            setSortField(field);
+            setSortOrder(['death_date', 'burial_date', 'created_at'].includes(field) ? 'desc' : 'asc');
+          }}
           className="sort-select"
         >
           <option value="death_date">Death Date</option>
@@ -189,8 +193,17 @@ const BurialRecordsPage = () => {
           onChange={(e) => setSortOrder(e.target.value)}
           className="sort-select"
         >
-          <option value="desc">Newest First</option>
-          <option value="asc">Oldest First</option>
+          {['death_date', 'burial_date', 'created_at'].includes(sortField) ? (
+            <>
+              <option value="desc">Newest First</option>
+              <option value="asc">Oldest First</option>
+            </>
+          ) : (
+            <>
+              <option value="asc">A → Z</option>
+              <option value="desc">Z → A</option>
+            </>
+          )}
         </select>
       </div>
 
