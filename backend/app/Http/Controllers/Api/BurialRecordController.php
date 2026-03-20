@@ -278,19 +278,26 @@ class BurialRecordController extends Controller
         // Update plot status to occupied
         $plot->update(['status' => 'occupied']);
 
-        // Sync contact info if this email matches an activated user account
+        // Sync contact info with the linked user account (if exists)
         if ($burialRecord->contact_email) {
             $user = \App\Models\User::where('email', $burialRecord->contact_email)
                                     ->where('invitation_accepted', true)
                                     ->first();
-            if ($user && $user->name) {
-                // Parse user's full name into detailed fields
-                $parts = explode(' ', $user->name, 3); // Split into max 3 parts
-                $burialRecord->contact_first_name = $parts[0] ?? '';
-                $burialRecord->contact_middle_initial = isset($parts[1]) ? $parts[1][0] : '';
-                $burialRecord->contact_last_name = $parts[2] ?? '';
-                $burialRecord->contact_name = $user->name;
-                $burialRecord->save();
+            if ($user) {
+                if ($user->name) {
+                    // Parse user's full name into detailed fields
+                    $parts = explode(' ', $user->name, 3);
+                    $burialRecord->contact_first_name = $parts[0] ?? '';
+                    $burialRecord->contact_middle_initial = isset($parts[1]) ? $parts[1][0] : '';
+                    $burialRecord->contact_last_name = $parts[2] ?? '';
+                    $burialRecord->contact_name = $user->name;
+                    $burialRecord->save();
+                }
+                // Sync phone from burial record to user account
+                if ($burialRecord->contact_phone) {
+                    $user->phone = $burialRecord->contact_phone;
+                    $user->save();
+                }
             }
         }
 
@@ -392,20 +399,26 @@ class BurialRecordController extends Controller
                 // Construct full name from detailed fields
                 $parts = [];
                 if ($record->contact_first_name) $parts[] = $record->contact_first_name;
-                if ($record->contact_middle_initial) $parts[] = $record->contact_middle_initial; // No dot? assuming dot isn't stored or added here
+                if ($record->contact_middle_initial) $parts[] = $record->contact_middle_initial;
                 if ($record->contact_last_name) $parts[] = $record->contact_last_name;
-                
+
                 $fullName = implode(' ', $parts);
-                
-                // Fallback to contact_name if detailed fields were not populated properly
+
+                // Fallback to contact_name if detailed fields were not populated
                 if (empty(trim($fullName))) {
                     $fullName = $record->contact_name;
                 }
-                
+
                 if (!empty(trim($fullName)) && $user->name !== $fullName) {
                     $user->name = $fullName;
-                    $user->save();
                 }
+
+                // Sync phone from burial record to user account
+                if ($record->contact_phone) {
+                    $user->phone = $record->contact_phone;
+                }
+
+                $user->save();
             }
             
             // Sync contact names to all other burial records with the same email

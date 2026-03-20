@@ -66,7 +66,6 @@ const ProfilePage = () => {
         formDataToSend.append('name', user.name || '');
         formDataToSend.append('email', user.email || '');
         formDataToSend.append('phone', user.phone || '');
-        formDataToSend.append('address', user.address || '');
       }
       const response = await api.post('/profile/update', formDataToSend);
       if (response.data.success) {
@@ -164,11 +163,6 @@ const ProfilePage = () => {
               <p className="form-value">
                 {user?.phone ? `+63 ${user.phone}` : '—'}
               </p>
-            </div>
-
-            <div className="form-group">
-              <label className="form-label">Address</label>
-              <p className="form-value">{user?.address || '—'}</p>
             </div>
 
             {avatarFile && (

@@ -339,7 +339,6 @@ class UserController extends Controller
                 Rule::unique('users')->ignore($user->id),
             ],
             'phone' => 'sometimes|nullable|string|max:20',
-            'address' => 'sometimes|nullable|string|max:500',
             'avatar' => 'sometimes|nullable|image|mimes:png,jpg,jpeg|max:5120', // 5MB max
         ]);
 
@@ -352,10 +351,6 @@ class UserController extends Controller
         if (isset($validated['phone'])) {
             $user->phone = $validated['phone'];
         }
-        if (isset($validated['address'])) {
-            $user->address = $validated['address'];
-        }
-
         // Handle avatar upload
         if ($request->hasFile('avatar')) {
             $file = $request->file('avatar');
@@ -393,7 +388,6 @@ class UserController extends Controller
                 'name' => $user->name,
                 'email' => $user->email,
                 'phone' => $user->phone,
-                'address' => $user->address,
                 'avatar' => $this->buildAvatarUrl($user->avatar),
                 'role' => $user->role,
                 'must_change_password' => $user->must_change_password,

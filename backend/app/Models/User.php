@@ -54,7 +54,6 @@ class User extends Authenticatable
         'email_verified_at' => 'datetime',
         'password' => 'hashed',
         'phone' => NullableEncryptedCast::class,
-        'address' => NullableEncryptedCast::class,
         'invitation_sent_at' => 'datetime',
         'invitation_expires_at' => 'datetime',
         'invitation_accepted' => 'boolean',
