@@ -58,61 +58,14 @@ const processPendingRequests = (newToken) => {
 // Response interceptor to handle errors
 api.interceptors.response.use(
   (response) => response,
-  async (error) => {
+  (error) => {
     // Don't redirect on 401 for login/register/refresh endpoints - let the component handle the error
     const isAuthEndpoint = error.config?.url?.includes('/login') || 
                            error.config?.url?.includes('/register') ||
                            error.config?.url?.includes('/refresh-token');
     
     if (error.response?.status === 401 && !isAuthEndpoint) {
-      const refreshToken = localStorage.getItem(REFRESH_TOKEN_KEY);
-
-      if (refreshToken && !isRefreshing) {
-        isRefreshing = true;
-
-        try {
-          const refreshResponse = await axios.post(
-            `${normalizedApiBaseUrl}/refresh-token`,
-            { refresh_token: refreshToken },
-            { headers: { 'Accept': 'application/json', 'Content-Type': 'application/json' } }
-          );
-
-          if (refreshResponse.data?.success) {
-            const { access_token: newToken, token_expires_at: newExpiresAt } = refreshResponse.data.data;
-            localStorage.setItem(TOKEN_KEY, newToken);
-            if (newExpiresAt) localStorage.setItem(TOKEN_EXPIRES_AT_KEY, newExpiresAt);
-
-            // Retry all queued requests with the new token
-            processPendingRequests(newToken);
-
-            // Retry the original failed request
-            error.config.headers.Authorization = `Bearer ${newToken}`;
-            return api(error.config);
-          }
-        } catch {
-          // Refresh failed — clear auth and redirect to login
-          processPendingRequests(null);
-          clearStoredAuth();
-          window.location.href = '/login';
-          return Promise.reject(error);
-        } finally {
-          isRefreshing = false;
-        }
-      } else if (refreshToken && isRefreshing) {
-        // Another refresh is in progress — queue this request
-        return new Promise((resolve, reject) => {
-          pendingRequests.push((newToken) => {
-            if (newToken) {
-              error.config.headers.Authorization = `Bearer ${newToken}`;
-              resolve(api(error.config));
-            } else {
-              reject(error);
-            }
-          });
-        });
-      }
-
-      // No refresh token available — clear auth and redirect
+      // Session expired — clear auth and redirect to login
       clearStoredAuth();
       window.location.href = '/login';
     }

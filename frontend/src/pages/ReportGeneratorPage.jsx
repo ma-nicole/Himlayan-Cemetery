@@ -201,7 +201,7 @@ const ReportGeneratorPage = () => {
     }
   };
 
-  const paymentStatuses = ['pending', 'paid', 'failed', 'refunded'];
+  const paymentStatuses = ['unpaid', 'pending', 'verified', 'rejected'];
 
   return (
     <Layout>
