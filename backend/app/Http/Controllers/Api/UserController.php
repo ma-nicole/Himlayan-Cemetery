@@ -360,31 +360,45 @@ class UserController extends Controller
         if ($request->hasFile('avatar')) {
             $file = $request->file('avatar');
             $filename = 'avatar_' . $user->id . '_' . time() . '.' . $file->extension();
-            
-            // Ensure avatars directory exists
-            \Illuminate\Support\Facades\Storage::disk('public')->makeDirectory('avatars', 0755, true);
-            
-            // Store in public/avatars directory
+
+            $disk = \Illuminate\Support\Facades\Storage::disk('public');
+            $disk->makeDirectory('avatars', 0755, true);
+
             $path = $file->storeAs('avatars', $filename, 'public');
-            
-            // Delete old avatar if it exists
-            if ($user->avatar && \Illuminate\Support\Facades\Storage::disk('public')->exists($user->avatar)) {
-                \Illuminate\Support\Facades\Storage::disk('public')->delete($user->avatar);
+
+            if (!$path || !$disk->exists($path)) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Failed to save avatar file. Please try again.',
+                ], 500);
             }
-            
+
+            // Delete old avatar if it exists
+            $oldAvatar = $user->avatar;
+            if ($oldAvatar && $oldAvatar !== $path && $disk->exists($oldAvatar)) {
+                $disk->delete($oldAvatar);
+            }
+
             $user->avatar = $path;
         }
 
         $user->save();
 
-        // Return user data with normalized avatar URL
-        $userData = $user->toArray();
-        $userData['avatar'] = $this->buildAvatarUrl($user->avatar);
-
+        // Return user data matching the same shape as GET /user
         return response()->json([
             'success' => true,
             'message' => 'Profile updated successfully',
-            'data' => $userData
+            'data' => [
+                'id' => $user->id,
+                'name' => $user->name,
+                'email' => $user->email,
+                'phone' => $user->phone,
+                'address' => $user->address,
+                'avatar' => $this->buildAvatarUrl($user->avatar),
+                'role' => $user->role,
+                'must_change_password' => $user->must_change_password,
+                'updated_at' => $user->updated_at?->toISOString(),
+            ],
         ]);
     }
 }

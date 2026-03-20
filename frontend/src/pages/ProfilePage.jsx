@@ -9,7 +9,7 @@ import { resolveAvatarUrl } from '../utils/imageHelpers';
 import './ProfilePage.css';
 
 const ProfilePage = () => {
-  const { user, refreshUser } = useAuth();
+  const { user, refreshUser, setUserFromSocial: setUserData } = useAuth();
   const toast = useToast();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
@@ -72,7 +72,12 @@ const ProfilePage = () => {
       if (response.data.success) {
         toast?.success('Profile photo updated!');
         setAvatarFile(null);
-        await refreshUser();
+        // Update user state immediately from the response so the avatar shows
+        // without waiting for a separate GET /user round-trip.
+        if (response.data.data) {
+          setUserData(response.data.data);
+          localStorage.setItem('user', JSON.stringify(response.data.data));
+        }
         setAvatarPreview(null);
       }
     } catch (error) {
