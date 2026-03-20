@@ -156,7 +156,8 @@ jobs:
               git checkout "$BRANCH"
               # Force the working tree to exactly match the remote — no stash/merge needed.
               git reset --hard origin/"$BRANCH"
-              git clean -fd || true
+              # Clean untracked files but preserve user uploads in storage
+              git clean -fd -e backend/storage/app/public/ || true
             fi
 
             echo "Deploying backend"
