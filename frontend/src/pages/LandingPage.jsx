@@ -32,27 +32,11 @@ const LandingPage = () => {
   const [contactMessage, setContactMessage] = useState('');
   const [validationErrors, setValidationErrors] = useState({});
 
-  // Services data
+  // Services data — same as member services page
   const landingServices = [
     {
       id: 1,
-      category: 'burial',
-      icon: (
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-          <path d="M12 3v18M5 8l7-5 7 5M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8"/>
-        </svg>
-      ),
-      title: 'Lawn Lots',
-      subtitle: 'Traditional Ground Burial',
-      description: 'Traditional burial lots in well-maintained lawn areas. Various sizes available depending on your family\'s needs.',
-      features: ['Single or Family lots', 'Perpetual care included', 'Well-maintained landscaping', 'Concrete vault ready'],
-      price: 'Starting at ₱150,000',
-      popular: false,
-      image: '/Florante-at-Laura-1-scaled.jpg'
-    },
-    {
-      id: 2,
-      category: 'cremation',
+      category: 'products',
       icon: (
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
           <rect x="3" y="3" width="18" height="18" rx="2"/>
@@ -62,66 +46,142 @@ const LandingPage = () => {
           <rect x="13" y="13" width="4" height="4"/>
         </svg>
       ),
-      title: 'Columbarium Niches',
-      subtitle: 'Modern Cremation Storage',
-      description: 'Modern niches for cremated remains. Climate-controlled and secured 24/7 for your peace of mind.',
-      features: ['Climate-controlled', 'Secured 24/7', 'Multiple sizes', 'Indoor location'],
-      price: 'Starting at ₱80,000',
-      popular: true,
-      image: '/Panooran-2.jpg'
+      title: 'Pugad Lawin Columbary',
+      subtitle: 'Affordable Crypt Options',
+      description: 'Affordable crypts offer a dignified resting place for loved ones, accommodating full-sized caskets, urns, and bone remains. These secure and serene spaces provide families a meaningful and cost-effective place to honor and remember their deceased.',
+      price: 'starting price: ₱70,000',
+      popular: false,
+      image: '/hp-columbary.png'
+    },
+    {
+      id: 2,
+      category: 'products',
+      icon: (
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+          <rect x="3" y="3" width="18" height="18" rx="2"/>
+          <rect x="7" y="7" width="4" height="4"/>
+          <rect x="13" y="7" width="4" height="4"/>
+          <rect x="7" y="13" width="4" height="4"/>
+          <rect x="13" y="13" width="4" height="4"/>
+        </svg>
+      ),
+      title: 'Dambana ng Alaala',
+      subtitle: 'Dignified Resting Place',
+      description: 'Affordable crypts offer a dignified resting place for loved ones, accommodating full-sized caskets, urns, and bone remains. These secure and serene spaces provide families a meaningful and cost-effective place to honor and remember their deceased.',
+      price: 'starting price: ₱70,000',
+      popular: false,
+      image: '/hp-columbary.png'
     },
     {
       id: 3,
-      category: 'burial',
+      category: 'products',
+      icon: (
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+          <path d="M12 3v18M5 8l7-5 7 5M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8"/>
+        </svg>
+      ),
+      title: 'Lawn Lots',
+      subtitle: 'Serene Garden Setting',
+      description: 'Lush spaces that offer a serene resting place. Whether by a tree, a pathwalk, or road you will be assured of a tranquil environment.',
+      price: 'starting price: ₱355,000',
+      popular: false,
+      image: '/hp-lawn-lots.png'
+    },
+    {
+      id: 4,
+      category: 'products',
       icon: (
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
           <path d="M3 21h18M5 21V7l7-4 7 4v14M9 21v-6h6v6"/>
           <rect x="9" y="9" width="2" height="2"/><rect x="13" y="9" width="2" height="2"/>
         </svg>
       ),
-      title: 'Mausoleum',
-      subtitle: 'Private Family Tombs',
-      description: 'Private family tombs with their own structure. Perfect for large families who want an exclusive memorial.',
-      features: ['Custom designs', 'Multiple vault capacity', 'Exclusive area', 'Premium location'],
-      price: 'Starting at ₱500,000',
-      popular: false,
-      image: '/himlayanheritage.jpg'
-    },
-    {
-      id: 4,
-      category: 'burial',
-      icon: (
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-          <circle cx="12" cy="12" r="10"/>
-          <path d="M12 6v6l4 2"/>
-        </svg>
-      ),
-      title: 'Memorial Terrace',
-      subtitle: 'Elevated Scenic Views',
-      description: 'Elevated memorial area with beautiful views of the entire park. Perfect for those who want a peaceful and serene location.',
-      features: ['Scenic views', 'Peaceful atmosphere', 'Well-maintained', 'Garden setting'],
-      price: 'Starting at ₱200,000',
-      popular: false,
-      image: '/Malakas-at-Maganda.jpg'
+      title: 'Memorials',
+      subtitle: 'Manicured Garden Lots',
+      description: 'Manicured garden lots with above-ground niches. The imposing niches serve as reverence to the status and achievements of the interred. Memorial lots has the highest capacity per area in our inventory. Lot varies from 9sqm to 30sqm.',
+      price: 'starting price: ₱1,200,000',
+      popular: true,
+      image: '/hp-memorials.png'
     },
     {
       id: 5,
+      category: 'products',
+      icon: (
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+          <path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/>
+          <polyline points="9 22 9 12 15 12 15 22"/>
+        </svg>
+      ),
+      title: 'Family Estates',
+      subtitle: 'Private Family Mausoleums',
+      description: 'Mausoleums that give you privacy befitting your family. Most plans and layouts are made with provision for washroom and pantry depending on the location. Various sizes available ranging from 40sqm to 100sqm.',
+      price: 'starting price: ₱3,200,000',
+      popular: false,
+      image: '/hp-family-estates.png'
+    },
+    {
+      id: 6,
+      category: 'products',
+      icon: (
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+          <path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/>
+          <circle cx="12" cy="16" r="3"/>
+        </svg>
+      ),
+      title: 'Terraces',
+      subtitle: 'Premium Custom Mausoleums',
+      description: 'Our largest and premium mausoleums that are tailored for the families\' comfort and requirement. Memorial Terraces also allows them to incorporate their own design and ideas. Lot sizes ranges from 80sqm to 250sqm.',
+      price: 'starting price: ₱8,000,000',
+      popular: false,
+      image: '/hp-terraces.png'
+    },
+    {
+      id: 7,
+      category: 'services',
+      icon: (
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+          <path d="M12 3v18M5 8l7-5 7 5M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8"/>
+        </svg>
+      ),
+      title: 'Internment',
+      subtitle: 'Compassionate Interment Services',
+      description: 'Experience compassionate interments with our services. We ensure a respectful and serene final resting place for your loved ones, providing personalized care and support during this difficult time.',
+      price: 'Contact for pricing',
+      popular: false,
+      image: '/hp-internment.jpg'
+    },
+    {
+      id: 8,
+      category: 'services',
+      icon: (
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+          <path d="M17 3a2.828 2.828 0 114 4L7.5 20.5 2 22l1.5-5.5L17 3z"/>
+        </svg>
+      ),
+      title: 'Cremation',
+      subtitle: 'Dignified Cremation Process',
+      description: 'Our cremation process is done in a dignified manner and as solemn as possible. We can help you hold ceremonies appropriate to your religious beliefs and needs.',
+      price: 'Contact for pricing',
+      popular: false,
+      image: '/hp-cremation.jpg'
+    },
+    {
+      id: 9,
       category: 'services',
       icon: (
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
           <path d="M18 2H6a2 2 0 00-2 2v16l8-4 8 4V4a2 2 0 00-2-2z"/>
         </svg>
       ),
-      title: 'Chapel Services',
-      subtitle: 'Memorial Masses & Events',
-      description: 'Our chapel is available for memorial masses, prayer services, and other religious ceremonies.',
-      features: ['Air-conditioned', '100+ seating capacity', 'Audio-visual system', 'Parking available'],
-      price: 'Starting at ₱5,000/event',
+      title: 'Funeral Chapels',
+      subtitle: 'Flexible Chapel Spaces',
+      description: 'We have made our chapels flexible to address your every need. Our chapels can accommodate 30 to 200 people, depending on the number of people expected to pay their respects.',
+      price: 'Contact for pricing',
       popular: false,
-      image: '/Teresa-Magbanua-scaled.jpg'
+      image: '/hp-funeral-chapels.jpg'
     },
     {
-      id: 6,
+      id: 10,
       category: 'services',
       icon: (
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
@@ -129,19 +189,18 @@ const LandingPage = () => {
           <path d="M16 8h4l3 3v5a2 2 0 01-2 2h-1M16 16H8M5.5 19.5a2.5 2.5 0 100-5 2.5 2.5 0 000 5zM18.5 19.5a2.5 2.5 0 100-5 2.5 2.5 0 000 5z"/>
         </svg>
       ),
-      title: 'Burial Coordination',
-      subtitle: 'Complete Assistance',
-      description: 'Complete and organized burial assistance from start to finish. One call and we\'ll take care of everything.',
-      features: ['Funeral home coordination', 'Equipment rental', 'Staff assistance', 'Documentation help'],
-      price: 'Starting at ₱15,000',
+      title: 'Packages',
+      subtitle: 'Care & Compassion Packages',
+      description: 'Designed with care and compassion, our packages ensure that your loved one is honored with dignity and respect. We have thoughtfully prepared packages for cremation, chapel viewing, and everything in between. Families can choose which suits their needs.',
+      price: 'Contact for pricing',
       popular: true,
-      image: '/Gabriela-Silang-scaled.jpg'
+      image: '/hp-packages.jpg'
     }
   ];
 
   // Filter services based on active tab
-  const filteredLandingServices = activeServiceTab === 'all' 
-    ? landingServices 
+  const filteredLandingServices = activeServiceTab === 'all'
+    ? landingServices
     : landingServices.filter(s => s.category === activeServiceTab);
 
 
@@ -653,7 +712,7 @@ const LandingPage = () => {
         {/* Filter Tabs */}
         <div className="filter-container-landing">
           <div className="filter-tabs-landing">
-            <button 
+            <button
               className={`filter-tab-landing ${activeServiceTab === 'all' ? 'active' : ''}`}
               onClick={() => setActiveServiceTab('all')}
             >
@@ -663,35 +722,27 @@ const LandingPage = () => {
                 <rect x="14" y="14" width="7" height="7"/>
                 <rect x="3" y="14" width="7" height="7"/>
               </svg>
-              All Services
+              All
             </button>
-            <button 
-              className={`filter-tab-landing ${activeServiceTab === 'burial' ? 'active' : ''}`}
-              onClick={() => setActiveServiceTab('burial')}
+            <button
+              className={`filter-tab-landing ${activeServiceTab === 'products' ? 'active' : ''}`}
+              onClick={() => setActiveServiceTab('products')}
             >
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <path d="M12 3v18M5 8l7-5 7 5"/>
+                <path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/>
+                <line x1="3" y1="6" x2="21" y2="6"/>
+                <path d="M16 10a4 4 0 01-8 0"/>
               </svg>
-              Burial Options
+              Products
             </button>
-            <button 
-              className={`filter-tab-landing ${activeServiceTab === 'cremation' ? 'active' : ''}`}
-              onClick={() => setActiveServiceTab('cremation')}
-            >
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <rect x="3" y="3" width="18" height="18" rx="2"/>
-                <rect x="8" y="8" width="8" height="8"/>
-              </svg>
-              Cremation
-            </button>
-            <button 
+            <button
               className={`filter-tab-landing ${activeServiceTab === 'services' ? 'active' : ''}`}
               onClick={() => setActiveServiceTab('services')}
             >
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                 <path d="M14.7 6.3a1 1 0 000 1.4l1.6 1.6a1 1 0 001.4 0l3.77-3.77a6 6 0 01-7.94 7.94l-6.91 6.91a2.12 2.12 0 01-3-3l6.91-6.91a6 6 0 017.94-7.94l-3.76 3.76z"/>
               </svg>
-              Additional Services
+              Services
             </button>
           </div>
         </div>
@@ -710,16 +761,6 @@ const LandingPage = () => {
                   <span className="service-subtitle-landing">{service.subtitle}</span>
                 </div>
                 <p className="service-description-landing">{service.description}</p>
-                <ul className="service-features-landing">
-                  {service.features.map((feature, idx) => (
-                    <li key={idx}>
-                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                        <polyline points="20 6 9 17 4 12"/>
-                      </svg>
-                      {feature}
-                    </li>
-                  ))}
-                </ul>
                 <div className="service-footer-landing">
                   <span className="service-price-landing">{service.price}</span>
                 </div>
