@@ -112,6 +112,9 @@ const ChangePasswordPage = () => {
 
     setLoading(true);
 
+    // Capture before the API call clears it
+    const wasForcedChange = user?.must_change_password;
+
     try {
       await api.post(
         '/auth/change-password',
@@ -122,13 +125,19 @@ const ChangePasswordPage = () => {
         }
       );
 
-      // Refresh user state so must_change_password becomes false, then redirect
-      const updatedUser = await refreshUser();
-      const role = updatedUser?.role || user?.role;
-      if (role === 'admin' || role === 'staff') {
-        navigate('/dashboard');
+      if (wasForcedChange) {
+        // First-login forced change: log out and require a fresh login with the new password
+        await logout();
+        navigate('/login');
       } else {
-        navigate('/member/dashboard');
+        // Voluntary change: refresh user state and go to dashboard
+        const updatedUser = await refreshUser();
+        const role = updatedUser?.role || user?.role;
+        if (role === 'admin' || role === 'staff') {
+          navigate('/dashboard');
+        } else {
+          navigate('/member/dashboard');
+        }
       }
     } catch (err) {
       setError(err.response?.data?.message || 'Failed to change password');
