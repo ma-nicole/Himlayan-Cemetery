@@ -15,6 +15,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
+use Laravel\Sanctum\PersonalAccessToken;
 
 class AuthController extends Controller
 {
@@ -203,33 +204,29 @@ class AuthController extends Controller
             'refresh_token' => 'required|string',
         ]);
 
-        $user = $request->user();
-        if (!$user) {
-            return $this->errorResponse('Unauthorized', 401);
-        }
+        // Look up the refresh token directly (no active access token required)
+        $tokenRecord = PersonalAccessToken::findToken($request->refresh_token);
 
-        // Verify the refresh token exists and belongs to this user
-        $refreshTokenRecord = $user->tokens()
-            ->where('name', 'refresh_token')
-            ->where('revoked', false)
-            ->whereNull('expires_at')
-            ->orWhereDate('expires_at', '>=', today())
-            ->first();
-
-        if (!$refreshTokenRecord) {
-            SecurityAuditService::log(
-                'auth.refresh_token',
-                'failed',
-                'Refresh token not found or expired',
-                $request,
-                $user->id
-            );
-
+        if (!$tokenRecord || $tokenRecord->name !== 'refresh_token') {
             return $this->errorResponse('Invalid or expired refresh token', 401);
         }
 
+        // Check expiry
+        if ($tokenRecord->expires_at && $tokenRecord->expires_at->isPast()) {
+            $tokenRecord->delete();
+            return $this->errorResponse('Refresh token has expired, please log in again', 401);
+        }
+
+        $user = $tokenRecord->tokenable;
+        if (!$user) {
+            return $this->errorResponse('User not found', 401);
+        }
+
+        // Revoke old access tokens for this user (keep the refresh token)
+        $user->tokens()->where('name', 'auth_token')->delete();
+
         // Create new access token
-        $expiryMinutes = (int) config('sanctum.expiration', 120);
+        $expiryMinutes = (int) config('sanctum.expiration', 480);
         $newTokenExpiresAt = now()->addMinutes($expiryMinutes);
         $newAccessToken = $user->createToken('auth_token', ['*'], $newTokenExpiresAt)->plainTextToken;
 
@@ -244,6 +241,7 @@ class AuthController extends Controller
         return $this->successResponse([
             'access_token' => $newAccessToken,
             'token_type' => 'Bearer',
+            'token_expires_at' => $newTokenExpiresAt->toISOString(),
             'access_token_expires_in' => $expiryMinutes * 60,
         ], 'Token refreshed successfully');
     }

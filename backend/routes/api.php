@@ -38,7 +38,7 @@ use App\Http\Controllers\Api\StorageController;
 
 // Authentication
 Route::post('/login', [AuthController::class, 'login']);
-Route::post('/refresh-token', [AuthController::class, 'refreshToken'])->middleware('auth:sanctum');
+Route::post('/refresh-token', [AuthController::class, 'refreshToken']); // No auth middleware - uses refresh_token body param
 // Note: Registration is disabled - only admins can create accounts
 
 // Password Reset
