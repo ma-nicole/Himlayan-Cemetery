@@ -5,9 +5,9 @@ const DeletePlotModal = ({ isOpen, onClose, plot, onPlotDeleted, isAdmin }) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
-  const handleDelete = async () => {
+  const handleArchive = async () => {
     if (!isAdmin) {
-      setError('Only administrators can delete plots');
+      setError('Only administrators can archive plots');
       return;
     }
 
@@ -15,19 +15,19 @@ const DeletePlotModal = ({ isOpen, onClose, plot, onPlotDeleted, isAdmin }) => {
     setError('');
 
     try {
-      const response = await mapService.deletePlot(plot.id);
+      const response = await mapService.archivePlot(plot.id);
 
       if (response.success) {
         onPlotDeleted(plot.id);
         onClose();
       } else {
-        setError(response.message || 'Failed to delete plot');
+        setError(response.message || 'Failed to archive plot');
       }
     } catch (err) {
       setError(
         err.response?.data?.message ||
         err.message ||
-        'An error occurred while deleting the plot'
+        'An error occurred while archiving the plot'
       );
     } finally {
       setLoading(false);
@@ -57,8 +57,8 @@ const DeletePlotModal = ({ isOpen, onClose, plot, onPlotDeleted, isAdmin }) => {
         width: '90%',
         boxShadow: '0 10px 40px rgba(0, 0, 0, 0.2)',
       }}>
-        <h2 style={{ marginTop: 0, color: '#e74c3c', textAlign: 'center' }}>
-          Delete Plot?
+        <h2 style={{ marginTop: 0, color: '#e67e22', textAlign: 'center' }}>
+          Archive Plot?
         </h2>
 
         {error && (
@@ -75,7 +75,7 @@ const DeletePlotModal = ({ isOpen, onClose, plot, onPlotDeleted, isAdmin }) => {
         )}
 
         <p style={{ marginBottom: '10px', color: '#333' }}>
-          Are you sure you want to delete plot <strong>{plot.plot_number}</strong>?
+          Are you sure you want to archive plot <strong>{plot.plot_number}</strong>?
         </p>
 
         {!isAdmin && (
@@ -87,12 +87,12 @@ const DeletePlotModal = ({ isOpen, onClose, plot, onPlotDeleted, isAdmin }) => {
             marginBottom: '15px',
             fontSize: '0.9rem',
           }}>
-            ⚠️ Only administrators can delete plots.
+            ⚠️ Only administrators can archive plots.
           </div>
         )}
 
         <p style={{ color: '#666', fontSize: '0.9rem', marginBottom: '20px' }}>
-          This action cannot be undone. All associated burial records will remain in the system.
+          The plot will be hidden from the system but kept in the database. All associated burial records will remain in the system.
         </p>
 
         <div style={{
@@ -118,11 +118,11 @@ const DeletePlotModal = ({ isOpen, onClose, plot, onPlotDeleted, isAdmin }) => {
             Cancel
           </button>
           <button
-            onClick={handleDelete}
+            onClick={handleArchive}
             disabled={loading || !isAdmin}
             style={{
               padding: '10px 20px',
-              backgroundColor: '#e74c3c',
+              backgroundColor: '#e67e22',
               color: 'white',
               border: 'none',
               borderRadius: '4px',
@@ -132,7 +132,7 @@ const DeletePlotModal = ({ isOpen, onClose, plot, onPlotDeleted, isAdmin }) => {
               opacity: loading || !isAdmin ? 0.6 : 1,
             }}
           >
-            {loading ? 'Deleting...' : 'Delete Plot'}
+            {loading ? 'Archiving...' : 'Archive Plot'}
           </button>
         </div>
       </div>

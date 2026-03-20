@@ -260,7 +260,7 @@
 }
 
 .btn-edit,
-.btn-delete,
+.btn-archive,
 .btn-view {
   width: 36px;
   height: 36px;
@@ -283,13 +283,13 @@
   color: white;
 }
 
-.btn-delete {
-  background: #fee2e2;
-  color: #dc2626;
+.btn-archive {
+  background: #fff3e0;
+  color: #e67e22;
 }
 
-.btn-delete:hover {
-  background: #dc2626;
+.btn-archive:hover {
+  background: #e67e22;
   color: white;
 }
 
@@ -304,7 +304,7 @@
 }
 
 .btn-edit svg,
-.btn-delete svg,
+.btn-archive svg,
 .btn-view svg {
   width: 16px;
   height: 16px;

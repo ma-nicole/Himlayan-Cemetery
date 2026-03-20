@@ -28,8 +28,8 @@ const MapPage = () => {
   
   // Modal states
   const [showAddPlotModal, setShowAddPlotModal] = useState(false);
-  const [showDeleteModal, setShowDeleteModal] = useState(false);
-  const [plotToDelete, setPlotToDelete] = useState(null);
+  const [showArchiveModal, setShowArchiveModal] = useState(false);
+  const [plotToArchive, setPlotToArchive] = useState(null);
   
   // Add plot mode state
   const [addPlotMode, setAddPlotMode] = useState(false);
@@ -101,15 +101,15 @@ const MapPage = () => {
     setMarkerDetails(null);
   };
 
-  const handleDeleteClick = (marker) => {
+  const handleArchiveClick = (marker) => {
     if (isAdmin) {
-      setPlotToDelete(marker);
-      setShowDeleteModal(true);
+      setPlotToArchive(marker);
+      setShowArchiveModal(true);
     }
   };
 
-  const handlePlotDeleted = (plotId) => {
-    // Remove deleted plot from markers
+  const handlePlotArchived = (plotId) => {
+    // Remove archived plot from markers
     setMarkers(prev => prev.filter(m => m.id !== plotId));
     setSelectedMarker(null);
     setMarkerDetails(null);
@@ -186,17 +186,17 @@ const MapPage = () => {
     setLandmarkToEdit(null);
   };
 
-  const handleDeleteLandmarkClick = async (marker) => {
-    if (!window.confirm(`Delete landmark "${marker.name}"? This cannot be undone.`)) return;
+  const handleArchiveLandmarkClick = async (marker) => {
+    if (!window.confirm(`Archive landmark "${marker.name}"? It will be hidden but kept in the database.`)) return;
     const numericId = String(marker.id).replace('lm_', '');
     try {
-      const response = await mapService.deleteLandmark(numericId);
+      const response = await mapService.archiveLandmark(numericId);
       if (response.success) {
         setMarkers(prev => prev.filter(m => m.id !== marker.id));
         setSelectedMarker(null);
       }
     } catch (err) {
-      console.error('Failed to delete landmark:', err);
+      console.error('Failed to archive landmark:', err);
     }
   };
 
@@ -477,11 +477,11 @@ const MapPage = () => {
                         Edit
                       </button>
                       <button
-                        onClick={() => handleDeleteLandmarkClick(selectedMarker)}
+                        onClick={() => handleArchiveLandmarkClick(selectedMarker)}
                         style={{
                           flex: 1,
                           padding: '10px',
-                          backgroundColor: '#e74c3c',
+                          backgroundColor: '#e67e22',
                           color: 'white',
                           border: 'none',
                           borderRadius: '4px',
@@ -490,7 +490,7 @@ const MapPage = () => {
                           fontWeight: '500',
                         }}
                       >
-                        Delete
+                        Archive
                       </button>
                     </div>
                   </div>
@@ -565,11 +565,11 @@ const MapPage = () => {
                   <div style={{ marginTop: '20px' }}>
                     <hr style={{ margin: '15px 0' }} />
                     <button
-                      onClick={() => handleDeleteClick(selectedMarker)}
+                      onClick={() => handleArchiveClick(selectedMarker)}
                       style={{
                         width: '100%',
                         padding: '10px',
-                        backgroundColor: '#e74c3c',
+                        backgroundColor: '#e67e22',
                         color: 'white',
                         border: 'none',
                         borderRadius: '4px',
@@ -578,7 +578,7 @@ const MapPage = () => {
                         fontWeight: '500',
                       }}
                     >
-                      🗑️ Delete Plot
+                      🗃️ Archive Plot
                     </button>
                   </div>
                 )}
@@ -622,10 +622,10 @@ const MapPage = () => {
       />
 
       <DeletePlotModal
-        isOpen={showDeleteModal}
-        onClose={() => setShowDeleteModal(false)}
-        plot={plotToDelete}
-        onPlotDeleted={handlePlotDeleted}
+        isOpen={showArchiveModal}
+        onClose={() => setShowArchiveModal(false)}
+        plot={plotToArchive}
+        onPlotDeleted={handlePlotArchived}
         isAdmin={isAdmin}
       />
     </Layout>

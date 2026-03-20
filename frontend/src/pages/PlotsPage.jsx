@@ -103,17 +103,17 @@ const PlotsPage = () => {
   };
 
   const handleDelete = async (id) => {
-    if (!window.confirm('Are you sure you want to delete this plot?')) {
+    if (!window.confirm('Are you sure you want to archive this plot?')) {
       return;
     }
 
     try {
-      await plotService.delete(id);
-      setSuccess('Plot deleted successfully');
+      await plotService.archive(id);
+      setSuccess('Plot archived successfully');
       handlePageChange(pagination.current_page);
       setTimeout(() => setSuccess(''), 3000);
     } catch (err) {
-      setError(err.response?.data?.message || 'Failed to delete plot');
+      setError(err.response?.data?.message || 'Failed to archive plot');
       setTimeout(() => setError(''), 3000);
     }
   };

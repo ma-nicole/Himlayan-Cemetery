@@ -99,13 +99,13 @@ const FeedbackManagementPage = () => {
   };
 
   const handleDelete = async (id) => {
-    if (!window.confirm('Are you sure you want to delete this feedback?')) return;
+    if (!window.confirm('Are you sure you want to archive this feedback?')) return;
     try {
       await api.delete(`/feedbacks/${id}`);
       loadFeedbacks();
       loadStats();
     } catch (error) {
-      alert('Failed to delete feedback');
+      alert('Failed to archive feedback');
     }
   };
 
@@ -205,8 +205,8 @@ const FeedbackManagementPage = () => {
                             <button className="btn-edit" onClick={() => handleOpenModal(item)} title="View & Respond">
                               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
                             </button>
-                            <button className="btn-delete" onClick={() => handleDelete(item.id)} title="Delete">
-                              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M3 6h18M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg>
+                            <button className="btn-archive" onClick={() => handleDelete(item.id)} title="Archive">
+                              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 8v13H3V8M1 3h22v5H1zM10 12h4"/></svg>
                             </button>
                           </div>
                         </td>

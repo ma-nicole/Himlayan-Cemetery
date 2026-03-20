@@ -52,11 +52,11 @@ export const plotService = {
   },
 
   /**
-   * Delete plot
+   * Archive plot (soft delete)
    * @param {number} id 
    * @returns {Promise}
    */
-  async delete(id) {
+  async archive(id) {
     const response = await api.delete(`/plots/${id}`);
     return response.data;
   },

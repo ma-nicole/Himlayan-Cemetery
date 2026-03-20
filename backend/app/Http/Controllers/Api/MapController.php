@@ -200,7 +200,7 @@ class MapController extends Controller
     {
         // Check if user is admin
         if (!auth('sanctum')->check() || !auth('sanctum')->user()->isAdmin()) {
-            return $this->errorResponse('Unauthorized. Only administrators can delete plots.', 403);
+            return $this->errorResponse('Unauthorized. Only administrators can archive plots.', 403);
         }
 
         $plot = Plot::find($plotId);
@@ -211,11 +211,11 @@ class MapController extends Controller
 
         try {
             $plotNumber = $plot->plot_number;
-            $plot->forceDelete();
+            $plot->delete();
 
-            return $this->successResponse(null, "Plot {$plotNumber} deleted successfully");
+            return $this->successResponse(null, "Plot {$plotNumber} archived successfully");
         } catch (\Exception $e) {
-            return $this->errorResponse('Failed to delete plot: ' . $e->getMessage(), 500);
+            return $this->errorResponse('Failed to archive plot: ' . $e->getMessage(), 500);
         }
     }
 
@@ -310,7 +310,7 @@ class MapController extends Controller
     public function deleteLandmark($landmarkId)
     {
         if (!auth('sanctum')->check() || !auth('sanctum')->user()->isAdmin()) {
-            return $this->errorResponse('Unauthorized. Only administrators can delete landmarks.', 403);
+            return $this->errorResponse('Unauthorized. Only administrators can archive landmarks.', 403);
         }
 
         $landmark = Landmark::find($landmarkId);
@@ -322,9 +322,9 @@ class MapController extends Controller
         try {
             $name = $landmark->name;
             $landmark->delete();
-            return $this->successResponse(null, "Landmark '{$name}' deleted successfully");
+            return $this->successResponse(null, "Landmark '{$name}' archived successfully");
         } catch (\Exception $e) {
-            return $this->errorResponse('Failed to delete landmark: ' . $e->getMessage(), 500);
+            return $this->errorResponse('Failed to archive landmark: ' . $e->getMessage(), 500);
         }
     }
 }

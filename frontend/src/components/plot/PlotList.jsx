@@ -101,7 +101,7 @@ const PlotList = ({ plots, onEdit, onDelete, onSort, sortField, sortOrder }) => 
                       className="btn btn-sm btn-danger"
                       onClick={() => onDelete(plot.id)}
                     >
-                      Delete
+                      Archive
                     </button>
                   )}
                 </div>

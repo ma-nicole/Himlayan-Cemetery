@@ -345,7 +345,7 @@ class AnnouncementController extends Controller
 
         return response()->json([
             'success' => true,
-            'message' => 'Announcement deleted successfully'
+            'message' => 'Announcement archived successfully'
         ]);
     }
 

@@ -720,7 +720,7 @@ class PaymentController extends Controller
 
         return response()->json([
             'success' => true,
-            'message' => 'Payment deleted successfully'
+            'message' => 'Payment archived successfully'
         ]);
     }
 

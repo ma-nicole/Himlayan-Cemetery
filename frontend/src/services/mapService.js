@@ -40,11 +40,11 @@ export const mapService = {
   },
 
   /**
-   * Delete a plot (admin only)
+   * Archive a plot (admin only — soft delete)
    * @param {number} plotId
    * @returns {Promise}
    */
-  async deletePlot(plotId) {
+  async archivePlot(plotId) {
     const response = await api.delete(`/map/plots/${plotId}`);
     return response.data;
   },
@@ -69,8 +69,9 @@ export const mapService = {
   },
 
   /**
-   * Delete a landmark (admin only)
+   * Update a landmark (admin/staff)
    * @param {number} landmarkId
+   * @param {Object} landmarkData
    * @returns {Promise}
    */
   async updateLandmark(landmarkId, landmarkData) {
@@ -78,7 +79,12 @@ export const mapService = {
     return response.data;
   },
 
-  async deleteLandmark(landmarkId) {
+  /**
+   * Archive a landmark (admin only — soft delete)
+   * @param {number} landmarkId
+   * @returns {Promise}
+   */
+  async archiveLandmark(landmarkId) {
     const response = await api.delete(`/map/landmarks/${landmarkId}`);
     return response.data;
   },

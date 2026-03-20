@@ -159,16 +159,16 @@ class PlotController extends Controller
 
         // Check if plot has burial record
         if ($plot->burialRecord) {
-            return $this->errorResponse('Cannot delete plot with burial record. Remove burial record first.', 400);
+            return $this->errorResponse('Cannot archive plot with burial record. Remove burial record first.', 400);
         }
 
         try {
             $plotNumber = $plot->plot_number;
-            $plot->forceDelete();
+            $plot->delete();
 
-            return $this->successResponse(null, "Plot {$plotNumber} deleted successfully");
+            return $this->successResponse(null, "Plot {$plotNumber} archived successfully");
         } catch (\Exception $e) {
-            return $this->errorResponse('Failed to delete plot: ' . $e->getMessage(), 500);
+            return $this->errorResponse('Failed to archive plot: ' . $e->getMessage(), 500);
         }
     }
 

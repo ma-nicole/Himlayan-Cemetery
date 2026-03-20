@@ -315,7 +315,7 @@ class FeedbackController extends Controller
 
         return response()->json([
             'success' => true,
-            'message' => 'Feedback deleted successfully'
+            'message' => 'Feedback archived successfully'
         ]);
     }
 

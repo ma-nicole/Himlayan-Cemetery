@@ -112,7 +112,7 @@ const BurialRecordsPage = () => {
     }
 
     try {
-      await burialService.delete(id);
+      await burialService.archive(id);
       setSuccess('Burial record archived successfully');
       loadRecords(pagination.current_page);
       setTimeout(() => setSuccess(''), 3000);

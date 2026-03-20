@@ -243,21 +243,25 @@ class ServiceRequestController extends Controller
             return response()->json(['success' => false, 'message' => 'Cannot cancel a paid service request.'], 422);
         }
 
-        // Hard-delete the unpaid service fee payment — works regardless of DB migration state.
-        // Notes-pattern delete catches both new (service_request_id linked) and legacy rows.
+        // Soft-delete (archive) the unpaid service fee payment — keeps record in database.
+        // Notes-pattern catches both new (service_request_id linked) and legacy rows.
         Payment::where('user_id', $serviceRequest->user_id)
             ->where('payment_type', Payment::TYPE_SERVICE_FEE)
             ->where('notes', 'like', '%Request #' . $serviceRequest->id . ')')
             ->whereNull('paid_at')
             ->where('status', Payment::STATUS_PENDING)
-            ->delete();
+            ->each(function ($payment) {
+                $payment->delete();
+            });
 
         // Also try via service_request_id if the column exists on this environment
         try {
             Payment::where('service_request_id', $serviceRequest->id)
                 ->whereNull('paid_at')
                 ->where('status', Payment::STATUS_PENDING)
-                ->delete();
+                ->each(function ($payment) {
+                    $payment->delete();
+                });
         } catch (\Exception $e) {
             // Column may not exist yet — notes-pattern above already handled it
         }
@@ -289,7 +293,7 @@ class ServiceRequestController extends Controller
 
         return response()->json([
             'success' => true,
-            'message' => 'Service request deleted successfully'
+            'message' => 'Service request archived successfully'
         ]);
     }
 

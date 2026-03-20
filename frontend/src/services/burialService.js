@@ -58,11 +58,11 @@ export const burialService = {
   },
 
   /**
-   * Delete burial record
+   * Archive burial record (soft delete)
    * @param {number} id 
    * @returns {Promise}
    */
-  async delete(id) {
+  async archive(id) {
     const response = await api.delete(`/burial-records/${id}`);
     return response.data;
   },
