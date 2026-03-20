@@ -138,6 +138,10 @@ class AuthController extends Controller
             ]
         );
 
+        // Create refresh token (long-lived, 30 days)
+        $refreshTokenExpiresAt = now()->addDays(30);
+        $refreshToken = $user->createToken('refresh_token', ['*'], $refreshTokenExpiresAt)->plainTextToken;
+
         return $this->successResponse([
             'user' => [
                 'id' => $user->id,
@@ -151,8 +155,11 @@ class AuthController extends Controller
                 'updated_at' => $user->updated_at?->toISOString(),
             ],
             'token' => $token,
+            'access_token' => $token,
+            'refresh_token' => $refreshToken,
             'token_type' => 'Bearer',
             'token_expires_at' => $tokenExpiresAt->toISOString(),
+            'access_token_expires_in' => $expiryMinutes * 60,
             'sensitive_operation_expires_at' => $sensitiveOperationExpiresAt->toISOString(),
         ], 'Login successful');
     }
@@ -182,6 +189,63 @@ class AuthController extends Controller
         );
 
         return $this->successResponse(null, 'Logged out successfully');
+    }
+
+    /**
+     * Refresh access token using refresh token
+     * 
+     * @param Request $request
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function refreshToken(Request $request)
+    {
+        $request->validate([
+            'refresh_token' => 'required|string',
+        ]);
+
+        $user = $request->user();
+        if (!$user) {
+            return $this->errorResponse('Unauthorized', 401);
+        }
+
+        // Verify the refresh token exists and belongs to this user
+        $refreshTokenRecord = $user->tokens()
+            ->where('name', 'refresh_token')
+            ->where('revoked', false)
+            ->whereNull('expires_at')
+            ->orWhereDate('expires_at', '>=', today())
+            ->first();
+
+        if (!$refreshTokenRecord) {
+            SecurityAuditService::log(
+                'auth.refresh_token',
+                'failed',
+                'Refresh token not found or expired',
+                $request,
+                $user->id
+            );
+
+            return $this->errorResponse('Invalid or expired refresh token', 401);
+        }
+
+        // Create new access token
+        $expiryMinutes = (int) config('sanctum.expiration', 120);
+        $newTokenExpiresAt = now()->addMinutes($expiryMinutes);
+        $newAccessToken = $user->createToken('auth_token', ['*'], $newTokenExpiresAt)->plainTextToken;
+
+        SecurityAuditService::log(
+            'auth.refresh_token',
+            'success',
+            'Access token refreshed',
+            $request,
+            $user->id
+        );
+
+        return $this->successResponse([
+            'access_token' => $newAccessToken,
+            'token_type' => 'Bearer',
+            'access_token_expires_in' => $expiryMinutes * 60,
+        ], 'Token refreshed successfully');
     }
 
     /**

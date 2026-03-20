@@ -38,6 +38,7 @@ use App\Http\Controllers\Api\StorageController;
 
 // Authentication
 Route::post('/login', [AuthController::class, 'login']);
+Route::post('/refresh-token', [AuthController::class, 'refreshToken'])->middleware('auth:sanctum');
 // Note: Registration is disabled - only admins can create accounts
 
 // Password Reset
