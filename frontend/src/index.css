@@ -4108,6 +4108,8 @@ textarea.form-input {
   box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
   transition: all 0.3s ease;
   position: relative;
+  display: flex;
+  flex-direction: column;
 }
 
 .service-card-landing:hover {
@@ -4163,6 +4165,9 @@ textarea.form-input {
 
 .service-content-landing {
   padding: 36px 20px 20px;
+  display: flex;
+  flex-direction: column;
+  flex: 1;
 }
 
 .service-header-landing {
@@ -4217,6 +4222,7 @@ textarea.form-input {
   align-items: center;
   padding-top: 16px;
   border-top: 1px solid #f3f4f6;
+  margin-top: auto;
 }
 
 .service-price-landing {
