@@ -753,7 +753,6 @@ const LandingPage = () => {
             <div key={service.id} className={`service-card-landing ${service.popular ? 'popular' : ''}`}>
               {service.popular && <div className="popular-badge-landing">MOST POPULAR</div>}
               <div className="service-image-landing" style={{ backgroundImage: `url(${service.image})` }}>
-                <div className="service-icon-landing">{service.icon}</div>
               </div>
               <div className="service-content-landing">
                 <div className="service-header-landing">

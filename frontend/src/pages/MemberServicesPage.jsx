@@ -700,7 +700,6 @@ const MemberServicesPage = () => {
           {filteredServices.map((service) => (
             <div key={service.id} className="service-card">
               <div className="service-image" style={{ backgroundImage: `url(${service.image})` }}>
-                <div className="service-icon">{service.icon}</div>
               </div>
               <div className="service-content">
                 <div className="service-header">
