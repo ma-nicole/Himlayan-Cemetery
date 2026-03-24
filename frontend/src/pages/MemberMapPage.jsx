@@ -245,8 +245,8 @@ const MemberMapPage = () => {
                           `${(record.deceased_name || '').split(' ').slice(-1)[0].substring(0, 8)}` +
                           `</text></svg>`
                         ),
-                        scaledSize: { width: 36, height: 44 },
-                        anchor: { x: 18, y: 44 },
+                        scaledSize: new window.google.maps.Size(36, 44),
+                        anchor: new window.google.maps.Point(18, 44),
                       }}
                       onClick={() => {
                         setInfoWindowOpen(false);

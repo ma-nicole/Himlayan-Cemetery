@@ -22,7 +22,7 @@ const MyLovedOnesPage = () => {
   const qrSvgRef = useRef(null);
 
   const downloadQrCode = () => {
-    const svgEl = qrSvgRef.current;
+    const svgEl = document.getElementById('qr-svg-download');
     if (!svgEl) return;
     const svgData = new XMLSerializer().serializeToString(svgEl);
     const svgBlob = new Blob([svgData], { type: 'image/svg+xml;charset=utf-8' });
@@ -409,7 +409,7 @@ const MyLovedOnesPage = () => {
                     borderRadius: '12px', marginBottom: '18px'
                   }}>
                     <QRCodeSVG
-                      ref={qrSvgRef}
+                      id="qr-svg-download"
                       value={graveUrl}
                       size={200}
                       bgColor="#ffffff"
