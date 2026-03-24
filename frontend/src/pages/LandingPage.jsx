@@ -30,7 +30,7 @@ const LandingPage = () => {
       if (recaptchaRef.current && window.grecaptcha && window.grecaptcha.render && recaptchaWidgetId.current === null) {
         try {
           recaptchaWidgetId.current = window.grecaptcha.render(recaptchaRef.current, {
-            sitekey: '6LdxwV4rAAAAAFQCxqBdCLzfEMYP_LBubKOJWCR5',
+            sitekey: '6LcDjZYsAAAAALNXGRJoOmsC0igbO9Eja1-Ie0KC',
             callback: (token) => setRecaptchaToken(token),
             'expired-callback': () => setRecaptchaToken(''),
           });
