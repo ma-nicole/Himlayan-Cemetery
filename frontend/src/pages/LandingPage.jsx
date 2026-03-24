@@ -1081,7 +1081,7 @@ const LandingPage = () => {
               </div>
 
               {/* reCAPTCHA */}
-              <div style={{ marginTop: '0.5rem' }}>
+              <div style={{ marginTop: '0.5rem', marginBottom: '1rem' }}>
                 <div ref={recaptchaRef}></div>
                 {validationErrors.captcha && (
                   <small style={{ color: '#dc2626', display: 'block', marginTop: '0.25rem' }}>
