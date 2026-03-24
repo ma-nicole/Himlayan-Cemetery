@@ -147,15 +147,7 @@ const LoginPage = () => {
                   type="email"
                   className={`cyl-input ${validationErrors.email ? 'error' : ''}`}
                   value={email}
-                  onChange={(e) => {
-                    setEmail(e.target.value);
-                    const validation = e.target.value.trim() ? validateEmail(e.target.value) : { valid: true };
-                    setValidationErrors(prev => {
-                      const updated = { ...prev };
-                      if (!validation.valid) { updated.email = validation.error; } else { delete updated.email; }
-                      return updated;
-                    });
-                  }}
+                  onChange={(e) => setEmail(e.target.value)}
                   placeholder="Email address"
                   required
                   maxLength="254"
@@ -167,20 +159,11 @@ const LoginPage = () => {
 
               <div className="cyl-form-group">
                 <div className="cyl-input-wrapper">
-                  <input
+                    <input
                     type={showPassword ? 'text' : 'password'}
                     className={`cyl-input ${validationErrors.password ? 'error' : ''}`}
                     value={password}
-                    onChange={(e) => {
-                      setPassword(e.target.value);
-                      let error = null;
-                      if (e.target.value.trim() && e.target.value.length < 6) error = 'Password must be at least 6 characters';
-                      setValidationErrors(prev => {
-                        const updated = { ...prev };
-                        if (error) { updated.password = error; } else { delete updated.password; }
-                        return updated;
-                      });
-                    }}
+                    onChange={(e) => setPassword(e.target.value)}
                     placeholder="Password"
                     required
                     maxLength="128"
