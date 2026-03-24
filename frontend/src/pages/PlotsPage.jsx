@@ -122,11 +122,7 @@ const PlotsPage = () => {
     <Layout>
       <div className="page-header">
         <h2>Plot Management</h2>
-        {isAdmin && (
-          <button className="page-action-btn" onClick={handleCreate}>
-            + Add Plot
-          </button>
-        )}
+
       </div>
 
       {error && <div className="alert alert-error">{error}</div>}

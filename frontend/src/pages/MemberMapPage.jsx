@@ -265,7 +265,7 @@ const MemberMapPage = () => {
                       }}
                       onCloseClick={() => setLovedOneWindowOpen(false)}
                     >
-                      <div style={{ padding: '4px 2px', minWidth: '140px' }}>
+                      <div style={{ padding: '4px 2px', minWidth: '160px' }}>
                         <strong style={{ fontSize: '14px', color: '#1a472a' }}>{selectedLovedOne.deceased_name}</strong>
                         {selectedLovedOne.deceased_nickname && (
                           <div style={{ fontSize: '12px', color: '#6b7280', fontStyle: 'italic' }}>
@@ -278,6 +278,25 @@ const MemberMapPage = () => {
                         {selectedLovedOne.plot?.section && (
                           <div style={{ fontSize: '11px', color: '#6b7280' }}>Section {selectedLovedOne.plot.section}</div>
                         )}
+                        <button
+                          style={{
+                            marginTop: '8px',
+                            width: '100%',
+                            padding: '5px 10px',
+                            backgroundColor: '#1a472a',
+                            color: '#fff',
+                            border: 'none',
+                            borderRadius: '4px',
+                            fontSize: '12px',
+                            cursor: 'pointer',
+                          }}
+                          onClick={() => {
+                            const url = `https://www.google.com/maps/dir/?api=1&destination=${selectedLovedOne.plot.latitude},${selectedLovedOne.plot.longitude}`;
+                            window.open(url, '_blank', 'noopener,noreferrer');
+                          }}
+                        >
+                          🗺️ Get Directions
+                        </button>
                       </div>
                     </InfoWindowF>
                   )}

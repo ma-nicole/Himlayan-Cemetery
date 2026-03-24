@@ -31,13 +31,24 @@ const MyLovedOnesPage = () => {
     const svgW = parseInt(svgEl.getAttribute('width') || '200');
     const svgH = parseInt(svgEl.getAttribute('height') || '200');
     img.onload = () => {
+      const padding = 20;
+      const textAreaH = 52;
       const canvas = document.createElement('canvas');
-      canvas.width = svgW * 2;
-      canvas.height = svgH * 2;
+      canvas.width = svgW * 2 + padding * 2;
+      canvas.height = svgH * 2 + textAreaH + padding * 2;
       const ctx = canvas.getContext('2d');
       ctx.fillStyle = '#ffffff';
       ctx.fillRect(0, 0, canvas.width, canvas.height);
-      ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+      ctx.drawImage(img, padding, padding, svgW * 2, svgH * 2);
+      // Deceased name
+      ctx.fillStyle = '#1a472a';
+      ctx.font = 'bold 22px Arial, sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText(qrRecord?.deceased_name || '', canvas.width / 2, svgH * 2 + padding + 30);
+      // Plot number
+      ctx.font = '16px Arial, sans-serif';
+      ctx.fillStyle = '#374151';
+      ctx.fillText(`Plot: ${qrRecord?.plot?.plot_number || ''}`, canvas.width / 2, svgH * 2 + padding + 52);
       URL.revokeObjectURL(url);
       const link = document.createElement('a');
       link.download = `${(qrRecord?.deceased_name || 'QR').replace(/\s+/g, '_')}_QR.jpg`;
