@@ -284,12 +284,12 @@
 }
 
 .btn-archive {
-  background: #fff3e0;
-  color: #e67e22;
+  background: #fee2e2;
+  color: #dc2626;
 }
 
 .btn-archive:hover {
-  background: #e67e22;
+  background: #dc2626;
   color: white;
 }
 
