@@ -17,6 +17,7 @@ const PayDuesPage = () => {
   const [loading, setLoading] = useState(false);
   const [isVerifying, setIsVerifying] = useState(false);
   const pollingRef = useRef(null);
+  const [showPayConfirm, setShowPayConfirm] = useState(false);
 
   const loadOutstandingDues = async () => {
     setDuesLoading(true);
@@ -167,12 +168,11 @@ const PayDuesPage = () => {
       toast?.warning('Please select a payment method');
       return;
     }
+    setShowPayConfirm(true);
+  };
 
-    const confirmed = window.confirm(
-      `Are you sure you want to proceed to payment?\n\nAmount: ${formatCurrency(selectedPlot.due_amount)}\nMethod: ${paymentMethod.toUpperCase()}\n\nYou will be redirected to the secure payment gateway.`
-    );
-    if (!confirmed) return;
-
+  const handleConfirmedPayment = async () => {
+    setShowPayConfirm(false);
     setLoading(true);
     try {
       // Use the existing pending payment record — do not create a new one.
@@ -424,6 +424,70 @@ const PayDuesPage = () => {
         </div>
         </div>
       </main>
+      {/* Payment Confirmation Modal */}
+      {showPayConfirm && (
+        <div
+          style={{
+            position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.5)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 9999,
+          }}
+          onClick={() => setShowPayConfirm(false)}
+        >
+          <div
+            style={{
+              background: '#fff', borderRadius: '16px', padding: '40px 36px',
+              maxWidth: '440px', width: '90%', textAlign: 'center', position: 'relative',
+              boxShadow: '0 20px 60px rgba(0,0,0,0.2)',
+            }}
+            onClick={e => e.stopPropagation()}
+          >
+            <button
+              onClick={() => setShowPayConfirm(false)}
+              style={{
+                position: 'absolute', top: '14px', right: '16px',
+                background: 'none', border: 'none', fontSize: '20px',
+                cursor: 'pointer', color: '#6b7280', lineHeight: 1,
+              }}
+            >
+              &times;
+            </button>
+            <div style={{ fontSize: '48px', marginBottom: '12px' }}>💳</div>
+            <h2 style={{ margin: '0 0 8px', fontSize: '22px', fontWeight: '700', color: '#111827' }}>Confirm Payment</h2>
+            <p style={{ color: '#374151', margin: '0 0 6px', fontSize: '15px' }}>
+              Amount: <strong>{formatCurrency(selectedPlot?.due_amount)}</strong>
+            </p>
+            <p style={{ color: '#374151', margin: '0 0 20px', fontSize: '15px' }}>
+              Method: <strong>{paymentMethod?.toUpperCase()}</strong>
+            </p>
+            <p style={{ color: '#6b7280', fontSize: '13px', marginBottom: '28px' }}>
+              You will be redirected to the secure payment gateway.
+            </p>
+            <div style={{ display: 'flex', gap: '12px', justifyContent: 'center' }}>
+              <button
+                onClick={() => setShowPayConfirm(false)}
+                style={{
+                  padding: '10px 28px', borderRadius: '8px',
+                  border: '1px solid #d1d5db', background: '#f9fafb',
+                  color: '#374151', fontSize: '15px', cursor: 'pointer', fontWeight: '500',
+                }}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleConfirmedPayment}
+                style={{
+                  padding: '10px 28px', borderRadius: '8px',
+                  border: 'none', background: '#1a472a',
+                  color: '#fff', fontSize: '15px', cursor: 'pointer', fontWeight: '600',
+                }}
+              >
+                Proceed to Payment
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <MemberFooter />
     </div>
   );
