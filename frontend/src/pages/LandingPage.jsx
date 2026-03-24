@@ -1,8 +1,14 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import api from '../services/api'; // For making search API requests
 import { validateName, validateEmail, validateTextArea, validatePhone } from '../utils/formValidator';
 import { resolvePhotoUrl } from '../utils/imageHelpers';
+
+const generateCaptcha = () => {
+  const a = Math.floor(Math.random() * 20) + 1;
+  const b = Math.floor(Math.random() * 20) + 1;
+  return { question: `${a} + ${b} = ?`, answer: a + b };
+};
 
 const LandingPage = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -18,6 +24,17 @@ const LandingPage = () => {
 
   // Services section state
   const [activeServiceTab, setActiveServiceTab] = useState('all');
+
+  // CAPTCHA state
+  const [captcha, setCaptcha] = useState(generateCaptcha);
+  const [captchaInput, setCaptchaInput] = useState('');
+  const [captchaError, setCaptchaError] = useState('');
+
+  const refreshCaptcha = useCallback(() => {
+    setCaptcha(generateCaptcha());
+    setCaptchaInput('');
+    setCaptchaError('');
+  }, []);
 
   // Contact form state
   const [contactForm, setContactForm] = useState({
@@ -350,6 +367,14 @@ const LandingPage = () => {
       errors.message = messageValidation.error;
     }
 
+    // Validate CAPTCHA
+    if (!captchaInput) {
+      errors.captcha = 'Please solve the CAPTCHA.';
+    } else if (parseInt(captchaInput, 10) !== captcha.answer) {
+      errors.captcha = 'Incorrect answer. Please try again.';
+      refreshCaptcha();
+    }
+
     // If validation errors exist, display them
     if (Object.keys(errors).length > 0) {
       setValidationErrors(errors);
@@ -379,6 +404,7 @@ const LandingPage = () => {
           message: ''
         });
         setValidationErrors({});
+        refreshCaptcha();
         setTimeout(() => setContactMessage(''), 5000);
       }
     } catch (err) {
@@ -750,7 +776,12 @@ const LandingPage = () => {
         {/* Services Grid */}
         <section className="services-grid-landing">
           {filteredLandingServices.map((service) => (
-            <div key={service.id} className={`service-card-landing ${service.popular ? 'popular' : ''}`}>
+            <a
+              key={service.id}
+              href="#contact"
+              className={`service-card-landing ${service.popular ? 'popular' : ''}`}
+              style={{ textDecoration: 'none', color: 'inherit', display: 'block' }}
+            >
               {service.popular && <div className="popular-badge-landing">MOST POPULAR</div>}
               <div className="service-image-landing" style={{ backgroundImage: `url(${service.image})` }}>
               </div>
@@ -764,7 +795,7 @@ const LandingPage = () => {
                   <span className="service-price-landing">{service.price}</span>
                 </div>
               </div>
-            </div>
+            </a>
           ))}
         </section>
       </section>
@@ -1033,6 +1064,65 @@ const LandingPage = () => {
                   </small>
                 )}
               </div>
+
+              {/* CAPTCHA */}
+              <div className="captcha-box" style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.75rem',
+                padding: '0.75rem 1rem',
+                background: '#f3f4f6',
+                borderRadius: '0.5rem',
+                border: captchaError || validationErrors.captcha ? '2px solid #dc2626' : '1px solid #d1d5db'
+              }}>
+                <span style={{ fontWeight: 600, fontSize: '0.95rem', whiteSpace: 'nowrap' }}>
+                  {captcha.question}
+                </span>
+                <input
+                  type="text"
+                  inputMode="numeric"
+                  placeholder="Your answer"
+                  value={captchaInput}
+                  onChange={(e) => {
+                    setCaptchaInput(e.target.value.replace(/\D/g, '').slice(0, 3));
+                    if (validationErrors.captcha) {
+                      setValidationErrors(prev => {
+                        const updated = { ...prev };
+                        delete updated.captcha;
+                        return updated;
+                      });
+                    }
+                  }}
+                  style={{
+                    flex: 1,
+                    padding: '0.5rem',
+                    borderRadius: '0.375rem',
+                    border: '1px solid #d1d5db',
+                    fontSize: '0.95rem',
+                    outline: 'none'
+                  }}
+                />
+                <button
+                  type="button"
+                  onClick={refreshCaptcha}
+                  title="New question"
+                  style={{
+                    background: 'none',
+                    border: 'none',
+                    cursor: 'pointer',
+                    fontSize: '1.25rem',
+                    padding: '0.25rem',
+                    lineHeight: 1
+                  }}
+                >
+                  ↻
+                </button>
+              </div>
+              {validationErrors.captcha && (
+                <small style={{ color: '#dc2626', display: 'block', marginTop: '0.25rem' }}>
+                  {validationErrors.captcha}
+                </small>
+              )}
               
               <button 
                 type="submit" 
