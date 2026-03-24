@@ -147,7 +147,7 @@ const LoginPage = () => {
                   type="email"
                   className={`cyl-input ${validationErrors.email ? 'error' : ''}`}
                   value={email}
-                  onChange={(e) => setEmail(e.target.value)}
+                  onChange={(e) => { setEmail(e.target.value); if (validationErrors.email) setValidationErrors(prev => { const u = { ...prev }; delete u.email; return u; }); }}
                   placeholder="Email address"
                   required
                   maxLength="254"
@@ -163,7 +163,7 @@ const LoginPage = () => {
                     type={showPassword ? 'text' : 'password'}
                     className={`cyl-input ${validationErrors.password ? 'error' : ''}`}
                     value={password}
-                    onChange={(e) => setPassword(e.target.value)}
+                    onChange={(e) => { setPassword(e.target.value); if (validationErrors.password) setValidationErrors(prev => { const u = { ...prev }; delete u.password; return u; }); }}
                     placeholder="Password"
                     required
                     maxLength="128"
