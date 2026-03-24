@@ -268,13 +268,20 @@ const FeedbackManagementPage = () => {
                     value={response} 
                     onChange={(e) => {
                       setResponse(e.target.value);
-                      if (validationErrors.response) {
-                        setValidationErrors(prev => {
-                          const newErrors = { ...prev };
-                          delete newErrors.response;
-                          return newErrors;
-                        });
+                      let error = null;
+                      if (e.target.value.trim()) {
+                        const r1 = validateRequired(e.target.value, 'Response');
+                        if (!r1.valid) { error = r1.error; }
+                        else {
+                          const r2 = validateTextArea(e.target.value, { minLength: 5, maxLength: 3000 });
+                          if (!r2.valid) error = r2.error;
+                        }
                       }
+                      setValidationErrors(prev => {
+                        const updated = { ...prev };
+                        if (error) { updated.response = error; } else { delete updated.response; }
+                        return updated;
+                      });
                     }} 
                     className={validationErrors.response ? 'error' : ''}
                     placeholder="Type your response to this feedback..." 

@@ -149,13 +149,12 @@ const LoginPage = () => {
                   value={email}
                   onChange={(e) => {
                     setEmail(e.target.value);
-                    if (validationErrors.email) {
-                      const validation = validateEmail(e.target.value);
-                      setValidationErrors(prev => ({
-                        ...prev,
-                        email: validation.valid ? undefined : validation.error
-                      }));
-                    }
+                    const validation = e.target.value.trim() ? validateEmail(e.target.value) : { valid: true };
+                    setValidationErrors(prev => {
+                      const updated = { ...prev };
+                      if (!validation.valid) { updated.email = validation.error; } else { delete updated.email; }
+                      return updated;
+                    });
                   }}
                   placeholder="Email address"
                   required
@@ -174,13 +173,13 @@ const LoginPage = () => {
                     value={password}
                     onChange={(e) => {
                       setPassword(e.target.value);
-                      if (validationErrors.password) {
-                        setValidationErrors(prev => {
-                          const newErrors = { ...prev };
-                          delete newErrors.password;
-                          return newErrors;
-                        });
-                      }
+                      let error = null;
+                      if (e.target.value.trim() && e.target.value.length < 6) error = 'Password must be at least 6 characters';
+                      setValidationErrors(prev => {
+                        const updated = { ...prev };
+                        if (error) { updated.password = error; } else { delete updated.password; }
+                        return updated;
+                      });
                     }}
                     placeholder="Password"
                     required

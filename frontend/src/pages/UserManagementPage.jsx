@@ -381,7 +381,7 @@ const UserManagementPage = () => {
                       <input
                         type="text"
                         value={formData.firstName}
-                        onChange={(e) => { setFormData({ ...formData, firstName: e.target.value }); setValidationErrors(p => { const n = {...p}; delete n.firstName; return n; }); }}
+                        onChange={(e) => { setFormData({ ...formData, firstName: e.target.value }); const r = e.target.value.trim() ? validateName(e.target.value.trim(), 'First name') : { valid: true }; setValidationErrors(p => { const n = {...p}; if (!r.valid) { n.firstName = r.error; } else { delete n.firstName; } return n; }); }}
                         className={validationErrors.firstName ? 'error' : ''}
                         placeholder="e.g. Maria"
                         required
@@ -404,7 +404,7 @@ const UserManagementPage = () => {
                       <input
                         type="text"
                         value={formData.lastName}
-                        onChange={(e) => { setFormData({ ...formData, lastName: e.target.value }); setValidationErrors(p => { const n = {...p}; delete n.lastName; return n; }); }}
+                        onChange={(e) => { setFormData({ ...formData, lastName: e.target.value }); const r = e.target.value.trim() ? validateName(e.target.value.trim(), 'Last name') : { valid: true }; setValidationErrors(p => { const n = {...p}; if (!r.valid) { n.lastName = r.error; } else { delete n.lastName; } return n; }); }}
                         className={validationErrors.lastName ? 'error' : ''}
                         placeholder="e.g. Santos"
                         required
@@ -417,7 +417,7 @@ const UserManagementPage = () => {
                     <input
                       type="email"
                       value={formData.email}
-                      onChange={(e) => { setFormData({ ...formData, email: e.target.value }); setValidationErrors(p => { const n = {...p}; delete n.email; return n; }); }}
+                      onChange={(e) => { setFormData({ ...formData, email: e.target.value }); const r = e.target.value.trim() ? validateEmail(e.target.value.trim()) : { valid: true }; setValidationErrors(p => { const n = {...p}; if (!r.valid) { n.email = r.error; } else { delete n.email; } return n; }); }}
                       className={validationErrors.email ? 'error' : ''}
                       placeholder="e.g. maria@example.com"
                       required

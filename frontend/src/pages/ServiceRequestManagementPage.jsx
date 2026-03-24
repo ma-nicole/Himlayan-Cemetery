@@ -288,13 +288,12 @@ const ServiceRequestManagementPage = () => {
                           value={formData.status} 
                           onChange={(e) => {
                             setFormData({...formData, status: e.target.value});
-                            if (validationErrors.status) {
-                              setValidationErrors(prev => {
-                                const newErrors = { ...prev };
-                                delete newErrors.status;
-                                return newErrors;
-                              });
-                            }
+                            const error = !e.target.value.trim() ? 'Status is required' : null;
+                            setValidationErrors(prev => {
+                              const updated = { ...prev };
+                              if (error) { updated.status = error; } else { delete updated.status; }
+                              return updated;
+                            });
                           }} 
                           className={validationErrors.status ? 'error' : ''}
                           required
@@ -322,13 +321,16 @@ const ServiceRequestManagementPage = () => {
                           value={formData.admin_notes} 
                           onChange={(e) => {
                             setFormData({...formData, admin_notes: e.target.value});
-                            if (validationErrors.admin_notes) {
-                              setValidationErrors(prev => {
-                                const newErrors = { ...prev };
-                                delete newErrors.admin_notes;
-                                return newErrors;
-                              });
+                            let error = null;
+                            if (e.target.value.trim()) {
+                              const r = validateTextArea(e.target.value, { minLength: 2, maxLength: 2000 });
+                              if (!r.valid) error = r.error;
                             }
+                            setValidationErrors(prev => {
+                              const updated = { ...prev };
+                              if (error) { updated.admin_notes = error; } else { delete updated.admin_notes; }
+                              return updated;
+                            });
                           }} 
                           className={validationErrors.admin_notes ? 'error' : ''}
                           placeholder="Add notes about this request..." 

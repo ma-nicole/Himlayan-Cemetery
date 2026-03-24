@@ -144,14 +144,22 @@ const ResetPasswordPage = () => {
                           className={`cyl-input ${validationErrors.password ? 'error' : ''}`}
                           value={password}
                           onChange={(e) => {
-                            setPassword(e.target.value);
-                            if (validationErrors.password) {
-                              setValidationErrors(prev => {
-                                const newErrors = { ...prev };
-                                delete newErrors.password;
-                                return newErrors;
-                              });
+                            const val = e.target.value;
+                            setPassword(val);
+                            let err = null;
+                            if (val) {
+                              if (val.length < 8) err = 'Password must be at least 8 characters';
+                              else if (!/[A-Z]/.test(val)) err = 'Password must contain at least one uppercase letter';
+                              else if (!/[a-z]/.test(val)) err = 'Password must contain at least one lowercase letter';
+                              else if (!/[0-9]/.test(val)) err = 'Password must contain at least one number';
                             }
+                            setValidationErrors(prev => {
+                              const updated = { ...prev };
+                              if (err) { updated.password = err; } else { delete updated.password; }
+                              if (confirmPassword && confirmPassword !== val) { updated.confirmPassword = 'Passwords do not match'; }
+                              else if (confirmPassword) { delete updated.confirmPassword; }
+                              return updated;
+                            });
                           }}
                           placeholder="Enter new password"
                           required
@@ -181,14 +189,15 @@ const ResetPasswordPage = () => {
                           className={`cyl-input ${validationErrors.confirmPassword ? 'error' : ''}`}
                           value={confirmPassword}
                           onChange={(e) => {
-                            setConfirmPassword(e.target.value);
-                            if (validationErrors.confirmPassword) {
-                              setValidationErrors(prev => {
-                                const newErrors = { ...prev };
-                                delete newErrors.confirmPassword;
-                                return newErrors;
-                              });
-                            }
+                            const val = e.target.value;
+                            setConfirmPassword(val);
+                            let err = null;
+                            if (val && val !== password) err = 'Passwords do not match';
+                            setValidationErrors(prev => {
+                              const updated = { ...prev };
+                              if (err) { updated.confirmPassword = err; } else { delete updated.confirmPassword; }
+                              return updated;
+                            });
                           }}
                           placeholder="Confirm new password"
                           required

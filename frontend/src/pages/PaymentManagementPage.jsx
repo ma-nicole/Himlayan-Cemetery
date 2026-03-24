@@ -327,13 +327,12 @@ const PaymentManagementPage = () => {
                       value={formData.status}
                       onChange={(e) => {
                         setFormData({...formData, status: e.target.value});
-                        if (validationErrors.status) {
-                          setValidationErrors(prev => {
-                            const newErrors = { ...prev };
-                            delete newErrors.status;
-                            return newErrors;
-                          });
-                        }
+                        const r = e.target.value.trim() ? validateRequired(e.target.value, 'Verification decision') : { valid: true };
+                        setValidationErrors(prev => {
+                          const updated = { ...prev };
+                          if (!r.valid) { updated.status = r.error; } else { delete updated.status; }
+                          return updated;
+                        });
                       }}
                       className={validationErrors.status ? 'error' : ''}
                       required
@@ -359,9 +358,12 @@ const PaymentManagementPage = () => {
                       value={formData.reason}
                       onChange={(e) => {
                         setFormData({...formData, reason: e.target.value});
-                        if (validationErrors.reason) {
-                          setValidationErrors(prev => { const n = {...prev}; delete n.reason; return n; });
-                        }
+                        const error = !e.target.value.trim() ? 'Reason is required for this decision.' : null;
+                        setValidationErrors(prev => {
+                          const updated = { ...prev };
+                          if (error) { updated.reason = error; } else { delete updated.reason; }
+                          return updated;
+                        });
                       }}
                       className={validationErrors.reason ? 'error' : ''}
                       placeholder={formData.status === 'under_investigation'
@@ -384,13 +386,16 @@ const PaymentManagementPage = () => {
                     value={formData.notes} 
                     onChange={(e) => {
                       setFormData({...formData, notes: e.target.value});
-                      if (validationErrors.notes) {
-                        setValidationErrors(prev => {
-                          const newErrors = { ...prev };
-                          delete newErrors.notes;
-                          return newErrors;
-                        });
+                      let error = null;
+                      if (e.target.value.trim()) {
+                        const r = validateTextArea(e.target.value, { minLength: 2, maxLength: 1500 });
+                        if (!r.valid) error = r.error;
                       }
+                      setValidationErrors(prev => {
+                        const updated = { ...prev };
+                        if (error) { updated.notes = error; } else { delete updated.notes; }
+                        return updated;
+                      });
                     }} 
                     className={validationErrors.notes ? 'error' : ''}
                     placeholder="Add verification notes..." 

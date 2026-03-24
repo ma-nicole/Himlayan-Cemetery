@@ -106,16 +106,39 @@ const AddLandmarkModal = ({
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen, initialData, selectedCoordinates]);
 
+  // Real-time field validation
+  const validateField = (name, value) => {
+    let error = null;
+    switch (name) {
+      case 'name':
+        if (!value.trim()) error = 'Landmark name is required';
+        break;
+      case 'latitude': {
+        const lat = parseFloat(value);
+        if (value !== '' && isNaN(lat)) error = 'Latitude must be a valid number (e.g., 14.682462)';
+        else if (!isNaN(lat) && (lat < 14.6796 || lat > 14.6858)) error = 'Latitude must be inside Himlayang area (14.679600 to 14.685800)';
+        break;
+      }
+      case 'longitude': {
+        const lng = parseFloat(value);
+        if (value !== '' && isNaN(lng)) error = 'Longitude must be a valid number (e.g., 121.0530409)';
+        else if (!isNaN(lng) && (lng < 121.05 || lng > 121.0552)) error = 'Longitude must be inside Himlayang area (121.050000 to 121.055200)';
+        break;
+      }
+      default:
+        break;
+    }
+    setValidationErrors(prev => {
+      const updated = { ...prev };
+      if (error) { updated[name] = error; } else { delete updated[name]; }
+      return updated;
+    });
+  };
+
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
-    if (validationErrors[name]) {
-      setValidationErrors(prev => {
-        const updated = { ...prev };
-        delete updated[name];
-        return updated;
-      });
-    }
+    validateField(name, value);
   };
 
   const handleSubmit = async (e) => {

@@ -27,19 +27,39 @@ const ChangePasswordPage = () => {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: value
-    }));
+    const newFormData = { ...formData, [name]: value };
+    setFormData(newFormData);
 
-    // Clear validation error for this field when user starts correcting it
-    if (validationErrors[name]) {
-      setValidationErrors(prev => {
-        const newErrors = { ...prev };
-        delete newErrors[name];
-        return newErrors;
-      });
+    // Validate field in real-time
+    let error = null;
+    switch (name) {
+      case 'currentPassword':
+        if (value.trim() && !value.trim()) error = 'Current password is required';
+        break;
+      case 'newPassword': {
+        if (value.trim()) {
+          const r = validatePassword(value);
+          if (!r.valid) error = r.error;
+          else if (value === newFormData.currentPassword) error = 'New password must be different from current password';
+        }
+        break;
+      }
+      case 'confirmPassword':
+        if (value.trim() && value !== newFormData.newPassword) error = 'Passwords do not match';
+        break;
+      default:
+        break;
     }
+    setValidationErrors(prev => {
+      const updated = { ...prev };
+      if (error) { updated[name] = error; } else { delete updated[name]; }
+      // Also re-validate confirmPassword when newPassword changes
+      if (name === 'newPassword' && newFormData.confirmPassword.trim()) {
+        if (newFormData.confirmPassword !== value) { updated.confirmPassword = 'Passwords do not match'; }
+        else { delete updated.confirmPassword; }
+      }
+      return updated;
+    });
 
     // Check password strength for new password
     if (name === 'newPassword') {

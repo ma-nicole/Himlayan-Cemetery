@@ -88,17 +88,47 @@ const PlotForm = ({ plot, onSubmit, onCancel }) => {
     }
   };
 
+  // Real-time field validation
+  const validateField = (name, value) => {
+    let error = null;
+    switch (name) {
+      case 'section':
+        if (!value.trim()) error = 'Section is required';
+        break;
+      case 'row_number':
+        if (!value) error = 'Row number is required';
+        break;
+      case 'column_number':
+        if (!value) error = 'Column number is required';
+        break;
+      case 'latitude':
+        if (value !== '' && value !== undefined) {
+          const lat = parseFloat(value);
+          if (isNaN(lat)) error = 'Latitude must be a valid number (e.g., 14.5558893)';
+          else if (lat < -90 || lat > 90) error = 'Latitude must be between -90 and 90';
+        }
+        break;
+      case 'longitude':
+        if (value !== '' && value !== undefined) {
+          const lng = parseFloat(value);
+          if (isNaN(lng)) error = 'Longitude must be a valid number (e.g., 121.0244567)';
+          else if (lng < -180 || lng > 180) error = 'Longitude must be between -180 and 180';
+        }
+        break;
+      default:
+        break;
+    }
+    setValidationErrors(prev => {
+      const updated = { ...prev };
+      if (error) { updated[name] = error; } else { delete updated[name]; }
+      return updated;
+    });
+  };
+
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
-    // Clear validation error for this field when user starts typing
-    if (validationErrors[name]) {
-      setValidationErrors(prev => {
-        const newErrors = { ...prev };
-        delete newErrors[name];
-        return newErrors;
-      });
-    }
+    validateField(name, value);
   };
 
   const handleSubmit = async (e) => {

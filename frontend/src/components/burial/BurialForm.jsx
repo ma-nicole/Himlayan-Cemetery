@@ -158,17 +158,54 @@ const BurialForm = ({ burial, onSubmit, onCancel }) => {
     }
   }, [burial]);
 
+  // Real-time field validation
+  const validateField = (name, value, allData) => {
+    let error = null;
+    switch (name) {
+      case 'deceased_first_name':
+      case 'contact_first_name':
+      case 'contact2_first_name':
+        if (value.trim()) { const r = validateName(value); if (!r.valid) error = r.error; }
+        break;
+      case 'deceased_last_name':
+      case 'contact_last_name':
+      case 'contact2_last_name':
+        if (value.trim()) { const r = validateName(value); if (!r.valid) error = r.error; }
+        break;
+      case 'contact_email':
+      case 'contact2_email':
+        if (value.trim()) { const r = validateEmail(value); if (!r.valid) error = r.error; }
+        break;
+      case 'contact_phone': {
+        if (value.trim()) { const r = validatePhone(value, allData.contact_country_code); if (!r.valid) error = r.error; }
+        break;
+      }
+      case 'contact2_phone': {
+        if (value.trim()) { const r = validatePhone(value, allData.contact2_country_code); if (!r.valid) error = r.error; }
+        break;
+      }
+      case 'birth_date':
+        if (value) { const r = validateBirthDate(value); if (!r.valid) error = r.error; }
+        break;
+      case 'death_date':
+        if (value) { const r = validateDeathDate(value, allData.birth_date); if (!r.valid) error = r.error; }
+        break;
+      case 'burial_date':
+        if (value) { const r = validateBurialDate(value, allData.birth_date, allData.death_date); if (!r.valid) error = r.error; }
+        break;
+      default:
+        break;
+    }
+    setValidationErrors(prev => {
+      const updated = { ...prev };
+      if (error) { updated[name] = error; } else { delete updated[name]; }
+      return updated;
+    });
+  };
+
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
-    
-    // Clear validation error for this field when user starts correcting it
-    if (validationErrors[name]) {
-      setValidationErrors(prev => {
-        const newErrors = { ...prev };
-        delete newErrors[name];
-        return newErrors;
-      });
-    }
+    const newValue = type === 'checkbox' ? checked : value;
     
     // When user manually changes contact email, reset the form loaded flag
     // to allow auto-fill on new email entry
@@ -185,7 +222,6 @@ const BurialForm = ({ burial, onSubmit, onCancel }) => {
       setFormData(prev => ({ 
         ...prev, 
         [name]: value,
-        // Clear phone if it exceeds new country's length requirement
         [phoneField]: currentPhone.length > newMaxLength ? '' : currentPhone
       }));
       return;
@@ -193,24 +229,27 @@ const BurialForm = ({ burial, onSubmit, onCancel }) => {
     
     // Handle phone number input - only allow digits and enforce length limit
     if (name === 'contact_phone' || name === 'contact2_phone') {
-      const digitsOnly = value.replace(/\D/g, ''); // Remove non-digit characters
+      const digitsOnly = value.replace(/\D/g, '');
       const countryCode = name === 'contact_phone' ? formData.contact_country_code : formData.contact2_country_code;
       const maxLength = getPhoneRequirements(countryCode).digits;
       
-      // Only update if within length limit
       if (digitsOnly.length <= maxLength) {
         setFormData(prev => ({ 
           ...prev, 
           [name]: digitsOnly 
         }));
+        validateField(name, digitsOnly, { ...formData, [name]: digitsOnly });
       }
       return;
     }
     
     setFormData(prev => ({ 
       ...prev, 
-      [name]: type === 'checkbox' ? checked : value 
+      [name]: newValue 
     }));
+    
+    // Validate field in real-time
+    validateField(name, String(newValue), { ...formData, [name]: newValue });
   };
 
   const handleFileChange = (e) => {

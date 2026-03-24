@@ -37,16 +37,44 @@ const FeedbackPage = () => {
     return requirements[countryCode] || { digits: 10, country: 'Selected Country' };
   };
 
+  // Real-time field validation
+  const validateField = (name, value, allData) => {
+    let error = null;
+    switch (name) {
+      case 'name':
+        if (value.trim()) { const r = validateName(value); if (!r.valid) error = r.error; }
+        break;
+      case 'email':
+        if (value.trim()) { const r = validateEmail(value); if (!r.valid) error = r.error; }
+        break;
+      case 'phone':
+        if (value.trim()) { const r = validatePhone(value, allData.phone_country_code); if (!r.valid) error = r.error; }
+        break;
+      case 'message':
+        if (value.trim()) { const r = validateTextArea(value); if (!r.valid) error = r.error; }
+        break;
+      default:
+        break;
+    }
+    setValidationErrors(prev => {
+      const updated = { ...prev };
+      if (error) { updated[name] = error; } else { delete updated[name]; }
+      return updated;
+    });
+  };
+
   const handleChange = (e) => {
     const { name, value } = e.target;
     
+    let actualValue = value;
     // Handle phone number input - only allow digits and enforce length limit
     if (name === 'phone') {
       const digitsOnly = value.replace(/\D/g, '');
       const maxLength = getPhoneRequirements(formData.phone_country_code).digits;
+      actualValue = digitsOnly.slice(0, maxLength);
       setFormData(prev => ({ 
         ...prev, 
-        [name]: digitsOnly.slice(0, maxLength)
+        [name]: actualValue
       }));
     } else if (name === 'phone_country_code') {
       // Handle country code changes - clear phone if it exceeds new country's limit
@@ -58,18 +86,14 @@ const FeedbackPage = () => {
         [name]: value,
         phone: currentPhone.length > newMaxLength ? '' : currentPhone
       }));
+      return;
     } else {
+      actualValue = value;
       setFormData(prev => ({ ...prev, [name]: value }));
     }
 
-    // Clear validation error for this field when user starts typing
-    if (validationErrors[name]) {
-      setValidationErrors(prev => {
-        const newErrors = { ...prev };
-        delete newErrors[name];
-        return newErrors;
-      });
-    }
+    // Validate field in real-time
+    validateField(name, actualValue, { ...formData, [name]: actualValue });
   };
 
   const handleSubmit = async (e) => {
@@ -78,27 +102,27 @@ const FeedbackPage = () => {
 
     // Validate name
     const nameValidation = validateName(formData.name);
-    if (!nameValidation.isValid) {
+    if (!nameValidation.valid) {
       newErrors.name = nameValidation.error;
     }
 
     // Validate email
     const emailValidation = validateEmail(formData.email);
-    if (!emailValidation.isValid) {
+    if (!emailValidation.valid) {
       newErrors.email = emailValidation.error;
     }
 
     // Validate phone if provided
     if (formData.phone) {
       const phoneValidation = validatePhone(formData.phone, formData.phone_country_code);
-      if (!phoneValidation.isValid) {
+      if (!phoneValidation.valid) {
         newErrors.phone = phoneValidation.error;
       }
     }
 
     // Validate message
     const messageValidation = validateTextArea(formData.message);
-    if (!messageValidation.isValid) {
+    if (!messageValidation.valid) {
       newErrors.message = messageValidation.error;
     }
 

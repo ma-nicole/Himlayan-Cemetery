@@ -308,16 +308,45 @@ const LandingPage = () => {
     return requirements[countryCode] || { digits: 10, country: 'Selected Country' };
   };
 
+  // Real-time field validation for contact form
+  const validateContactField = (name, value, allData) => {
+    let error = null;
+    switch (name) {
+      case 'firstName':
+      case 'lastName':
+        if (value.trim()) { const r = validateName(value, name === 'firstName' ? 'First Name' : 'Last Name'); if (!r.valid) error = r.error; }
+        break;
+      case 'email':
+        if (value.trim()) { const r = validateEmail(value); if (!r.valid) error = r.error; }
+        break;
+      case 'phone':
+        if (value.trim()) { const r = validatePhone(value, allData.phone_country_code); if (!r.valid) error = r.error; }
+        break;
+      case 'message':
+        if (value.trim()) { const r = validateTextArea(value); if (!r.valid) error = r.error; }
+        break;
+      default:
+        break;
+    }
+    setValidationErrors(prev => {
+      const updated = { ...prev };
+      if (error) { updated[name] = error; } else { delete updated[name]; }
+      return updated;
+    });
+  };
+
   // Handle contact form change
   const handleContactChange = (e) => {
     const { name, value } = e.target;
     
+    let actualValue = value;
     if (name === 'phone') {
       const digitsOnly = value.replace(/\D/g, '');
       const maxLength = getPhoneRequirements(contactForm.phone_country_code).digits;
+      actualValue = digitsOnly.slice(0, maxLength);
       setContactForm(prev => ({
         ...prev,
-        phone: digitsOnly.slice(0, maxLength)
+        phone: actualValue
       }));
     } else if (name === 'phone_country_code') {
       const currentPhone = contactForm.phone;
@@ -327,6 +356,7 @@ const LandingPage = () => {
         phone_country_code: value,
         phone: currentPhone.length > newMaxLength ? '' : currentPhone
       }));
+      return;
     } else {
       setContactForm(prev => ({
         ...prev,
@@ -334,14 +364,8 @@ const LandingPage = () => {
       }));
     }
     
-    // Clear validation error for this field as user types
-    if (validationErrors[name]) {
-      setValidationErrors(prev => {
-        const updated = { ...prev };
-        delete updated[name];
-        return updated;
-      });
-    }
+    // Validate field in real-time
+    validateContactField(name, actualValue, { ...contactForm, [name]: actualValue });
   };
 
   // Handle contact form submit

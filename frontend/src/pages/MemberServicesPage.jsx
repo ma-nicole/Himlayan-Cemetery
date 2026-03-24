@@ -32,6 +32,7 @@ const MemberServicesPage = () => {
   const [submitSuccess, setSubmitSuccess] = useState(false);
   const [contactError, setContactError] = useState('');
   const [productTypeError, setProductTypeError] = useState('');
+  const [bodyDimErrors, setBodyDimErrors] = useState({});
   const [myRequests, setMyRequests] = useState([]);
   const [requestsLoading, setRequestsLoading] = useState(false);
   const [filterStatus, setFilterStatus] = useState('');
@@ -145,6 +146,7 @@ const MemberServicesPage = () => {
     setSelectedService(service);
     setRequestForm({ description: '', preferred_date: '', product_type: '', product_radio: '', product_price: '', body_weight: '', body_height: '', body_width: '' });
     setProductTypeError('');
+    setBodyDimErrors({});
     setSubmitSuccess(false);
     setShowRequestModal(true);
   };
@@ -168,16 +170,18 @@ const MemberServicesPage = () => {
 
     // Validate body dimensions if required
     if (requiresBodyDimensions(selectedService?.title)) {
+      const dimErrors = {};
       if (!requestForm.body_weight || parseFloat(requestForm.body_weight) <= 0) {
-        alert('Body weight is required and must be greater than 0.');
-        return;
+        dimErrors.body_weight = 'Body weight is required and must be greater than 0.';
       }
       if (!requestForm.body_height || parseFloat(requestForm.body_height) <= 0) {
-        alert('Body height is required and must be greater than 0.');
-        return;
+        dimErrors.body_height = 'Body height is required and must be greater than 0.';
       }
       if (!requestForm.body_width || parseFloat(requestForm.body_width) <= 0) {
-        alert('Body width is required and must be greater than 0.');
+        dimErrors.body_width = 'Body width is required and must be greater than 0.';
+      }
+      if (Object.keys(dimErrors).length > 0) {
+        setBodyDimErrors(dimErrors);
         return;
       }
     }
@@ -899,43 +903,61 @@ const MemberServicesPage = () => {
                             <label>Body Weight (kg) <span className="required-star">*</span></label>
                             <input
                               type="number"
-                              className="form-control"
+                              className={`form-control ${bodyDimErrors.body_weight ? 'error' : ''}`}
                               value={requestForm.body_weight}
-                              onChange={(e) => setRequestForm({...requestForm, body_weight: e.target.value})}
+                              onChange={(e) => {
+                                const val = e.target.value;
+                                setRequestForm({...requestForm, body_weight: val});
+                                const err = !val || parseFloat(val) <= 0 ? 'Body weight is required and must be greater than 0.' : null;
+                                setBodyDimErrors(prev => { const u = {...prev}; if (err) u.body_weight = err; else delete u.body_weight; return u; });
+                              }}
                               placeholder="e.g. 65"
                               min="1"
                               max="500"
                               step="0.1"
                               required
                             />
+                            {bodyDimErrors.body_weight && <small style={{ color: '#ef4444', marginTop: '4px', display: 'block' }}>{bodyDimErrors.body_weight}</small>}
                           </div>
                           <div className="form-group">
                             <label>Body Height (cm) <span className="required-star">*</span></label>
                             <input
                               type="number"
-                              className="form-control"
+                              className={`form-control ${bodyDimErrors.body_height ? 'error' : ''}`}
                               value={requestForm.body_height}
-                              onChange={(e) => setRequestForm({...requestForm, body_height: e.target.value})}
+                              onChange={(e) => {
+                                const val = e.target.value;
+                                setRequestForm({...requestForm, body_height: val});
+                                const err = !val || parseFloat(val) <= 0 ? 'Body height is required and must be greater than 0.' : null;
+                                setBodyDimErrors(prev => { const u = {...prev}; if (err) u.body_height = err; else delete u.body_height; return u; });
+                              }}
                               placeholder="e.g. 170"
                               min="1"
                               max="300"
                               step="0.1"
                               required
                             />
+                            {bodyDimErrors.body_height && <small style={{ color: '#ef4444', marginTop: '4px', display: 'block' }}>{bodyDimErrors.body_height}</small>}
                           </div>
                           <div className="form-group">
                             <label>Body Width (cm) <span className="required-star">*</span></label>
                             <input
                               type="number"
-                              className="form-control"
+                              className={`form-control ${bodyDimErrors.body_width ? 'error' : ''}`}
                               value={requestForm.body_width}
-                              onChange={(e) => setRequestForm({...requestForm, body_width: e.target.value})}
+                              onChange={(e) => {
+                                const val = e.target.value;
+                                setRequestForm({...requestForm, body_width: val});
+                                const err = !val || parseFloat(val) <= 0 ? 'Body width is required and must be greater than 0.' : null;
+                                setBodyDimErrors(prev => { const u = {...prev}; if (err) u.body_width = err; else delete u.body_width; return u; });
+                              }}
                               placeholder="e.g. 50"
                               min="1"
                               max="200"
                               step="0.1"
                               required
                             />
+                            {bodyDimErrors.body_width && <small style={{ color: '#ef4444', marginTop: '4px', display: 'block' }}>{bodyDimErrors.body_width}</small>}
                           </div>
                         </>
                       )}
@@ -977,43 +999,61 @@ const MemberServicesPage = () => {
                             <label>Body Weight (kg) <span className="required-star">*</span></label>
                             <input
                               type="number"
-                              className="form-control"
+                              className={`form-control ${bodyDimErrors.body_weight ? 'error' : ''}`}
                               value={requestForm.body_weight}
-                              onChange={(e) => setRequestForm({...requestForm, body_weight: e.target.value})}
+                              onChange={(e) => {
+                                const val = e.target.value;
+                                setRequestForm({...requestForm, body_weight: val});
+                                const err = !val || parseFloat(val) <= 0 ? 'Body weight is required and must be greater than 0.' : null;
+                                setBodyDimErrors(prev => { const u = {...prev}; if (err) u.body_weight = err; else delete u.body_weight; return u; });
+                              }}
                               placeholder="e.g. 65"
                               min="1"
                               max="500"
                               step="0.1"
                               required
                             />
+                            {bodyDimErrors.body_weight && <small style={{ color: '#ef4444', marginTop: '4px', display: 'block' }}>{bodyDimErrors.body_weight}</small>}
                           </div>
                           <div className="form-group">
                             <label>Body Height (cm) <span className="required-star">*</span></label>
                             <input
                               type="number"
-                              className="form-control"
+                              className={`form-control ${bodyDimErrors.body_height ? 'error' : ''}`}
                               value={requestForm.body_height}
-                              onChange={(e) => setRequestForm({...requestForm, body_height: e.target.value})}
+                              onChange={(e) => {
+                                const val = e.target.value;
+                                setRequestForm({...requestForm, body_height: val});
+                                const err = !val || parseFloat(val) <= 0 ? 'Body height is required and must be greater than 0.' : null;
+                                setBodyDimErrors(prev => { const u = {...prev}; if (err) u.body_height = err; else delete u.body_height; return u; });
+                              }}
                               placeholder="e.g. 170"
                               min="1"
                               max="300"
                               step="0.1"
                               required
                             />
+                            {bodyDimErrors.body_height && <small style={{ color: '#ef4444', marginTop: '4px', display: 'block' }}>{bodyDimErrors.body_height}</small>}
                           </div>
                           <div className="form-group">
                             <label>Body Width (cm) <span className="required-star">*</span></label>
                             <input
                               type="number"
-                              className="form-control"
+                              className={`form-control ${bodyDimErrors.body_width ? 'error' : ''}`}
                               value={requestForm.body_width}
-                              onChange={(e) => setRequestForm({...requestForm, body_width: e.target.value})}
+                              onChange={(e) => {
+                                const val = e.target.value;
+                                setRequestForm({...requestForm, body_width: val});
+                                const err = !val || parseFloat(val) <= 0 ? 'Body width is required and must be greater than 0.' : null;
+                                setBodyDimErrors(prev => { const u = {...prev}; if (err) u.body_width = err; else delete u.body_width; return u; });
+                              }}
                               placeholder="e.g. 50"
                               min="1"
                               max="200"
                               step="0.1"
                               required
                             />
+                            {bodyDimErrors.body_width && <small style={{ color: '#ef4444', marginTop: '4px', display: 'block' }}>{bodyDimErrors.body_width}</small>}
                           </div>
                         </>
                       )}

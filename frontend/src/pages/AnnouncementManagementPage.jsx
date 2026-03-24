@@ -263,13 +263,12 @@ const AnnouncementManagementPage = () => {
                     value={formData.title} 
                     onChange={(e) => {
                       setFormData({...formData, title: e.target.value});
-                      if (validationErrors.title) {
-                        setValidationErrors(prev => {
-                          const newErrors = { ...prev };
-                          delete newErrors.title;
-                          return newErrors;
-                        });
-                      }
+                      const r = e.target.value.trim() ? validateRequired(e.target.value, 'Title') : { valid: true };
+                      setValidationErrors(prev => {
+                        const updated = { ...prev };
+                        if (!r.valid) { updated.title = r.error; } else { delete updated.title; }
+                        return updated;
+                      });
                     }} 
                     className={validationErrors.title ? 'error' : ''}
                     required 
@@ -285,13 +284,16 @@ const AnnouncementManagementPage = () => {
                     value={formData.content} 
                     onChange={(e) => {
                       setFormData({...formData, content: e.target.value});
-                      if (validationErrors.content) {
-                        setValidationErrors(prev => {
-                          const newErrors = { ...prev };
-                          delete newErrors.content;
-                          return newErrors;
-                        });
+                      let error = null;
+                      if (e.target.value.trim()) {
+                        const r = validateTextArea(e.target.value, 'Content', 10, 5000);
+                        if (!r.valid) error = r.error;
                       }
+                      setValidationErrors(prev => {
+                        const updated = { ...prev };
+                        if (error) { updated.content = error; } else { delete updated.content; }
+                        return updated;
+                      });
                     }} 
                     className={validationErrors.content ? 'error' : ''}
                     required 
