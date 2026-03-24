@@ -22,6 +22,8 @@ const PlotsPage = () => {
   const [sortOrder, setSortOrder] = useState('asc');
   
   const { isAdmin } = useAuth();
+  const [archiveConfirmId, setArchiveConfirmId] = useState(null);
+  const [archiveError, setArchiveError] = useState('');
 
   // Load plots function - doesn't depend on search/filter/sort to avoid infinite loops
   const loadPlots = useCallback(async (page = 1, searchVal = '', filterVal = 'all', sortFieldVal = 'plot_number', sortOrderVal = 'asc') => {
@@ -102,19 +104,20 @@ const PlotsPage = () => {
     }
   };
 
-  const handleDelete = async (id) => {
-    if (!window.confirm('Are you sure you want to archive this plot?')) {
-      return;
-    }
+  const handleDelete = (id) => {
+    setArchiveConfirmId(id);
+    setArchiveError('');
+  };
 
+  const handleConfirmedDelete = async () => {
     try {
-      await plotService.delete(id);
+      await plotService.delete(archiveConfirmId);
+      setArchiveConfirmId(null);
       setSuccess('Plot archived successfully');
       handlePageChange(pagination.current_page);
       setTimeout(() => setSuccess(''), 3000);
     } catch (err) {
-      setError(err.response?.data?.message || 'Failed to archive plot');
-      setTimeout(() => setError(''), 3000);
+      setArchiveError(err.response?.data?.message || 'Failed to archive plot. Please try again.');
     }
   };
 
@@ -226,6 +229,29 @@ const PlotsPage = () => {
                 onSubmit={handleSubmit}
                 onCancel={() => setShowForm(false)}
               />
+            </div>
+          </div>
+        </div>
+      )}
+
+      {archiveConfirmId !== null && (
+        <div
+          style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 9999 }}
+          onClick={() => { setArchiveConfirmId(null); setArchiveError(''); }}
+        >
+          <div
+            style={{ background: '#fff', borderRadius: '16px', padding: '40px 36px', maxWidth: '420px', width: '90%', textAlign: 'center', position: 'relative', boxShadow: '0 20px 60px rgba(0,0,0,0.2)' }}
+            onClick={e => e.stopPropagation()}
+          >
+            <button onClick={() => { setArchiveConfirmId(null); setArchiveError(''); }} style={{ position: 'absolute', top: '14px', right: '16px', background: 'none', border: 'none', fontSize: '20px', cursor: 'pointer', color: '#6b7280', lineHeight: 1 }}>&times;</button>
+            <div style={{ fontSize: '44px', marginBottom: '12px' }}>🗄️</div>
+            <h2 style={{ margin: '0 0 8px', fontSize: '22px', fontWeight: '700', color: '#111827' }}>Archive This Plot?</h2>
+            <p style={{ color: '#6b7280', fontSize: '14px', marginBottom: '6px' }}>Are you sure you want to archive this plot?</p>
+            <p style={{ color: '#ef4444', fontSize: '13px', fontWeight: '600', marginBottom: '24px' }}>This cannot be undone.</p>
+            {archiveError && <p style={{ color: '#ef4444', fontSize: '13px', marginBottom: '16px', padding: '8px 12px', background: '#fef2f2', borderRadius: '6px' }}>{archiveError}</p>}
+            <div style={{ display: 'flex', gap: '12px', justifyContent: 'center' }}>
+              <button onClick={() => { setArchiveConfirmId(null); setArchiveError(''); }} style={{ padding: '10px 28px', borderRadius: '8px', border: '1px solid #d1d5db', background: '#f9fafb', color: '#374151', fontSize: '15px', cursor: 'pointer', fontWeight: '500' }}>Cancel</button>
+              <button onClick={handleConfirmedDelete} style={{ padding: '10px 28px', borderRadius: '8px', border: 'none', background: '#1a472a', color: '#fff', fontSize: '15px', cursor: 'pointer', fontWeight: '600' }}>Yes, Archive</button>
             </div>
           </div>
         </div>

@@ -30,6 +30,8 @@ const MapPage = () => {
   const [showAddPlotModal, setShowAddPlotModal] = useState(false);
   const [showArchiveModal, setShowArchiveModal] = useState(false);
   const [plotToArchive, setPlotToArchive] = useState(null);
+  const [landmarkArchiveConfirm, setLandmarkArchiveConfirm] = useState(null);
+  const [landmarkArchiveError, setLandmarkArchiveError] = useState('');
   
   // Add plot mode state
   const [addPlotMode, setAddPlotMode] = useState(false);
@@ -186,16 +188,23 @@ const MapPage = () => {
     setLandmarkToEdit(null);
   };
 
-  const handleArchiveLandmarkClick = async (marker) => {
-    if (!window.confirm(`Archive landmark "${marker.name}"? It will be hidden but kept in the database.`)) return;
+  const handleArchiveLandmarkClick = (marker) => {
+    setLandmarkArchiveConfirm(marker);
+    setLandmarkArchiveError('');
+  };
+
+  const handleConfirmedArchiveLandmark = async () => {
+    const marker = landmarkArchiveConfirm;
     const numericId = String(marker.id).replace('lm_', '');
     try {
       const response = await mapService.archiveLandmark(numericId);
       if (response.success) {
         setMarkers(prev => prev.filter(m => m.id !== marker.id));
         setSelectedMarker(null);
+        setLandmarkArchiveConfirm(null);
       }
     } catch (err) {
+      setLandmarkArchiveError('Failed to archive landmark. Please try again.');
       console.error('Failed to archive landmark:', err);
     }
   };
@@ -628,6 +637,30 @@ const MapPage = () => {
         onPlotDeleted={handlePlotArchived}
         isAdmin={isAdmin}
       />
+
+      {landmarkArchiveConfirm !== null && (
+        <div
+          style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 9999 }}
+          onClick={() => { setLandmarkArchiveConfirm(null); setLandmarkArchiveError(''); }}
+        >
+          <div
+            style={{ background: '#fff', borderRadius: '16px', padding: '40px 36px', maxWidth: '420px', width: '90%', textAlign: 'center', position: 'relative', boxShadow: '0 20px 60px rgba(0,0,0,0.2)' }}
+            onClick={e => e.stopPropagation()}
+          >
+            <button onClick={() => { setLandmarkArchiveConfirm(null); setLandmarkArchiveError(''); }} style={{ position: 'absolute', top: '14px', right: '16px', background: 'none', border: 'none', fontSize: '20px', cursor: 'pointer', color: '#6b7280', lineHeight: 1 }}>&times;</button>
+            <div style={{ fontSize: '44px', marginBottom: '12px' }}>🗄️</div>
+            <h2 style={{ margin: '0 0 8px', fontSize: '22px', fontWeight: '700', color: '#111827' }}>Archive Landmark?</h2>
+            <p style={{ color: '#374151', fontSize: '14px', fontWeight: '600', marginBottom: '4px' }}>&ldquo;{landmarkArchiveConfirm?.name}&rdquo;</p>
+            <p style={{ color: '#6b7280', fontSize: '13px', marginBottom: '6px' }}>It will be hidden from the map but kept in the database.</p>
+            <p style={{ color: '#ef4444', fontSize: '13px', fontWeight: '600', marginBottom: '24px' }}>This cannot be undone.</p>
+            {landmarkArchiveError && <p style={{ color: '#ef4444', fontSize: '13px', marginBottom: '16px', padding: '8px 12px', background: '#fef2f2', borderRadius: '6px' }}>{landmarkArchiveError}</p>}
+            <div style={{ display: 'flex', gap: '12px', justifyContent: 'center' }}>
+              <button onClick={() => { setLandmarkArchiveConfirm(null); setLandmarkArchiveError(''); }} style={{ padding: '10px 28px', borderRadius: '8px', border: '1px solid #d1d5db', background: '#f9fafb', color: '#374151', fontSize: '15px', cursor: 'pointer', fontWeight: '500' }}>Cancel</button>
+              <button onClick={handleConfirmedArchiveLandmark} style={{ padding: '10px 28px', borderRadius: '8px', border: 'none', background: '#1a472a', color: '#fff', fontSize: '15px', cursor: 'pointer', fontWeight: '600' }}>Yes, Archive</button>
+            </div>
+          </div>
+        </div>
+      )}
     </Layout>
   );
 };
