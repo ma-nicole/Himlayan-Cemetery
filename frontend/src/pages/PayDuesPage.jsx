@@ -451,7 +451,6 @@ const PayDuesPage = () => {
             >
               &times;
             </button>
-            <div style={{ fontSize: '48px', marginBottom: '12px' }}>💳</div>
             <h2 style={{ margin: '0 0 8px', fontSize: '22px', fontWeight: '700', color: '#111827' }}>Confirm Payment</h2>
             <p style={{ color: '#374151', margin: '0 0 6px', fontSize: '15px' }}>
               Amount: <strong>{formatCurrency(selectedPlot?.due_amount)}</strong>
