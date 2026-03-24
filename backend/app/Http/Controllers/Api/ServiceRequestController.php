@@ -74,6 +74,9 @@ class ServiceRequestController extends Controller
             'description' => 'nullable|string',
             'preferred_date' => $isProduct ? 'nullable' : 'required|date|after:today',
             'contact_number' => 'required|string|max:20',
+            'body_weight' => 'nullable|numeric|min:0.1|max:500',
+            'body_height' => 'nullable|numeric|min:0.1|max:300',
+            'body_width' => 'nullable|numeric|min:0.1|max:200',
         ]);
 
         // Product requests never have a preferred date — ignore whatever was sent.

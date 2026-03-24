@@ -254,6 +254,14 @@ const ServiceRequestManagementPage = () => {
                 {selectedItem?.preferred_date && !selectedItem?.product_type && (
                   <p><strong>Preferred Date:</strong> {new Date(selectedItem.preferred_date).toLocaleDateString()}</p>
                 )}
+                {(selectedItem?.body_weight || selectedItem?.body_height || selectedItem?.body_width) && (
+                  <div style={{ marginTop: '8px', padding: '10px 14px', background: '#f0f9ff', border: '1px solid #bae6fd', borderRadius: '8px' }}>
+                    <p style={{ margin: '0 0 4px', fontWeight: 600, color: '#0369a1', fontSize: '0.85rem' }}>Body Dimensions</p>
+                    {selectedItem?.body_weight && <p style={{ margin: '2px 0' }}><strong>Weight:</strong> {selectedItem.body_weight} kg</p>}
+                    {selectedItem?.body_height && <p style={{ margin: '2px 0' }}><strong>Height:</strong> {selectedItem.body_height} cm</p>}
+                    {selectedItem?.body_width && <p style={{ margin: '2px 0' }}><strong>Width:</strong> {selectedItem.body_width} cm</p>}
+                  </div>
+                )}
               </div>
 
               <form onSubmit={handleSubmit}>

@@ -20,8 +20,16 @@ const MemberServicesPage = () => {
     country_code: '+63',
     product_type: '',
     product_radio: '',
-    product_price: ''
+    product_price: '',
+    body_weight: '',
+    body_height: '',
+    body_width: ''
   });
+
+  // Services that require body dimensions
+  const requiresBodyDimensions = (title) => [
+    'Internment', 'Cremation', 'Pugad Lawin Columbary', 'Dambana ng Alaala', 'Memorials'
+  ].includes(title);
   const [submitting, setSubmitting] = useState(false);
   const [submitSuccess, setSubmitSuccess] = useState(false);
   const [contactError, setContactError] = useState('');
@@ -137,7 +145,7 @@ const MemberServicesPage = () => {
 
   const openRequestModal = (service) => {
     setSelectedService(service);
-    setRequestForm({ description: '', preferred_date: '', contact_number: '', country_code: '+63', product_type: '', product_radio: '', product_price: '' });
+    setRequestForm({ description: '', preferred_date: '', contact_number: '', country_code: '+63', product_type: '', product_radio: '', product_price: '', body_weight: '', body_height: '', body_width: '' });
     setContactError('');
     setProductTypeError('');
     setSubmitSuccess(false);
@@ -157,6 +165,22 @@ const MemberServicesPage = () => {
       const found = opts.find(o => o.label === requestForm.product_type);
       if (found?.subOptions && !requestForm.product_radio) {
         setProductTypeError('Please select an option for this type.');
+        return;
+      }
+    }
+
+    // Validate body dimensions if required
+    if (requiresBodyDimensions(selectedService?.title)) {
+      if (!requestForm.body_weight || parseFloat(requestForm.body_weight) <= 0) {
+        alert('Body weight is required and must be greater than 0.');
+        return;
+      }
+      if (!requestForm.body_height || parseFloat(requestForm.body_height) <= 0) {
+        alert('Body height is required and must be greater than 0.');
+        return;
+      }
+      if (!requestForm.body_width || parseFloat(requestForm.body_width) <= 0) {
+        alert('Body width is required and must be greater than 0.');
         return;
       }
     }
@@ -199,7 +223,12 @@ const MemberServicesPage = () => {
         description: requestForm.description,
         preferred_date: preferredDateValue,
         ...(isProduct ? { product_type: productTypeLabel, price_range: requestForm.product_price } : {}),
-        contact_number: fullContactNumber
+        contact_number: fullContactNumber,
+        ...(requiresBodyDimensions(selectedService.title) ? {
+          body_weight: parseFloat(requestForm.body_weight),
+          body_height: parseFloat(requestForm.body_height),
+          body_width: parseFloat(requestForm.body_width)
+        } : {})
       });
       setSubmitSuccess(true);
     } catch (error) {
@@ -639,6 +668,16 @@ const MemberServicesPage = () => {
                           <strong>Admin Notes:</strong> {request.admin_notes}
                         </div>
                       )}
+                      {(request.body_weight || request.body_height || request.body_width) && (
+                        <div style={{ marginTop: '10px', padding: '8px 12px', background: '#f0f9ff', border: '1px solid #bae6fd', borderRadius: '6px', fontSize: '0.85rem' }}>
+                          <strong>Body Dimensions:</strong>{' '}
+                          {request.body_weight && <span>Weight: {request.body_weight} kg</span>}
+                          {request.body_weight && request.body_height && <span> &middot; </span>}
+                          {request.body_height && <span>Height: {request.body_height} cm</span>}
+                          {(request.body_weight || request.body_height) && request.body_width && <span> &middot; </span>}
+                          {request.body_width && <span>Width: {request.body_width} cm</span>}
+                        </div>
+                      )}
                       {request.status === 'approved' && request.service_fee_amount > 0 && (
                         <div className="admin-notes" style={{ marginTop: '10px', background: '#fef9c3', border: '1px solid #fde047', borderRadius: '6px', padding: '10px' }}>
                           <strong>💳 Service Fee:</strong> ₱{parseFloat(request.service_fee_amount).toLocaleString('en-PH', { minimumFractionDigits: 2 })}
@@ -876,6 +915,52 @@ const MemberServicesPage = () => {
                           </div>
                         )}
                       </div>
+                      {requiresBodyDimensions(selectedService?.title) && (
+                        <>
+                          <div className="form-group">
+                            <label>Body Weight (kg) <span className="required-star">*</span></label>
+                            <input
+                              type="number"
+                              className="form-control"
+                              value={requestForm.body_weight}
+                              onChange={(e) => setRequestForm({...requestForm, body_weight: e.target.value})}
+                              placeholder="e.g. 65"
+                              min="1"
+                              max="500"
+                              step="0.1"
+                              required
+                            />
+                          </div>
+                          <div className="form-group">
+                            <label>Body Height (cm) <span className="required-star">*</span></label>
+                            <input
+                              type="number"
+                              className="form-control"
+                              value={requestForm.body_height}
+                              onChange={(e) => setRequestForm({...requestForm, body_height: e.target.value})}
+                              placeholder="e.g. 170"
+                              min="1"
+                              max="300"
+                              step="0.1"
+                              required
+                            />
+                          </div>
+                          <div className="form-group">
+                            <label>Body Width (cm) <span className="required-star">*</span></label>
+                            <input
+                              type="number"
+                              className="form-control"
+                              value={requestForm.body_width}
+                              onChange={(e) => setRequestForm({...requestForm, body_width: e.target.value})}
+                              placeholder="e.g. 50"
+                              min="1"
+                              max="200"
+                              step="0.1"
+                              required
+                            />
+                          </div>
+                        </>
+                      )}
                       <div className="form-group">
                         <label>Contact Number <span className="required-star">*</span></label>
                         <div style={{ display: 'flex', gap: '8px', alignItems: 'flex-start' }}>
@@ -950,6 +1035,52 @@ const MemberServicesPage = () => {
                           required
                         />
                       </div>
+                      {requiresBodyDimensions(selectedService?.title) && (
+                        <>
+                          <div className="form-group">
+                            <label>Body Weight (kg) <span className="required-star">*</span></label>
+                            <input
+                              type="number"
+                              className="form-control"
+                              value={requestForm.body_weight}
+                              onChange={(e) => setRequestForm({...requestForm, body_weight: e.target.value})}
+                              placeholder="e.g. 65"
+                              min="1"
+                              max="500"
+                              step="0.1"
+                              required
+                            />
+                          </div>
+                          <div className="form-group">
+                            <label>Body Height (cm) <span className="required-star">*</span></label>
+                            <input
+                              type="number"
+                              className="form-control"
+                              value={requestForm.body_height}
+                              onChange={(e) => setRequestForm({...requestForm, body_height: e.target.value})}
+                              placeholder="e.g. 170"
+                              min="1"
+                              max="300"
+                              step="0.1"
+                              required
+                            />
+                          </div>
+                          <div className="form-group">
+                            <label>Body Width (cm) <span className="required-star">*</span></label>
+                            <input
+                              type="number"
+                              className="form-control"
+                              value={requestForm.body_width}
+                              onChange={(e) => setRequestForm({...requestForm, body_width: e.target.value})}
+                              placeholder="e.g. 50"
+                              min="1"
+                              max="200"
+                              step="0.1"
+                              required
+                            />
+                          </div>
+                        </>
+                      )}
                       <div className="form-group">
                         <label>Contact Number <span className="required-star">*</span></label>
                         <div style={{ display: 'flex', gap: '8px', alignItems: 'flex-start' }}>

@@ -19,6 +19,9 @@ class ServiceRequest extends Model
         'description',
         'preferred_date',
         'contact_number',
+        'body_weight',
+        'body_height',
+        'body_width',
         'status',
         'admin_notes',
         'service_fee_amount',
@@ -30,6 +33,9 @@ class ServiceRequest extends Model
         'preferred_date' => 'date',
         'processed_at' => 'datetime',
         'service_fee_amount' => 'decimal:2',
+        'body_weight' => 'decimal:1',
+        'body_height' => 'decimal:1',
+        'body_width' => 'decimal:1',
     ];
 
     const STATUS_PENDING = 'pending';
