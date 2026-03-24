@@ -524,7 +524,7 @@ const BurialForm = ({ burial, onSubmit, onCancel }) => {
       <h4 style={{ marginTop: '20px', marginBottom: '15px', color: '#1a1a2e' }}>Deceased Information</h4>
 
       {/* Deceased Name Fields */}
-      <div className="form-row">
+      <div className="form-row" style={{ gridTemplateColumns: '1fr 80px 1fr' }}>
         <div className="form-group">
           <label>First Name *</label>
           <input
@@ -541,7 +541,7 @@ const BurialForm = ({ burial, onSubmit, onCancel }) => {
             </small>
           )}
         </div>
-        <div className="form-group" style={{ flex: '0 0 120px' }}>
+        <div className="form-group">
           <label>M.I.</label>
           <input
             type="text"
@@ -723,7 +723,7 @@ const BurialForm = ({ burial, onSubmit, onCancel }) => {
       {/* Primary Contact Information */}
       <h4 style={{ marginTop: '20px', marginBottom: '15px', color: '#1a1a2e' }}>Primary Contact Information</h4>
 
-      <div className="form-row">
+      <div className="form-row" style={{ gridTemplateColumns: '1fr 80px 1fr' }}>
         <div className="form-group">
           <label>First Name *</label>
           <input
@@ -740,7 +740,7 @@ const BurialForm = ({ burial, onSubmit, onCancel }) => {
             </small>
           )}
         </div>
-        <div className="form-group" style={{ flex: '0 0 120px' }}>
+        <div className="form-group">
           <label>M.I.</label>
           <input
             type="text"
@@ -839,7 +839,7 @@ const BurialForm = ({ burial, onSubmit, onCancel }) => {
         Secondary Contact Information <span style={{ fontSize: '0.85rem', fontWeight: 'normal', color: '#666' }}>(Optional)</span>
       </h4>
 
-      <div className="form-row">
+      <div className="form-row" style={{ gridTemplateColumns: '1fr 80px 1fr' }}>
         <div className="form-group">
           <label>First Name</label>
           <input
@@ -850,7 +850,7 @@ const BurialForm = ({ burial, onSubmit, onCancel }) => {
             onChange={handleChange}
           />
         </div>
-        <div className="form-group" style={{ flex: '0 0 120px' }}>
+        <div className="form-group">
           <label>M.I.</label>
           <input
             type="text"

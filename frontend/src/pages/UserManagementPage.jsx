@@ -393,10 +393,10 @@ const UserManagementPage = () => {
                       <input
                         type="text"
                         value={formData.middleInitial}
-                        onChange={(e) => { const val = e.target.value.slice(0, 1).toUpperCase(); setFormData({ ...formData, middleInitial: val }); }}
+                        onChange={(e) => { const val = e.target.value.slice(0, 2).toUpperCase(); setFormData({ ...formData, middleInitial: val }); }}
                         className={validationErrors.middleInitial ? 'error' : ''}
                         placeholder="A"
-                        maxLength="1"
+                        maxLength="2"
                       />
                     </div>
                     <div className="form-group">
