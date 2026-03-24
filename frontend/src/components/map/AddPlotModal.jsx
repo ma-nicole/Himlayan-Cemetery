@@ -363,7 +363,7 @@ const AddPlotModal = ({ isOpen, onClose, onPlotAdded, center, selectedCoordinate
           {/* Section */}
           <div style={{ marginBottom: '15px' }}>
             <label style={{ display: 'block', marginBottom: '5px', fontWeight: '600', color: '#333' }}>
-              Section
+              Section <span style={{ color: '#e74c3c' }}>*</span>
             </label>
             <input
               type="text"
@@ -392,7 +392,7 @@ const AddPlotModal = ({ isOpen, onClose, onPlotAdded, center, selectedCoordinate
           <div style={{ display: 'flex', gap: '15px', marginBottom: '15px' }}>
             <div style={{ flex: 1 }}>
               <label style={{ display: 'block', marginBottom: '5px', fontWeight: '600', color: '#333' }}>
-                Row
+                Row Number <span style={{ color: '#e74c3c' }}>*</span>
               </label>
               <input
                 type="number"
@@ -418,7 +418,7 @@ const AddPlotModal = ({ isOpen, onClose, onPlotAdded, center, selectedCoordinate
             </div>
             <div style={{ flex: 1 }}>
               <label style={{ display: 'block', marginBottom: '5px', fontWeight: '600', color: '#333' }}>
-                Column
+                Column Number <span style={{ color: '#e74c3c' }}>*</span>
               </label>
               <input
                 type="number"

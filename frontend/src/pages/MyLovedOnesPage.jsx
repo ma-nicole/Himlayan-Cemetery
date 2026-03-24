@@ -430,16 +430,17 @@ const MyLovedOnesPage = () => {
                     Plot: <strong style={{ color: '#374151' }}>{qrRecord.plot?.plot_number}</strong>
                   </p>
 
-                  {/* Hidden canvas used for JPEG download */}
-                  <QRCodeCanvas
-                    ref={qrCanvasRef}
-                    value={graveUrl}
-                    size={300}
-                    bgColor="#ffffff"
-                    fgColor="#1a472a"
-                    level="M"
-                    style={{ display: 'none' }}
-                  />
+                  {/* Off-screen canvas used for JPEG download */}
+                  <div style={{ position: 'absolute', left: '-9999px', top: '-9999px', pointerEvents: 'none', visibility: 'hidden' }}>
+                    <QRCodeCanvas
+                      ref={qrCanvasRef}
+                      value={graveUrl}
+                      size={300}
+                      bgColor="#ffffff"
+                      fgColor="#1a472a"
+                      level="M"
+                    />
+                  </div>
 
                   <button
                     onClick={downloadQrCode}
@@ -568,7 +569,7 @@ const MyLovedOnesPage = () => {
             position: 'relative'
           }} onClick={(e) => e.stopPropagation()}>
             <div style={{ padding: '20px 25px', borderBottom: '1px solid #e5e7eb', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <h3 style={{ margin: 0, fontSize: '18px', fontWeight: 'bold' }}>Edit Profile: {editingRecord.deceased_name}</h3>
+              <h3 style={{ margin: 0, fontSize: '18px', fontWeight: 'bold' }}>Edit Info: {editingRecord.deceased_name}</h3>
               <button 
                 onClick={handleCloseModal}
                 style={{ background: 'none', border: 'none', fontSize: '24px', cursor: 'pointer', color: '#6b7280' }}
