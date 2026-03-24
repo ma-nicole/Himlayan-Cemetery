@@ -135,6 +135,22 @@ const BurialRecordsPage = () => {
     }
   };
 
+  // Handle QR code regeneration (replaces existing QR with new one)
+  const handleRegenerateQR = async (burialId) => {
+    try {
+      const response = await qrService.regenerate(burialId);
+      if (response.success) {
+        setQrData(response.data);
+        setSuccess('QR code regenerated successfully');
+        loadRecords(pagination.current_page, search);
+        setTimeout(() => setSuccess(''), 3000);
+      }
+    } catch (err) {
+      setError('Failed to regenerate QR code');
+      setTimeout(() => setError(''), 3000);
+    }
+  };
+
   return (
     <Layout>
       <div className="page-header">
@@ -268,6 +284,7 @@ const BurialRecordsPage = () => {
           qrData={qrData}
           onClose={() => setShowDetails(false)}
           onGenerateQR={handleGenerateQR}
+          onRegenerateQR={handleRegenerateQR}
         />
       )}
     </Layout>

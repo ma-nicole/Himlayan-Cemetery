@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { QRCodeSVG } from 'qrcode.react';
+import { QRCodeSVG, QRCodeCanvas } from 'qrcode.react';
 import { useAuth } from '../hooks/useAuth';
 import api from '../services/api';
 import MemberHeader from '../components/common/MemberHeader';
@@ -19,6 +19,23 @@ const MyLovedOnesPage = () => {
   const [qrRecord, setQrRecord] = useState(null);
   const [qrNotGenerated, setQrNotGenerated] = useState(null); // record whose QR hasn't been generated yet
   const qrModalRef = useRef(null);
+  const qrCanvasRef = useRef(null);
+
+  const downloadQrCode = () => {
+    const canvas = qrCanvasRef.current;
+    if (!canvas) return;
+    const tempCanvas = document.createElement('canvas');
+    tempCanvas.width = canvas.width;
+    tempCanvas.height = canvas.height;
+    const ctx = tempCanvas.getContext('2d');
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(0, 0, tempCanvas.width, tempCanvas.height);
+    ctx.drawImage(canvas, 0, 0);
+    const link = document.createElement('a');
+    link.download = `${(qrRecord?.deceased_name || 'QR').replace(/\s+/g, '_')}_QR.jpg`;
+    link.href = tempCanvas.toDataURL('image/jpeg', 0.95);
+    link.click();
+  };
   
   // Edit Modal State
   const [editingRecord, setEditingRecord] = useState(null);
@@ -317,7 +334,7 @@ const MyLovedOnesPage = () => {
                       onMouseOver={(e) => e.target.style.backgroundColor = '#15803d'}
                       onMouseOut={(e) => e.target.style.backgroundColor = '#1a472a'}
                       >
-                        Edit Profile
+                        Edit Info
                       </button>
                     </div>
                   </div>
@@ -412,6 +429,39 @@ const MyLovedOnesPage = () => {
                   }}>
                     Plot: <strong style={{ color: '#374151' }}>{qrRecord.plot?.plot_number}</strong>
                   </p>
+
+                  {/* Hidden canvas used for JPEG download */}
+                  <QRCodeCanvas
+                    ref={qrCanvasRef}
+                    value={graveUrl}
+                    size={300}
+                    bgColor="#ffffff"
+                    fgColor="#1a472a"
+                    level="M"
+                    style={{ display: 'none' }}
+                  />
+
+                  <button
+                    onClick={downloadQrCode}
+                    style={{
+                      marginTop: '16px',
+                      display: 'flex', alignItems: 'center', gap: '8px',
+                      padding: '10px 20px',
+                      backgroundColor: '#1a472a', color: '#fff',
+                      border: 'none', borderRadius: '8px',
+                      fontSize: '14px', fontWeight: '600',
+                      cursor: 'pointer', margin: '16px auto 0'
+                    }}
+                    onMouseOver={(e) => e.currentTarget.style.backgroundColor = '#15803d'}
+                    onMouseOut={(e) => e.currentTarget.style.backgroundColor = '#1a472a'}
+                  >
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                      <polyline points="7 10 12 15 17 10"/>
+                      <line x1="12" y1="15" x2="12" y2="3"/>
+                    </svg>
+                    Download QR Code
+                  </button>
                 </>
               ) : (
                 <p style={{ color: '#ef4444', fontSize: '14px' }}>

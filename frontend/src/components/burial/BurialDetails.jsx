@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { sendInvitation, resendInvitation, getInvitationStatus } from '../../services/invitationService';
 import { resolvePhotoUrl } from '../../utils/imageHelpers';
 
-const BurialDetails = ({ burial, qrData, onClose, onGenerateQR }) => {
+const BurialDetails = ({ burial, qrData, onClose, onGenerateQR, onRegenerateQR }) => {
   const [invitationStatus, setInvitationStatus] = useState(null);
   const [loadingInvitation, setLoadingInvitation] = useState(false);
   const [invitationMessage, setInvitationMessage] = useState('');
@@ -373,6 +373,9 @@ const BurialDetails = ({ burial, qrData, onClose, onGenerateQR }) => {
                 <div className="qr-url">
                   {qrData.qr_code.url}
                 </div>
+                <button className="btn btn-warning" style={{ marginTop: '12px' }} onClick={() => onRegenerateQR(burial.id)}>
+                  ↺ Regenerate QR Code
+                </button>
               </div>
             ) : burial.qr_code ? (
               <div className="qr-display">
@@ -386,6 +389,9 @@ const BurialDetails = ({ burial, qrData, onClose, onGenerateQR }) => {
                 <div className="qr-url">
                   {burial.qr_code.url}
                 </div>
+                <button className="btn btn-warning" style={{ marginTop: '12px' }} onClick={() => onRegenerateQR(burial.id)}>
+                  ↺ Regenerate QR Code
+                </button>
               </div>
             ) : (
               <div style={{ textAlign: 'center' }}>

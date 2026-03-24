@@ -36,6 +36,7 @@ const MemberServicesPage = () => {
   const [myRequests, setMyRequests] = useState([]);
   const [requestsLoading, setRequestsLoading] = useState(false);
   const [filterStatus, setFilterStatus] = useState('');
+  const [filterCategory, setFilterCategory] = useState('');
   const [sortOrder, setSortOrder] = useState('newest');
   const [currentPage, setCurrentPage] = useState(1);
   const [requestsMeta, setRequestsMeta] = useState({ current_page: 1, last_page: 1, total: 0 });
@@ -106,13 +107,14 @@ const MemberServicesPage = () => {
     if (activeTab === 'my-requests') {
       loadMyRequests(1, filterStatus, sortOrder);
     }
-  }, [filterStatus, sortOrder]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [filterStatus, sortOrder, filterCategory]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const loadMyRequests = async (page = 1, status = filterStatus, sort = sortOrder) => {
+  const loadMyRequests = async (page = 1, status = filterStatus, sort = sortOrder, category = filterCategory) => {
     setRequestsLoading(true);
     try {
       const params = new URLSearchParams({ per_page: 5, page });
       if (status) params.append('status', status);
+      if (category) params.append('category', category);
       params.append('sort', sort === 'oldest' ? 'asc' : 'desc');
       const response = await api.get(`/service-requests?${params}`);
       if (response.data.success) {
@@ -570,12 +572,35 @@ const MemberServicesPage = () => {
                   <option value="oldest">Oldest First</option>
                 </select>
               </div>
-              {(filterStatus || sortOrder !== 'newest') && (
-                <button className="rc-clear" onClick={() => { setFilterStatus(''); setSortOrder('newest'); }}>Clear</button>
+              {(filterStatus || filterCategory || sortOrder !== 'newest') && (
+                <button className="rc-clear" onClick={() => { setFilterStatus(''); setFilterCategory(''); setSortOrder('newest'); }}>Clear</button>
               )}
               {!requestsLoading && (
                 <span className="rc-count">{requestsMeta.total} request{requestsMeta.total !== 1 ? 's' : ''}</span>
               )}
+            </div>
+
+            {/* Category filter buttons */}
+            <div style={{ display: 'flex', gap: '8px', marginBottom: '16px' }}>
+              {[{ key: '', label: 'All' }, { key: 'product', label: 'Products' }, { key: 'service', label: 'Services' }].map(({ key, label }) => (
+                <button
+                  key={key}
+                  onClick={() => setFilterCategory(key)}
+                  style={{
+                    padding: '7px 18px',
+                    borderRadius: '20px',
+                    border: `1.5px solid ${filterCategory === key ? '#1a472a' : '#d1d5db'}`,
+                    backgroundColor: filterCategory === key ? '#1a472a' : '#fff',
+                    color: filterCategory === key ? '#fff' : '#374151',
+                    fontWeight: '600',
+                    fontSize: '13px',
+                    cursor: 'pointer',
+                    transition: 'all 0.15s'
+                  }}
+                >
+                  {label}
+                </button>
+              ))}
             </div>
 
             {requestsLoading ? (
@@ -583,7 +608,7 @@ const MemberServicesPage = () => {
                 <div className="loading-spinner"></div>
                 <p>Loading your requests...</p>
               </div>
-            ) : myRequests.length === 0 && !filterStatus ? (
+            ) : myRequests.length === 0 && !filterStatus && !filterCategory ? (
               <div className="no-requests">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
                   <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
@@ -698,14 +723,14 @@ const MemberServicesPage = () => {
                 <div className="pagination" style={{ marginTop: '20px' }}>
                   <button
                     disabled={currentPage <= 1}
-                    onClick={() => loadMyRequests(currentPage - 1, filterStatus, sortOrder)}
+                    onClick={() => loadMyRequests(currentPage - 1, filterStatus, sortOrder, filterCategory)}
                   >
                     Previous
                   </button>
                   <span>Page {currentPage} of {requestsMeta.last_page}</span>
                   <button
                     disabled={currentPage >= requestsMeta.last_page}
-                    onClick={() => loadMyRequests(currentPage + 1, filterStatus, sortOrder)}
+                    onClick={() => loadMyRequests(currentPage + 1, filterStatus, sortOrder, filterCategory)}
                   >
                     Next
                   </button>

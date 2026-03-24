@@ -31,6 +31,15 @@ class ServiceRequestController extends Controller
             $query->where('service_type', $request->service_type);
         }
 
+        // Category filter: 'product' or 'service'
+        if ($request->has('category') && $request->category) {
+            if ($request->category === 'product') {
+                $query->whereNotNull('product_type');
+            } elseif ($request->category === 'service') {
+                $query->whereNull('product_type');
+            }
+        }
+
         // Search
         if ($request->has('search') && $request->search) {
             $search = $request->search;
