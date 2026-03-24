@@ -73,11 +73,16 @@ class ServiceRequestController extends Controller
             'price_range' => 'nullable|string|max:100',
             'description' => 'nullable|string',
             'preferred_date' => $isProduct ? 'nullable' : 'required|date|after:today',
-            'contact_number' => 'required|string|max:20',
+            'contact_number' => 'nullable|string|max:20',
             'body_weight' => 'nullable|numeric|min:0.1|max:500',
             'body_height' => 'nullable|numeric|min:0.1|max:300',
             'body_width' => 'nullable|numeric|min:0.1|max:200',
         ]);
+
+        // Auto-fill contact number from user profile if not provided
+        if (empty($validated['contact_number'])) {
+            $validated['contact_number'] = auth()->user()->phone;
+        }
 
         // Product requests never have a preferred date — ignore whatever was sent.
         if ($isProduct) {

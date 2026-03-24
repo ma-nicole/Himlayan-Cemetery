@@ -16,8 +16,6 @@ const MemberServicesPage = () => {
   const [requestForm, setRequestForm] = useState({
     description: '',
     preferred_date: '',
-    contact_number: '',
-    country_code: '+63',
     product_type: '',
     product_radio: '',
     product_price: '',
@@ -145,8 +143,7 @@ const MemberServicesPage = () => {
 
   const openRequestModal = (service) => {
     setSelectedService(service);
-    setRequestForm({ description: '', preferred_date: '', contact_number: '', country_code: '+63', product_type: '', product_radio: '', product_price: '', body_weight: '', body_height: '', body_width: '' });
-    setContactError('');
+    setRequestForm({ description: '', preferred_date: '', product_type: '', product_radio: '', product_price: '', body_weight: '', body_height: '', body_width: '' });
     setProductTypeError('');
     setSubmitSuccess(false);
     setShowRequestModal(true);
@@ -185,26 +182,8 @@ const MemberServicesPage = () => {
       }
     }
 
-    // Validate contact number digit length (required)
-    const rule = phoneRules[requestForm.country_code] || [6, 15];
-    const len = requestForm.contact_number.length;
-    if (len === 0) {
-      setContactError('Contact number is required.');
-      return;
-    }
-    if (len < rule[0] || len > rule[1]) {
-      const msg = rule[0] === rule[1]
-        ? `Contact number must be exactly ${rule[0]} digits for ${requestForm.country_code}`
-        : `Contact number must be ${rule[0]}\u2013${rule[1]} digits for ${requestForm.country_code}`;
-      setContactError(msg);
-      return;
-    }
-
     setSubmitting(true);
     try {
-      const fullContactNumber = requestForm.contact_number
-        ? `${requestForm.country_code} ${requestForm.contact_number}`
-        : '';
       const isProduct = selectedService.category === 'products';
       const productTypeLabel = isProduct
         ? requestForm.product_type + (requestForm.product_radio ? ` \u2013 ${requestForm.product_radio}` : '')
@@ -223,7 +202,6 @@ const MemberServicesPage = () => {
         description: requestForm.description,
         preferred_date: preferredDateValue,
         ...(isProduct ? { product_type: productTypeLabel, price_range: requestForm.product_price } : {}),
-        contact_number: fullContactNumber,
         ...(requiresBodyDimensions(selectedService.title) ? {
           body_weight: parseFloat(requestForm.body_weight),
           body_height: parseFloat(requestForm.body_height),
@@ -962,48 +940,6 @@ const MemberServicesPage = () => {
                         </>
                       )}
                       <div className="form-group">
-                        <label>Contact Number <span className="required-star">*</span></label>
-                        <div style={{ display: 'flex', gap: '8px', alignItems: 'flex-start' }}>
-                          <select
-                            className="form-control"
-                            value={requestForm.country_code}
-                            onChange={(e) => { setRequestForm({...requestForm, country_code: e.target.value, contact_number: ''}); setContactError(''); }}
-                            style={{ flex: '0 0 100px' }}
-                          >
-                            <option value="+63">🇵🇭 +63</option>
-                            <option value="+1">🇺🇸 +1</option>
-                            <option value="+44">🇬🇧 +44</option>
-                            <option value="+81">🇯🇵 +81</option>
-                            <option value="+82">🇰🇷 +82</option>
-                            <option value="+86">🇨🇳 +86</option>
-                            <option value="+65">🇸🇬 +65</option>
-                            <option value="+60">🇲🇾 +60</option>
-                            <option value="+61">🇦🇺 +61</option>
-                            <option value="+971">🇦🇪 +971</option>
-                            <option value="+966">🇸🇦 +966</option>
-                            <option value="+39">🇮🇹 +39</option>
-                            <option value="+49">🇩🇪 +49</option>
-                            <option value="+33">🇫🇷 +33</option>
-                            <option value="+34">🇪🇸 +34</option>
-                          </select>
-                          <div style={{ flex: '1' }}>
-                            <input
-                              type="tel"
-                              className={`form-control${contactError ? ' error' : ''}`}
-                              value={requestForm.contact_number}
-                              onChange={handleContactChange}
-                              placeholder="digits only"
-                              inputMode="numeric"
-                            />
-                            {contactError ? (
-                              <small style={{ color: '#dc2626', fontSize: '0.78rem', marginTop: '4px', display: 'block' }}>{contactError}</small>
-                            ) : (
-                              <small style={{ color: '#6b7280', fontSize: '0.78rem', marginTop: '4px', display: 'block' }}>{phoneHints[requestForm.country_code] || '6–15 digits'}</small>
-                            )}
-                          </div>
-                        </div>
-                      </div>
-                      <div className="form-group">
                         <label>Additional Details</label>
                         <textarea
                           rows="4"
@@ -1081,48 +1017,6 @@ const MemberServicesPage = () => {
                           </div>
                         </>
                       )}
-                      <div className="form-group">
-                        <label>Contact Number <span className="required-star">*</span></label>
-                        <div style={{ display: 'flex', gap: '8px', alignItems: 'flex-start' }}>
-                          <select
-                            className="form-control"
-                            value={requestForm.country_code}
-                            onChange={(e) => { setRequestForm({...requestForm, country_code: e.target.value, contact_number: ''}); setContactError(''); }}
-                            style={{ flex: '0 0 100px' }}
-                          >
-                            <option value="+63">🇵🇭 +63</option>
-                            <option value="+1">🇺🇸 +1</option>
-                            <option value="+44">🇬🇧 +44</option>
-                            <option value="+81">🇯🇵 +81</option>
-                            <option value="+82">🇰🇷 +82</option>
-                            <option value="+86">🇨🇳 +86</option>
-                            <option value="+65">🇸🇬 +65</option>
-                            <option value="+60">🇲🇾 +60</option>
-                            <option value="+61">🇦🇺 +61</option>
-                            <option value="+971">🇦🇪 +971</option>
-                            <option value="+966">🇸🇦 +966</option>
-                            <option value="+39">🇮🇹 +39</option>
-                            <option value="+49">🇩🇪 +49</option>
-                            <option value="+33">🇫🇷 +33</option>
-                            <option value="+34">🇪🇸 +34</option>
-                          </select>
-                          <div style={{ flex: '1' }}>
-                            <input
-                              type="tel"
-                              className={`form-control${contactError ? ' error' : ''}`}
-                              value={requestForm.contact_number}
-                              onChange={handleContactChange}
-                              placeholder="digits only"
-                              inputMode="numeric"
-                            />
-                            {contactError ? (
-                              <small style={{ color: '#dc2626', fontSize: '0.78rem', marginTop: '4px', display: 'block' }}>{contactError}</small>
-                            ) : (
-                              <small style={{ color: '#6b7280', fontSize: '0.78rem', marginTop: '4px', display: 'block' }}>{phoneHints[requestForm.country_code] || '6–15 digits'}</small>
-                            )}
-                          </div>
-                        </div>
-                      </div>
                       <div className="form-group">
                         <label>Additional Details</label>
                         <textarea
