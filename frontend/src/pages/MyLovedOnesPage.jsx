@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { QRCodeSVG, QRCodeCanvas } from 'qrcode.react';
+import { QRCodeSVG } from 'qrcode.react';
 import { useAuth } from '../hooks/useAuth';
 import api from '../services/api';
 import MemberHeader from '../components/common/MemberHeader';
@@ -19,22 +19,33 @@ const MyLovedOnesPage = () => {
   const [qrRecord, setQrRecord] = useState(null);
   const [qrNotGenerated, setQrNotGenerated] = useState(null); // record whose QR hasn't been generated yet
   const qrModalRef = useRef(null);
-  const qrCanvasRef = useRef(null);
+  const qrSvgRef = useRef(null);
 
   const downloadQrCode = () => {
-    const canvas = qrCanvasRef.current;
-    if (!canvas) return;
-    const tempCanvas = document.createElement('canvas');
-    tempCanvas.width = canvas.width;
-    tempCanvas.height = canvas.height;
-    const ctx = tempCanvas.getContext('2d');
-    ctx.fillStyle = '#ffffff';
-    ctx.fillRect(0, 0, tempCanvas.width, tempCanvas.height);
-    ctx.drawImage(canvas, 0, 0);
-    const link = document.createElement('a');
-    link.download = `${(qrRecord?.deceased_name || 'QR').replace(/\s+/g, '_')}_QR.jpg`;
-    link.href = tempCanvas.toDataURL('image/jpeg', 0.95);
-    link.click();
+    const svgEl = qrSvgRef.current;
+    if (!svgEl) return;
+    const svgData = new XMLSerializer().serializeToString(svgEl);
+    const svgBlob = new Blob([svgData], { type: 'image/svg+xml;charset=utf-8' });
+    const url = URL.createObjectURL(svgBlob);
+    const img = new Image();
+    const svgW = parseInt(svgEl.getAttribute('width') || '200');
+    const svgH = parseInt(svgEl.getAttribute('height') || '200');
+    img.onload = () => {
+      const canvas = document.createElement('canvas');
+      canvas.width = svgW * 2;
+      canvas.height = svgH * 2;
+      const ctx = canvas.getContext('2d');
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+      URL.revokeObjectURL(url);
+      const link = document.createElement('a');
+      link.download = `${(qrRecord?.deceased_name || 'QR').replace(/\s+/g, '_')}_QR.jpg`;
+      link.href = canvas.toDataURL('image/jpeg', 0.95);
+      link.click();
+    };
+    img.onerror = () => URL.revokeObjectURL(url);
+    img.src = url;
   };
   
   // Edit Modal State
@@ -398,6 +409,7 @@ const MyLovedOnesPage = () => {
                     borderRadius: '12px', marginBottom: '18px'
                   }}>
                     <QRCodeSVG
+                      ref={qrSvgRef}
                       value={graveUrl}
                       size={200}
                       bgColor="#ffffff"
@@ -429,18 +441,6 @@ const MyLovedOnesPage = () => {
                   }}>
                     Plot: <strong style={{ color: '#374151' }}>{qrRecord.plot?.plot_number}</strong>
                   </p>
-
-                  {/* Off-screen canvas used for JPEG download */}
-                  <div style={{ position: 'absolute', left: '-9999px', top: '-9999px', pointerEvents: 'none', visibility: 'hidden' }}>
-                    <QRCodeCanvas
-                      ref={qrCanvasRef}
-                      value={graveUrl}
-                      size={300}
-                      bgColor="#ffffff"
-                      fgColor="#1a472a"
-                      level="M"
-                    />
-                  </div>
 
                   <button
                     onClick={downloadQrCode}

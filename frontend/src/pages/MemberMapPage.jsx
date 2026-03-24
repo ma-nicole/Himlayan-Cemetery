@@ -5,6 +5,7 @@ import MemberHeader from '../components/common/MemberHeader';
 import MemberFooter from '../components/common/MemberFooter';
 import { mapService } from '../services/mapService';
 import { getLandmarkIcon, createLandmarkIcon } from '../components/map/CemeteryMap';
+import api from '../services/api';
 import '../styles/MemberMap.css';
 
 const CEMETERY_CENTER = { lat: 14.682462, lng: 121.0530409 };
@@ -25,6 +26,11 @@ const MemberMapPage = () => {
   const [infoWindowOpen, setInfoWindowOpen] = useState(false);
   const [loadingLandmarks, setLoadingLandmarks] = useState(true);
 
+  // Loved-ones pins
+  const [lovedOnes, setLovedOnes] = useState([]);
+  const [selectedLovedOne, setSelectedLovedOne] = useState(null);
+  const [lovedOneWindowOpen, setLovedOneWindowOpen] = useState(false);
+
   const { isLoaded } = useJsApiLoader({
     googleMapsApiKey: process.env.REACT_APP_GOOGLE_MAPS_API_KEY || '',
   });
@@ -36,6 +42,19 @@ const MemberMapPage = () => {
       .then(res => { if (res.success) setLandmarks(res.data); })
       .catch(err => console.error('Failed to load landmarks:', err))
       .finally(() => setLoadingLandmarks(false));
+
+    // Load the member's own loved ones
+    api.get('/my-burial-records')
+      .then(res => {
+        if (res.data.success) {
+          // Keep only records whose plot has valid coordinates
+          const withCoords = (res.data.data || []).filter(
+            r => r.plot && r.plot.latitude && r.plot.longitude
+          );
+          setLovedOnes(withCoords);
+        }
+      })
+      .catch(err => console.error('Failed to load loved ones:', err));
   }, []);
 
   const handleSelectLandmark = (landmark) => {
@@ -193,16 +212,75 @@ const MemberMapPage = () => {
                       strictBounds: false,
                     },
                   }}
-                  onClick={() => setInfoWindowOpen(false)}
+                  onClick={() => {
+                    setInfoWindowOpen(false);
+                    setLovedOneWindowOpen(false);
+                  }}
                 >
                   {landmarks.map((lm) => (
                     <MarkerF
                       key={lm.id}
                       position={{ lat: parseFloat(lm.latitude), lng: parseFloat(lm.longitude) }}
                       icon={createLandmarkIcon(lm.name)}
-                      onClick={() => handleSelectLandmark(lm)}
+                      onClick={() => {
+                        setLovedOneWindowOpen(false);
+                        setSelectedLovedOne(null);
+                        handleSelectLandmark(lm);
+                      }}
                     />
                   ))}
+
+                  {/* Loved ones pins — only the current user's deceased */}
+                  {lovedOnes.map((record) => (
+                    <MarkerF
+                      key={`lo-${record.id}`}
+                      position={{
+                        lat: parseFloat(record.plot.latitude),
+                        lng: parseFloat(record.plot.longitude),
+                      }}
+                      icon={{
+                        url: 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(
+                          `<svg xmlns="http://www.w3.org/2000/svg" width="36" height="44" viewBox="0 0 36 44"><path d="M18 0C8.06 0 0 8.06 0 18c0 13.5 18 26 18 26s18-12.5 18-26C36 8.06 27.94 0 18 0z" fill="#e53e3e"/><path d="M18 10c-2.21 0-4 1.79-4 4 0 1.2.53 2.27 1.37 3L18 20l2.63-3C21.47 16.27 22 15.2 22 14c0-2.21-1.79-4-4-4zm0 2.5c.83 0 1.5.67 1.5 1.5s-.67 1.5-1.5 1.5-1.5-.67-1.5-1.5.67-1.5 1.5-1.5z" fill="white"/>` +
+                          `<text x="18" y="37" text-anchor="middle" fill="white" font-size="6" font-family="Arial">` +
+                          `${(record.deceased_name || '').split(' ').slice(-1)[0].substring(0, 8)}` +
+                          `</text></svg>`
+                        ),
+                        scaledSize: { width: 36, height: 44 },
+                        anchor: { x: 18, y: 44 },
+                      }}
+                      onClick={() => {
+                        setInfoWindowOpen(false);
+                        setSelectedLandmark(null);
+                        setSelectedLovedOne(record);
+                        setLovedOneWindowOpen(true);
+                      }}
+                    />
+                  ))}
+
+                  {selectedLovedOne && lovedOneWindowOpen && (
+                    <InfoWindowF
+                      position={{
+                        lat: parseFloat(selectedLovedOne.plot.latitude),
+                        lng: parseFloat(selectedLovedOne.plot.longitude),
+                      }}
+                      onCloseClick={() => setLovedOneWindowOpen(false)}
+                    >
+                      <div style={{ padding: '4px 2px', minWidth: '140px' }}>
+                        <strong style={{ fontSize: '14px', color: '#1a472a' }}>{selectedLovedOne.deceased_name}</strong>
+                        {selectedLovedOne.deceased_nickname && (
+                          <div style={{ fontSize: '12px', color: '#6b7280', fontStyle: 'italic' }}>
+                            &ldquo;{selectedLovedOne.deceased_nickname}&rdquo;
+                          </div>
+                        )}
+                        <div style={{ fontSize: '12px', color: '#374151', marginTop: '4px' }}>
+                          📍 {selectedLovedOne.plot?.plot_number}
+                        </div>
+                        {selectedLovedOne.plot?.section && (
+                          <div style={{ fontSize: '11px', color: '#6b7280' }}>Section {selectedLovedOne.plot.section}</div>
+                        )}
+                      </div>
+                    </InfoWindowF>
+                  )}
                   {selectedLandmark && infoWindowOpen && (
                     <InfoWindowF
                       position={{

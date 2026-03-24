@@ -12,6 +12,7 @@ const BurialRecordsPage = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+  const [qrToast, setQrToast] = useState(''); // toast message for QR generate/regenerate
   
   // Modal states
   const [showForm, setShowForm] = useState(false);
@@ -125,9 +126,9 @@ const BurialRecordsPage = () => {
       const response = await qrService.generate(burialId);
       if (response.success) {
         setQrData(response.data);
-        setSuccess('QR code generated successfully');
-        loadRecords(pagination.current_page, search); // Reload to show updated QR status
-        setTimeout(() => setSuccess(''), 3000);
+        setQrToast('QR Code Generated!');
+        loadRecords(pagination.current_page, search);
+        setTimeout(() => setQrToast(''), 3000);
       }
     } catch (err) {
       setError('Failed to generate QR code');
@@ -141,9 +142,9 @@ const BurialRecordsPage = () => {
       const response = await qrService.regenerate(burialId);
       if (response.success) {
         setQrData(response.data);
-        setSuccess('QR code regenerated successfully');
+        setQrToast('QR Code Regenerated!');
         loadRecords(pagination.current_page, search);
-        setTimeout(() => setSuccess(''), 3000);
+        setTimeout(() => setQrToast(''), 3000);
       }
     } catch (err) {
       setError('Failed to regenerate QR code');
@@ -153,6 +154,24 @@ const BurialRecordsPage = () => {
 
   return (
     <Layout>
+      {/* QR Toast notification */}
+      {qrToast && (
+        <div style={{
+          position: 'fixed', top: '24px', left: '50%', transform: 'translateX(-50%)',
+          zIndex: 9999, background: '#1a472a', color: '#fff',
+          padding: '14px 28px', borderRadius: '10px',
+          boxShadow: '0 4px 20px rgba(0,0,0,0.25)',
+          display: 'flex', alignItems: 'center', gap: '10px',
+          fontSize: '15px', fontWeight: '700', letterSpacing: '0.02em',
+          animation: 'fadeInDown 0.3s ease'
+        }}>
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+            <polyline points="20 6 9 17 4 12"/>
+          </svg>
+          {qrToast}
+        </div>
+      )}
+
       <div className="page-header">
         <h2>Burial Records</h2>
         <button className="page-action-btn" onClick={handleCreate}>

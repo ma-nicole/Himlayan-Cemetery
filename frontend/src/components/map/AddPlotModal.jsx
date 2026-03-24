@@ -372,6 +372,7 @@ const AddPlotModal = ({ isOpen, onClose, onPlotAdded, center, selectedCoordinate
               onChange={handleInputChange}
               placeholder="e.g., D"
               disabled={loading}
+              required
               style={{
                 width: '100%',
                 padding: '10px',
@@ -401,6 +402,7 @@ const AddPlotModal = ({ isOpen, onClose, onPlotAdded, center, selectedCoordinate
                 onChange={handleInputChange}
                 placeholder="e.g., 4"
                 disabled={loading}
+                required
                 style={{
                   width: '100%',
                   padding: '10px',
@@ -427,6 +429,7 @@ const AddPlotModal = ({ isOpen, onClose, onPlotAdded, center, selectedCoordinate
                 onChange={handleInputChange}
                 placeholder="e.g., 4"
                 disabled={loading}
+                required
                 style={{
                   width: '100%',
                   padding: '10px',
