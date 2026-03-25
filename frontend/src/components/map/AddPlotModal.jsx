@@ -115,10 +115,10 @@ const AddPlotModal = ({ isOpen, onClose, onPlotAdded, center, selectedCoordinate
         if (!value.trim()) error = 'Section is required';
         break;
       case 'row_number':
-        if (!value) error = 'Row number is required';
+        if (value === '' || value === null || value === undefined) error = 'Row number is required';
         break;
       case 'column_number':
-        if (!value) error = 'Column number is required';
+        if (value === '' || value === null || value === undefined) error = 'Column number is required';
         break;
       case 'latitude': {
         const lat = parseFloat(value);
@@ -184,11 +184,11 @@ const AddPlotModal = ({ isOpen, onClose, onPlotAdded, center, selectedCoordinate
       newErrors.section = 'Section is required';
     }
 
-    if (!formData.row_number) {
+    if (formData.row_number === '' || formData.row_number === null || formData.row_number === undefined) {
       newErrors.row_number = 'Row number is required';
     }
 
-    if (!formData.column_number) {
+    if (formData.column_number === '' || formData.column_number === null || formData.column_number === undefined) {
       newErrors.column_number = 'Column number is required';
     }
 

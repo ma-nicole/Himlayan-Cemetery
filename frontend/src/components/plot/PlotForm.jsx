@@ -128,10 +128,10 @@ const PlotForm = ({ plot, onSubmit, onCancel }) => {
         if (!value.trim()) error = 'Section is required';
         break;
       case 'row_number':
-        if (!value) error = 'Row number is required';
+        if (value === '' || value === null || value === undefined) error = 'Row number is required';
         break;
       case 'column_number':
-        if (!value) error = 'Column number is required';
+        if (value === '' || value === null || value === undefined) error = 'Column number is required';
         break;
       case 'latitude':
         if (value !== '' && value !== undefined) {
@@ -198,11 +198,11 @@ const PlotForm = ({ plot, onSubmit, onCancel }) => {
       newErrors.section = 'Section is required';
     }
 
-    if (!formData.row_number) {
+    if (formData.row_number === '' || formData.row_number === null || formData.row_number === undefined) {
       newErrors.row_number = 'Row number is required';
     }
 
-    if (!formData.column_number) {
+    if (formData.column_number === '' || formData.column_number === null || formData.column_number === undefined) {
       newErrors.column_number = 'Column number is required';
     }
 
@@ -304,7 +304,6 @@ const PlotForm = ({ plot, onSubmit, onCancel }) => {
             className={`form-control ${validationErrors.row_number ? 'error' : ''}`}
             value={formData.row_number}
             onChange={handleChange}
-            min="1"
           />
           {validationErrors.row_number && (
             <small style={{ color: '#ef4444', marginTop: '4px', display: 'block' }}>
@@ -320,7 +319,6 @@ const PlotForm = ({ plot, onSubmit, onCancel }) => {
             className={`form-control ${validationErrors.column_number ? 'error' : ''}`}
             value={formData.column_number}
             onChange={handleChange}
-            min="1"
           />
           {validationErrors.column_number && (
             <small style={{ color: '#ef4444', marginTop: '4px', display: 'block' }}>

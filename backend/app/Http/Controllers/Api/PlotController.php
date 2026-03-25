@@ -70,8 +70,8 @@ class PlotController extends Controller
     {
         $validated = $request->validate([
             'section' => 'required|string|max:50',
-            'row_number' => 'required|integer|min:1',
-            'column_number' => 'required|integer|min:1',
+            'row_number' => 'required|integer',
+            'column_number' => 'required|integer',
             'latitude' => 'required|numeric|between:' . self::HIMS_LAT_MIN . ',' . self::HIMS_LAT_MAX,
             'longitude' => 'required|numeric|between:' . self::HIMS_LNG_MIN . ',' . self::HIMS_LNG_MAX,
             'status' => ['required', Rule::in(['available', 'occupied', 'reserved', 'maintenance'])],
@@ -139,8 +139,8 @@ class PlotController extends Controller
 
         $validated = $request->validate([
             'section' => 'nullable|string|max:50',
-            'row_number' => 'nullable|integer|min:1',
-            'column_number' => 'nullable|integer|min:1',
+            'row_number' => 'nullable|integer',
+            'column_number' => 'nullable|integer',
             'latitude' => 'sometimes|numeric|between:' . self::HIMS_LAT_MIN . ',' . self::HIMS_LAT_MAX,
             'longitude' => 'sometimes|numeric|between:' . self::HIMS_LNG_MIN . ',' . self::HIMS_LNG_MAX,
             'status' => ['nullable', Rule::in(['available', 'occupied', 'reserved', 'maintenance'])],
