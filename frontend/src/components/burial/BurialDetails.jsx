@@ -9,6 +9,7 @@ const BurialDetails = ({ burial, qrData, onClose, onGenerateQR, onRegenerateQR }
   const [invitationMessageType, setInvitationMessageType] = useState('success');
   const [loadingStatus, setLoadingStatus] = useState(true);
   const [statusError, setStatusError] = useState(null);
+  const [activeTab, setActiveTab] = useState('information');
   
   const formatDate = (dateString) => {
     if (!dateString) return '-';
@@ -145,7 +146,41 @@ const BurialDetails = ({ burial, qrData, onClose, onGenerateQR, onRegenerateQR }
           <h3>Burial Record Details</h3>
           <button className="modal-close" onClick={onClose}>&times;</button>
         </div>
+
+        {/* Tab Navigation */}
+        <div style={{
+          display: 'flex',
+          borderBottom: '2px solid #e5e7eb',
+          marginBottom: '0',
+          padding: '0 20px',
+          backgroundColor: '#fff',
+        }}>
+          {[['information', 'Information'], ['invitation', 'Invitation'], ['qrcode', 'QR Code']].map(([key, label]) => (
+            <button
+              key={key}
+              onClick={() => setActiveTab(key)}
+              style={{
+                padding: '12px 20px',
+                border: 'none',
+                borderBottom: activeTab === key ? '3px solid #1a472a' : '3px solid transparent',
+                background: 'none',
+                cursor: 'pointer',
+                fontWeight: activeTab === key ? '700' : '500',
+                color: activeTab === key ? '#1a472a' : '#6b7280',
+                fontSize: '0.9rem',
+                marginBottom: '-2px',
+                transition: 'color 0.2s',
+              }}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+
         <div className="modal-body">
+          {/* Information Tab */}
+          {activeTab === 'information' && (
+            <>
           {/* Deceased Information */}
           <div className="card" style={{ marginBottom: '15px' }}>
             <h4 style={{ marginBottom: '15px', color: '#1a1a2e' }}>Deceased Information</h4>
@@ -245,9 +280,12 @@ const BurialDetails = ({ burial, qrData, onClose, onGenerateQR, onRegenerateQR }
               )}
             </div>
           )}
+          </>
+          )}
 
-          {/* Account Invitation */}
-          <div className="card" style={{ marginBottom: '15px' }}>
+          {/* Invitation Tab */}
+          {activeTab === 'invitation' && (
+            <div className="card" style={{ marginBottom: '15px' }}>
             <h4 style={{ marginBottom: '15px', color: '#1a1a2e' }}>Account Invitation</h4>
             
             {loadingStatus ? (
@@ -360,9 +398,11 @@ const BurialDetails = ({ burial, qrData, onClose, onGenerateQR, onRegenerateQR }
               <p style={{ color: '#666' }}>No invitation data available.</p>
             )}
           </div>
+          )}
 
-          {/* QR Code */}
-          <div className="card">
+          {/* QR Code Tab */}
+          {activeTab === 'qrcode' && (
+            <div className="card">
             <h4 style={{ marginBottom: '15px', color: '#1a1a2e' }}>QR Code</h4>
             {qrData ? (
               <div className="qr-display">
@@ -402,6 +442,7 @@ const BurialDetails = ({ burial, qrData, onClose, onGenerateQR, onRegenerateQR }
               </div>
             )}
           </div>
+          )}
         </div>
       </div>
     </div>

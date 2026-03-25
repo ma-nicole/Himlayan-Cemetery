@@ -2,6 +2,24 @@ import React, { useState, useEffect } from 'react';
 import { mapService } from '../../services/mapService';
 import plotService from '../../services/plotService';
 
+const SECTION_OPTIONS = [
+  'LA-3000 A','LA-3000 B','LA-3000 C','LA-3000 E','LA-3000 F',
+  'LA-6000 A','LA-6000 B','LA-6000 D','LA-6000 C',
+  'LA-4000','LA-7000',
+  'LA-5000 A','LA-5000 B','LA-5000 C','LA-5000 D','LA-5000 E','LA-5000 F',
+  'CM-4C','CM-8D','CM-12',
+  'FM-3A','FM-4A','FM-5A','FM-6A','FM-3B',
+  'JM-41','JM-411',
+  'LA-1000 A','LA-1000 B','LA-1000 C','LA-1000 D','LA-1000 E','LA-1000 F',
+  'JM-12','JM-8',
+  'LA-9000','LA-12000',
+  'LA-1100 A','LA-1100 B',
+  'FE-16 A','FE-24','FE-16 B',
+  'LA-2000 A','LA-2000 B',
+  'MT-40','MT-30',
+  'M4-K6','M4-K7',
+];
+
 const AddPlotModal = ({ isOpen, onClose, onPlotAdded, center, selectedCoordinates, addPlotMode, toggleMapClickMode, onMapClick }) => {
   const DEFAULT_COORDINATES = {
     latitude: 14.682462,
@@ -28,6 +46,7 @@ const AddPlotModal = ({ isOpen, onClose, onPlotAdded, center, selectedCoordinate
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [validationErrors, setValidationErrors] = useState({});
+  const [allPlots, setAllPlots] = useState([]);
 
   const generateNextPlotNumber = async () => {
     try {
@@ -76,6 +95,16 @@ const AddPlotModal = ({ isOpen, onClose, onPlotAdded, center, selectedCoordinate
     }
 
     generateNextPlotNumber();
+
+    const loadAllPlots = async () => {
+      try {
+        const res = await plotService.getAll({ per_page: 9999 });
+        if (res.success) setAllPlots(res.data?.data ?? []);
+      } catch (_) {
+        // non-critical; duplicate check will just be skipped
+      }
+    };
+    loadAllPlots();
   }, [isOpen]);
 
   // Real-time field validation
@@ -115,11 +144,32 @@ const AddPlotModal = ({ isOpen, onClose, onPlotAdded, center, selectedCoordinate
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: value,
-    }));
+    const newData = { ...formData, [name]: value };
+    setFormData(newData);
     validateField(name, value);
+
+    if (['section', 'row_number', 'column_number'].includes(name)) {
+      const { section, row_number, column_number } = newData;
+      if (section && row_number && column_number) {
+        const isDup = allPlots.some(
+          p =>
+            p.section === section &&
+            parseInt(p.row_number) === parseInt(row_number) &&
+            parseInt(p.column_number) === parseInt(column_number)
+        );
+        setValidationErrors(prev => {
+          const updated = { ...prev };
+          if (isDup) {
+            updated.duplicate = `Row ${row_number}, Column ${column_number} already exists in section "${section}".`;
+          } else {
+            delete updated.duplicate;
+          }
+          return updated;
+        });
+      } else {
+        setValidationErrors(prev => { const u = { ...prev }; delete u.duplicate; return u; });
+      }
+    }
   };
 
   const handleSubmit = async (e) => {
@@ -167,6 +217,10 @@ const AddPlotModal = ({ isOpen, onClose, onPlotAdded, center, selectedCoordinate
 
     if (Object.keys(newErrors).length > 0) {
       setValidationErrors(newErrors);
+      return;
+    }
+
+    if (validationErrors.duplicate) {
       return;
     }
 
@@ -225,6 +279,7 @@ const AddPlotModal = ({ isOpen, onClose, onPlotAdded, center, selectedCoordinate
     setError('');
     setSuccess('');
     setValidationErrors({});
+    setAllPlots([]);
     onClose();
   };
 
@@ -367,10 +422,11 @@ const AddPlotModal = ({ isOpen, onClose, onPlotAdded, center, selectedCoordinate
             </label>
             <input
               type="text"
+              list="add-plot-section-options"
               name="section"
               value={formData.section}
               onChange={handleInputChange}
-              placeholder="e.g., D"
+              placeholder="Select or type a section"
               disabled={loading}
               required
               style={{
@@ -382,6 +438,9 @@ const AddPlotModal = ({ isOpen, onClose, onPlotAdded, center, selectedCoordinate
                 boxSizing: 'border-box',
               }}
             />
+            <datalist id="add-plot-section-options">
+              {SECTION_OPTIONS.map(s => <option key={s} value={s} />)}
+            </datalist>
             {validationErrors.section && (
               <small style={{ color: '#ef4444', marginTop: '4px', display: 'block' }}>
                 {validationErrors.section}
@@ -446,6 +505,20 @@ const AddPlotModal = ({ isOpen, onClose, onPlotAdded, center, selectedCoordinate
               )}
             </div>
           </div>
+
+          {validationErrors.duplicate && (
+            <div style={{
+              padding: '10px',
+              backgroundColor: '#fff3cd',
+              color: '#856404',
+              borderRadius: '4px',
+              fontSize: '0.875rem',
+              marginBottom: '15px',
+              border: '1px solid #ffc107',
+            }}>
+              ⚠️ {validationErrors.duplicate}
+            </div>
+          )}
 
           {/* Latitude and Longitude */}
           <div style={{ display: 'flex', gap: '15px', marginBottom: '15px' }}>

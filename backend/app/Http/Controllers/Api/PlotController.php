@@ -88,6 +88,18 @@ class PlotController extends Controller
         // Always generate plot number server-side to enforce sequential numbering.
         $validated['plot_number'] = Plot::generateNextPlotNumber();
 
+        // Ensure row+column combination is unique within the section
+        $exists = Plot::where('section', $validated['section'])
+            ->where('row_number', $validated['row_number'])
+            ->where('column_number', $validated['column_number'])
+            ->exists();
+        if ($exists) {
+            return $this->errorResponse(
+                "Row {$validated['row_number']}, Column {$validated['column_number']} already exists in section '{$validated['section']}'.",
+                422
+            );
+        }
+
         $plot = Plot::create($validated);
 
         return $this->successResponse($plot, 'Plot created successfully', 201);
@@ -137,6 +149,22 @@ class PlotController extends Controller
             'latitude.between' => 'Latitude must be inside Himlayang Pilipino Memorial Park area.',
             'longitude.between' => 'Longitude must be inside Himlayang Pilipino Memorial Park area.',
         ]);
+
+        // Ensure row+column combination is unique within the section (excluding current plot)
+        $section = $validated['section'] ?? $plot->section;
+        $rowNumber = $validated['row_number'] ?? $plot->row_number;
+        $columnNumber = $validated['column_number'] ?? $plot->column_number;
+        $duplicate = Plot::where('section', $section)
+            ->where('row_number', $rowNumber)
+            ->where('column_number', $columnNumber)
+            ->where('id', '!=', $id)
+            ->exists();
+        if ($duplicate) {
+            return $this->errorResponse(
+                "Row {$rowNumber}, Column {$columnNumber} already exists in section '{$section}'.",
+                422
+            );
+        }
 
         $plot->update($validated);
 
