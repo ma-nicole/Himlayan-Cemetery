@@ -116,9 +116,11 @@ const AddPlotModal = ({ isOpen, onClose, onPlotAdded, center, selectedCoordinate
         break;
       case 'row_number':
         if (value === '' || value === null || value === undefined) error = 'Row number is required';
+        else if (parseInt(value) < 1) error = 'Row number must be at least 1';
         break;
       case 'column_number':
         if (value === '' || value === null || value === undefined) error = 'Column number is required';
+        else if (parseInt(value) < 1) error = 'Column number must be at least 1';
         break;
       case 'latitude': {
         const lat = parseFloat(value);
@@ -186,10 +188,14 @@ const AddPlotModal = ({ isOpen, onClose, onPlotAdded, center, selectedCoordinate
 
     if (formData.row_number === '' || formData.row_number === null || formData.row_number === undefined) {
       newErrors.row_number = 'Row number is required';
+    } else if (parseInt(formData.row_number) < 1) {
+      newErrors.row_number = 'Row number must be at least 1';
     }
 
     if (formData.column_number === '' || formData.column_number === null || formData.column_number === undefined) {
       newErrors.column_number = 'Column number is required';
+    } else if (parseInt(formData.column_number) < 1) {
+      newErrors.column_number = 'Column number must be at least 1';
     }
 
 
@@ -462,6 +468,7 @@ const AddPlotModal = ({ isOpen, onClose, onPlotAdded, center, selectedCoordinate
                 placeholder="e.g., 4"
                 disabled={loading}
                 required
+                min="1"
                 style={{
                   width: '100%',
                   padding: '10px',
@@ -489,6 +496,7 @@ const AddPlotModal = ({ isOpen, onClose, onPlotAdded, center, selectedCoordinate
                 placeholder="e.g., 4"
                 disabled={loading}
                 required
+                min="1"
                 style={{
                   width: '100%',
                   padding: '10px',

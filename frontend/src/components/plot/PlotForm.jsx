@@ -129,9 +129,11 @@ const PlotForm = ({ plot, onSubmit, onCancel }) => {
         break;
       case 'row_number':
         if (value === '' || value === null || value === undefined) error = 'Row number is required';
+        else if (parseInt(value) < 1) error = 'Row number must be at least 1';
         break;
       case 'column_number':
         if (value === '' || value === null || value === undefined) error = 'Column number is required';
+        else if (parseInt(value) < 1) error = 'Column number must be at least 1';
         break;
       case 'latitude':
         if (value !== '' && value !== undefined) {
@@ -200,10 +202,14 @@ const PlotForm = ({ plot, onSubmit, onCancel }) => {
 
     if (formData.row_number === '' || formData.row_number === null || formData.row_number === undefined) {
       newErrors.row_number = 'Row number is required';
+    } else if (parseInt(formData.row_number) < 1) {
+      newErrors.row_number = 'Row number must be at least 1';
     }
 
     if (formData.column_number === '' || formData.column_number === null || formData.column_number === undefined) {
       newErrors.column_number = 'Column number is required';
+    } else if (parseInt(formData.column_number) < 1) {
+      newErrors.column_number = 'Column number must be at least 1';
     }
 
 
@@ -304,6 +310,7 @@ const PlotForm = ({ plot, onSubmit, onCancel }) => {
             className={`form-control ${validationErrors.row_number ? 'error' : ''}`}
             value={formData.row_number}
             onChange={handleChange}
+            min="1"
           />
           {validationErrors.row_number && (
             <small style={{ color: '#ef4444', marginTop: '4px', display: 'block' }}>
@@ -319,6 +326,7 @@ const PlotForm = ({ plot, onSubmit, onCancel }) => {
             className={`form-control ${validationErrors.column_number ? 'error' : ''}`}
             value={formData.column_number}
             onChange={handleChange}
+            min="1"
           />
           {validationErrors.column_number && (
             <small style={{ color: '#ef4444', marginTop: '4px', display: 'block' }}>
